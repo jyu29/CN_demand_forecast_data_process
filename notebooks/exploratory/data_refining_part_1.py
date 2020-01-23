@@ -6,6 +6,8 @@ from pyspark.ml.feature import StringIndexer
 import pyspark.sql.functions as F
 import sys
 
+spark = SparkSession.builder.getOrCreate()
+
 def read_parquet_s3(app, s3_path):
     
     df = app.read.parquet(s3_path)
