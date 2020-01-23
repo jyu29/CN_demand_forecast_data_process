@@ -8,6 +8,8 @@ import sys
 
 spark = SparkSession.builder.getOrCreate()
 
+spark.sparkContext.setLogLevel("ERROR")
+
 def read_parquet_s3(app, s3_path):
     
     df = app.read.parquet(s3_path)
