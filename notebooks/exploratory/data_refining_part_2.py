@@ -250,13 +250,13 @@ filter_val, filter_type = dict_scope[scope].values()
 # Read and cache data
 
 actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/actual_sales/')
-actual_sales.persist()
+actual_sales.cache()
 
 active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/active_sales/')
-active_sales.persist()
+active_sales.cache()
 
 model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/model_info/')
-model_info.persist()
+model_info.cache()
 
 
 """
