@@ -393,7 +393,7 @@ model_info = indexer \
 assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
 assert model_info.count() == model_info.select('model').drop_duplicates().count()
 
-print("writing files...)
+print("writing files...")
       
 write_parquet_s3(model_info, 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
 write_parquet_s3(actual_sales, 'fcst-refined-demand-forecast-dev', 'part_1/actual_sales')
