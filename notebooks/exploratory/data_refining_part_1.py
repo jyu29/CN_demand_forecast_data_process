@@ -111,10 +111,9 @@ actual_sales_online = dyd \
 actual_sales = actual_sales_offline.union(actual_sales_online) \
     .groupby(['week_id', 'date', 'model']) \
     .agg(F.sum('f_qty_item').alias('y')) \
-    .filter(F.col('y') > 0) \
-    .repartition(200)
+    .filter(F.col('y') > 0)
 
-actual_sales.cache()
+#actual_sales.cache()
 
 
 lifestage_update = sdm \
@@ -137,10 +136,9 @@ lifestage_update = sdm \
             sdm.date_begin,
             "date_end",
             sdm.lifestage.cast('int').alias('lifestage')) \
-    .drop_duplicates() \
-    .repartition(200)
+    .drop_duplicates()
 
-lifestage_update.cache()
+#lifestage_update.cache()
 
 
 model_info = sku \
@@ -160,11 +158,9 @@ model_info = sku \
             sku.pnt_num_product_nature.alias('product_nature'),
             sku.product_nature_label.alias('product_nature_label'),
             sku.category_label.alias('category_label')) \
-    .drop_duplicates() \
-    .repartition(200)
+    .drop_duplicates()
 
-model_info.cache()
-
+#model_info.cache()
 
 max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 
