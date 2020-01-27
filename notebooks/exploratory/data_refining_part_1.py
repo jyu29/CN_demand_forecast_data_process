@@ -390,6 +390,6 @@ assert model_info.count() == model_info.select('model').drop_duplicates().count(
 
 write_parquet_s3(model_info.orderBy('model'), 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
 write_parquet_s3(actual_sales.orderBy(['model', 'week_id']), 'fcst-refined-demand-forecast-dev', 'part_1/actual_sales')
-write_parquet_s3(active_sales.orderBy(['model', 'week_id'], 'fcst-refined-demand-forecast-dev', 'part_1/active_sales')
+write_parquet_s3(active_sales.orderBy(['model', 'week_id']), 'fcst-refined-demand-forecast-dev', 'part_1/active_sales')
 
 spark.stop()
