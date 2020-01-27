@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import numpy as np
 import time
 
-
+"""
 conf = SparkConf().setAll([
  ('spark.sql.shuffle.partitions', 110),
  ('spark.default.parallelism', 110),
@@ -33,6 +33,12 @@ conf = SparkConf().setAll([
 spark = SparkSession.builder \
     .appName("data_refining_part_2_history_reconstruction") \
     .config(conf=conf)\
+    .getOrCreate()
+"""
+
+
+spark = SparkSession.builder \
+    .appName("data_refining_part_2_history_reconstruction") \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("ERROR")
