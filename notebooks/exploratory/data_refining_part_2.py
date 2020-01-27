@@ -259,13 +259,13 @@ filter_val, filter_type = dict_scope[scope].values()
 # Read and cache data
 
 actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/actual_sales/')
-actual_sales.cache()
+actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
 active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/active_sales/')
-active_sales.cache()
+active_sales.persist(StorageLevel.MEMORY_ONLY)
 
 model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/model_info/')
-model_info.cache()
+model_info.persist(StorageLevel.MEMORY_ONLY)
 
 
 """
@@ -320,7 +320,7 @@ iterate_week = cutoff_week_val.union(cutoff_week_test)
 iterate_week = [row.week_id for row in iterate_week.collect()]
 
 # add cache
-active_sales.persist(StorageLevel.MEMORY_AND_DISK)
+active_sales.persist(StorageLevel.MEMORY_ONLY)
 
 
 
