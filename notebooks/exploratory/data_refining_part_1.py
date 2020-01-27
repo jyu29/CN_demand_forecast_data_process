@@ -111,9 +111,11 @@ actual_sales_online = dyd \
 actual_sales = actual_sales_offline.union(actual_sales_online) \
     .groupby(['week_id', 'date', 'model']) \
     .agg(F.sum('f_qty_item').alias('y')) \
-    .filter(F.col('y') > 0)
+    .filter(F.col('y') > 0) \
+    .repartition('model')
 
-#actual_sales.cache()
+actual_sales.persist(StorageLevel.MEMORY_ONLY)
+print("actual_sales length :", actual_sales.count())
 
 
 lifestage_update = sdm \
@@ -136,9 +138,11 @@ lifestage_update = sdm \
             sdm.date_begin,
             "date_end",
             sdm.lifestage.cast('int').alias('lifestage')) \
-    .drop_duplicates()
+    .drop_duplicates() \
+    .repartition('model')
 
-#lifestage_update.cache()
+lifestage_update.persist(StorageLevel.MEMORY_ONLY)
+print("lifestage_update length :", lifestage_update.count())
 
 
 model_info = sku \
@@ -158,9 +162,12 @@ model_info = sku \
             sku.pnt_num_product_nature.alias('product_nature'),
             sku.product_nature_label.alias('product_nature_label'),
             sku.category_label.alias('category_label')) \
-    .drop_duplicates()
+    .drop_duplicates() \
+    .repartition('model')
 
-#model_info.cache()
+model_info.persist(StorageLevel.MEMORY_ONLY)
+print("model_info length :", model_info.count())
+
 
 max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 
@@ -265,6 +272,8 @@ complete_ts = complete_ts.fillna(0, subset=['y'])
 
 complete_ts = complete_ts.join(model_lifestage, ['date', 'model'], how='left')
 
+complete_ts.persist(StorageLevel.MEMORY_ONLY)
+print("complete_ts length :", complete_ts.count())
 
 
 def add_column_index(df, col_name): 
@@ -381,8 +390,8 @@ model_info = indexer \
 
 
 # Check duplicates rows
-assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
-assert model_info.count() == model_info.select('model').drop_duplicates().count()
+print(assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1)
+print(assert model_info.count() == model_info.select('model').drop_duplicates().count())
 
 
 write_parquet_s3(model_info, 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
