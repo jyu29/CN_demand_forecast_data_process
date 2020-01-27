@@ -9,6 +9,7 @@ from pyspark.ml.feature import StringIndexer
 import datetime
 from datetime import datetime, timedelta
 import numpy as np
+import time
 
 
 conf = SparkConf().setAll([
@@ -318,9 +319,12 @@ active_sales.persist(StorageLevel.MEMORY_AND_DISK)
 # loop generate cutoffs
 
 for cutoff_week_id in sorted(iterate_week):
-
+    
     print('Generating train data for cutoff', str(cutoff_week_id))
-
+    
+    t0 = time.time()
+    
+    print('Generating train data for cutoff', str(cutoff_week_id))
     train_data_cutoff = active_sales.filter(active_sales.week_id < cutoff_week_id)
 
     model_sold = train_data_cutoff.select(['model', 'y'])\
@@ -344,6 +348,10 @@ for cutoff_week_id in sorted(iterate_week):
     train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
 
     train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/part_2/{}/cutoff_data/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
+    
+    t1 = time.time()
+    total = t1-t0
+    print('temps boucle {} {}:'.format(str(cutoff_week_id), total))
 
-
+ 
 spark.stop()
