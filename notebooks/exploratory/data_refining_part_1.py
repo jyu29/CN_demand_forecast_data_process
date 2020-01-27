@@ -17,7 +17,6 @@ def read_parquet_s3(app, s3_path):
         
     return df
 
-
 def write_parquet_s3(spark_df, bucket, file_path):
     """Writing spark Dataframe into s3 as a parquet file.
     
@@ -36,7 +35,6 @@ purch_org = 'Z001'
 sales_org = 'Z002'
 bucket = 's3://fcst-clean-dev/'
 
-
 tdt = read_parquet_s3(spark, bucket + 'f_transaction_detail/*/')
 dyd = read_parquet_s3(spark, bucket + 'f_delivery_detail/*/')
 
@@ -48,7 +46,6 @@ sdm = read_parquet_s3(spark, bucket + 'd_sales_data_material_h/')
 
 day = read_parquet_s3(spark, bucket + 'd_day/')
 week = read_parquet_s3(spark, bucket + 'd_week/')
-
 
 actual_sales_offline = tdt \
     .join(day,
@@ -176,10 +173,9 @@ actual_sales = actual_sales \
     .orderBy('model', 'date')
 
 
+# Keep only usefull life stage values: models in actual sales
 lifestage_update = lifestage_update.join(actual_sales.select('model').drop_duplicates(), 
                                          on='model', how='inner')
-
-
 
 # Calculates all possible date/model combinations associated with a life stage update
 min_date = lifestage_update.select(F.min('date_begin')).collect()[0][0]
@@ -208,8 +204,6 @@ model_lifestage = model_lifestage \
 # not to lose anything.
 model_lifestage = date_model.join(model_lifestage, on=['date', 'model'], how='left')
 
-
-
 model_lifestage = model_lifestage \
     .groupby(['date', 'model']) \
     .agg(F.min('lifestage').alias('lifestage'))
@@ -222,7 +216,6 @@ window = Window.partitionBy('model')\
 ffilled_lifestage = F.last(model_lifestage['lifestage'], ignorenulls=True).over(window)
 
 model_lifestage = model_lifestage.withColumn('lifestage', ffilled_lifestage)
-
 
 model_lifestage = model_lifestage \
     .withColumn('lifestage_shift', 
@@ -251,6 +244,8 @@ model_lifestage = model_lifestage \
     .filter(model_lifestage.date >= model_lifestage.cut_date) \
     .select(['date', 'model', 'lifestage'])
 
+model_lifestage.persist(StorageLevel.MEMORY_ONLY)
+print("model_lifestage length :", model_lifestage.count())
 
 # Calculates all possible date/model combinations from actual sales
 all_sales_model = actual_sales.select('model').orderBy('model').drop_duplicates()
@@ -391,13 +386,10 @@ model_info = indexer \
 
 # Check duplicates rows
 assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
-assert model_info.count() == model_info.select('model').drop_duplicates().count()
+assert model_info.count() == model_info.select('model').drop_duplicates().count()      
 
-print("writing files...")
-      
-write_parquet_s3(model_info, 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
-write_parquet_s3(actual_sales, 'fcst-refined-demand-forecast-dev', 'part_1/actual_sales')
-write_parquet_s3(active_sales, 'fcst-refined-demand-forecast-dev', 'part_1/active_sales')
-
+write_parquet_s3(model_info.orderBy('model'), 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
+write_parquet_s3(actual_sales.orderBy(['model', 'week_id']), 'fcst-refined-demand-forecast-dev', 'part_1/actual_sales')
+write_parquet_s3(active_sales.orderBy(['model', 'week_id'], 'fcst-refined-demand-forecast-dev', 'part_1/active_sales')
 
 spark.stop()
