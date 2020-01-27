@@ -332,7 +332,6 @@ for cutoff_week_id in sorted(iterate_week):
     
     t0 = time.time()
     
-    print('Generating train data for cutoff', str(cutoff_week_id))
     train_data_cutoff = active_sales.filter(active_sales.week_id < cutoff_week_id)
 
     model_sold = train_data_cutoff.select(['model', 'y'])\
