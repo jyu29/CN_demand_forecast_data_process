@@ -267,7 +267,7 @@ model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_
 model_info.persist(StorageLevel.MEMORY_ONLY)
 
 
-"""
+
 if scope != 'full_scope':
 
     actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
@@ -279,7 +279,7 @@ if scope != 'full_scope':
 
     active_sales = active_sales.filter(active_sales[filter_type].isin(filter_val))\
                                .drop(filter_type)
-"""
+
 
 # Generate training data used to forecast validation & test cutoffs
 
