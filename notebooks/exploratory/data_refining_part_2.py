@@ -12,29 +12,28 @@ import numpy as np
 import time
 
 
-conf = SparkConf().setAll([
- ('spark.sql.shuffle.partitions', 110),
- ('spark.default.parallelism', 110),
- ('spark.autoBroadcastJoinThreshold', 15485760),
- ('spark.dynamicAllocation.enabled', 'false'),
- ('spark.executor.instances', 11),
- ('spark.executor.memory', '19g'),
- ('spark.driver.memory', '19g'),
- ('spark.driver.cores', 5),
- # ('spark.memory.storageFraction', 0.1),
- ('spark.memory.storageFraction', 0.4),   
- # ('spark.memory.fraction', 0.9),
- ('spark.memory.fraction', 0.6),
- ('spark.executor.memoryOverhead', '2g'),
- ('spark.executor.cores', 5),
- ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
-])
-
-spark = SparkSession.builder \
-    .appName("data_refining_part_2_history_reconstruction") \
-    .config(conf=conf)\
-    .getOrCreate()
-
+#conf = SparkConf().setAll([
+# ('spark.sql.shuffle.partitions', 110),
+# ('spark.default.parallelism', 110),
+# ('spark.autoBroadcastJoinThreshold', 15485760),
+# ('spark.dynamicAllocation.enabled', 'false'),
+# ('spark.executor.instances', 11),
+# ('spark.executor.memory', '19g'),
+# ('spark.driver.memory', '19g'),
+# ('spark.driver.cores', 5),
+# # ('spark.memory.storageFraction', 0.1),
+# ('spark.memory.storageFraction', 0.4),   
+# # ('spark.memory.fraction', 0.9),
+# ('spark.memory.fraction', 0.6),
+# ('spark.executor.memoryOverhead', '2g'),
+# ('spark.executor.cores', 5),
+# ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
+#])
+#
+#spark = SparkSession.builder \
+#    .appName("data_refining_part_2_history_reconstruction") \
+#    .config(conf=conf)\
+#    .getOrCreate()
 
 
 spark = SparkSession.builder \
