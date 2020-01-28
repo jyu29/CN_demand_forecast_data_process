@@ -267,8 +267,8 @@ model_info.persist(StorageLevel.MEMORY_ONLY)
 
 print('scope: ', scope)
 print('filter_type: ', filter_type)
+print('filter_val: ', filter_val)
 
-actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
 
 
 if scope != 'full_scope':
