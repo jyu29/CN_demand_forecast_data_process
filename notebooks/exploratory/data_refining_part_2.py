@@ -265,6 +265,10 @@ active_sales.persist(StorageLevel.MEMORY_ONLY)
 model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/model_info/')
 model_info.persist(StorageLevel.MEMORY_ONLY)
 
+print('scope: ', scope)
+print('filer: ', filter_type)
+
+actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
 
 
 if scope != 'full_scope':
