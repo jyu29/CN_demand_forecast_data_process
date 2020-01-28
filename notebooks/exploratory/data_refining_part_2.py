@@ -251,7 +251,7 @@ scope = 'domyos_nov_2019'
 first_test_cutoff = 201922
 
 
-filter_val, filter_type = dict_scope[scope].values()
+filter_type, filter_val = dict_scope[scope].values()
 
 
 # Read and cache data
@@ -266,7 +266,7 @@ model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_
 model_info.persist(StorageLevel.MEMORY_ONLY)
 
 print('scope: ', scope)
-print('filer: ', filter_type)
+print('filter_type: ', filter_type)
 
 actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
 
