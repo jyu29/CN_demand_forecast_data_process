@@ -33,11 +33,6 @@ spark = SparkSession.builder \
     .config(conf=conf)\
     .getOrCreate()
 
-"""
-spark = SparkSession.builder \
-    .appName("data_refining_part_2_history_reconstruction") \
-    .getOrCreate()
-"""
 
 spark.sparkContext.setLogLevel("ERROR")
 
@@ -256,13 +251,13 @@ filter_type, filter_val = dict_scope[scope].values()
 
 # Read and cache data
 
-actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/actual_sales/')
+actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/actual_sales/')
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/active_sales/')
+active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/active_sales/')
 active_sales.persist(StorageLevel.MEMORY_ONLY)
 
-model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1_2/model_info/')
+model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/model_info/')
 model_info.persist(StorageLevel.MEMORY_ONLY)
 
 print('scope: ', scope)
@@ -282,8 +277,11 @@ if scope != 'full_scope':
 
     active_sales = active_sales.filter(active_sales[filter_type].isin(filter_val))\
                                .drop(filter_type)
+    
+    active_sales.persist(StorageLevel.MEMORY_ONLY)
+    actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-
+    
 # Generate training data used to forecast validation & test cutoffs
 
 
@@ -321,19 +319,14 @@ cutoff_week_val = cutoff_week_val.where(cutoff_week_val.value == 1).drop('value'
 iterate_week = cutoff_week_val.union(cutoff_week_test)
 iterate_week = [row.week_id for row in iterate_week.collect()]
 
-# add cache
-active_sales.persist(StorageLevel.MEMORY_ONLY)
-
-
 
 # loop generate cutoffs
 
 for cutoff_week_id in sorted(iterate_week):
-    
-    print('Generating train data for cutoff', str(cutoff_week_id))
-    
+        
     t0 = time.time()
-    
+    print('Generating train data for cutoff', str(cutoff_week_id))
+
     train_data_cutoff = active_sales.filter(active_sales.week_id < cutoff_week_id)
 
     model_sold = train_data_cutoff.select(['model', 'y'])\
@@ -356,7 +349,7 @@ for cutoff_week_id in sorted(iterate_week):
     # Reconstruct a fake history
     train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
 
-    train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/part_2/{}/cutoff_data/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
+    train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/scope/{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
     
     t1 = time.time()
     total = t1-t0
