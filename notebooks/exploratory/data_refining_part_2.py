@@ -296,7 +296,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
     print(l_cutoff_week_id)  
     # loop generate cutoffs
 
-    for cutoff_week_id in sorted(l_cutoff_week_id):
+    for cutoff_week_id in sorted(l_cutoff_week_id[:3]):
 
         t0 = time.time()
         print('Generating train data for cutoff', str(cutoff_week_id))
@@ -341,7 +341,7 @@ actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=False)        
 
 
 spark.stop()
