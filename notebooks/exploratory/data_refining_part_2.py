@@ -36,6 +36,16 @@ spark = SparkSession.builder \
 
 spark.sparkContext.setLogLevel("ERROR")
 
+dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
+              'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
+              'full_scope': {'filter_type' : '', 'filter_val' : []},
+              "domyos_nov_2019": {"filter_type" : "family", "filter_val" : [224, 12072, 600]}}
+
+scope = 'domyos_nov_2019'
+first_test_cutoff = 201922
+
+filter_type, filter_val = dict_scope[scope].values()
+
 
 def read_parquet_s3(app, s3_path):
 
@@ -228,17 +238,6 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     return complete_ts
 
 
-dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
-              'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
-              'full_scope': {'filter_type' : '', 'filter_val' : []},
-              "domyos_nov_2019": {"filter_type" : "family", "filter_val" : [224, 12072, 600]}}
-
-scope = 'domyos_nov_2019'
-first_test_cutoff = 201922
-
-
-filter_type, filter_val = dict_scope[scope].values()
-
 
 # Read and cache data
 def read_clean_data():
@@ -254,12 +253,6 @@ def read_clean_data():
 
     return actual_sales, active_sales, model_info
     
-
-    
-print('scope: ', scope)
-print('filter_type: ', filter_type)
-print('filter_val: ', filter_val)
-
 
 
 def filter_data_scope(actual_sales, active_sales, model_info):
@@ -340,7 +333,11 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
 
 
         
-        
+
+    
+print('scope: ', scope)
+print('filter_type: ', filter_type)
+print('filter_val: ', filter_val)        
         
 actual_sales, active_sales, model_info = read_clean_data()
 
