@@ -1,4 +1,6 @@
 #!/bin/bash -x
+sudo pip-3.6 install PyYAML
+
 spark-submit \
     --deploy-mode client \
     --master yarn \

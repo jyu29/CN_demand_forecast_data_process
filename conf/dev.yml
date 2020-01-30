@@ -1,2 +1,3 @@
 s3_path_clean: fcst-clean-dev/
-s3_path_refine: fcst-refined-demand-forecast-dev/
+s3_path_refine_global: fcst-refined-demand-forecast-dev/global/
+s3_path_refine_specific: fcst-refined-demand-forecast-dev/specific/
