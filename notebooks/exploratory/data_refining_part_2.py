@@ -252,13 +252,13 @@ filter_type, filter_val = dict_scope[scope].values()
 # Read and cache data
 def read_clean_data():
     
-    actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/actual_sales/')
+    actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/actual_sales/')
     actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/active_sales/')
+    active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/active_sales/')
     active_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/model_info/')
+    model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/model_info/')
     model_info.persist(StorageLevel.MEMORY_ONLY)
 
     return actual_sales, active_sales, model_info
@@ -305,7 +305,8 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         cutoff_week_test = active_sales.where(active_sales.week_id >= first_test_cutoff).select(active_sales.week_id).distinct().orderBy('week_id')
 
         nRow = spark.createDataFrame([[current_cutoff]])
-        l_cutoff_week_id = cutoff_week_test.union(nRow)
+        iterate_week = cutoff_week_test.union(nRow)
+        l_cutoff_week_id = [row.week_id for row in iterate_week.collect()]
         
         
     # loop generate cutoffs
