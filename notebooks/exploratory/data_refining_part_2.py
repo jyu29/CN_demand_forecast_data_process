@@ -23,7 +23,7 @@ conf = SparkConf().setAll([
  ('spark.driver.cores', 5),
  ('spark.memory.storageFraction', 0.4),   
  ('spark.memory.fraction', 0.6),
- ('spark.executor.memoryOverhead', '2g'),
+ ('spark.executor.memoryOverhead', '8g'),
  ('spark.executor.cores', 5),
  ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
 ])
