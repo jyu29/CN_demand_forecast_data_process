@@ -1,4 +1,2 @@
-s3_path:
-    clean: fcst-clean-prod/
-    refine: fcst-refined-demand-forecast-prod/
-    exchange: fcst-data-exchange/prod/
+s3_path_clean: fcst-clean-prod/
+s3_path_refine: fcst-refined-demand-forecast-prod/
