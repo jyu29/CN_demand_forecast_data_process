@@ -228,15 +228,6 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     return complete_ts
 
 
-# Conf !!Add file Conf
-
-horizon = 10
-horizon_freq = '1W-SUN'
-
-prediction_length = horizon
-prediction_freq = '1W-SUN'
-season_length = 52
-
 dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
               'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
               'full_scope': {'filter_type' : '', 'filter_val' : []},
