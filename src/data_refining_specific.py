@@ -36,6 +36,16 @@ spark = SparkSession.builder \
 
 spark.sparkContext.setLogLevel("ERROR")
 
+dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
+              'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
+              'full_scope': {'filter_type' : '', 'filter_val' : []},
+              "domyos_nov_2019": {"filter_type" : "family", "filter_val" : [224, 12072, 600]}}
+
+scope = 'domyos_nov_2019'
+first_test_cutoff = 201922
+
+filter_type, filter_val = dict_scope[scope].values()
+
 
 def read_parquet_s3(app, s3_path):
 
@@ -159,9 +169,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
     full = list_weeks.crossJoin(list_models)
     full_actives_sales = full.join(train_data_cutoff, ['week_id', 'model'], how='left')
-    #full_actives_sales = full_actives_sales[full_actives_sales['week_id'] < cutoff_week_id_test]
 
-    #full_actives_sales.describe().show()
     # add cluster infos
 
     mdl_inf = model_info.select(['model'] + cluster_keys)
@@ -188,7 +196,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
     complete_ts = complete_ts.join(model_scale_factor, ['model'], how='left')
 
-    # assert complete_ts.where(complete_ts.model_scale_factor.isNull()).count() == 0
+    assert complete_ts.where(complete_ts.model_scale_factor.isNull()).count() == 0
 
 
     #compute fake Y
@@ -228,26 +236,6 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     return complete_ts
 
 
-# Conf !!Add file Conf
-
-horizon = 10
-horizon_freq = '1W-SUN'
-
-prediction_length = horizon
-prediction_freq = '1W-SUN'
-season_length = 52
-
-dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
-              'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
-              'full_scope': {'filter_type' : '', 'filter_val' : []},
-              "domyos_nov_2019": {"filter_type" : "family", "filter_val" : [224, 12072, 600]}}
-
-scope = 'domyos_nov_2019'
-first_test_cutoff = 201922
-
-
-filter_val, filter_type  = dict_scope[scope].values()
-
 
 # Read and cache data
 def read_clean_data():
@@ -263,12 +251,6 @@ def read_clean_data():
 
     return actual_sales, active_sales, model_info
     
-
-    
-print('scope: ', scope)
-print('filter_type: ', filter_type)
-print('filter_val: ', filter_val)
-
 
 
 def filter_data_scope(actual_sales, active_sales, model_info):
@@ -291,6 +273,9 @@ def filter_data_scope(actual_sales, active_sales, model_info):
         actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
     
+    return actual_sales, active_sales
+    
+    
 # Generate training data used to forecast validation & test cutoffs
 def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True):
 
@@ -308,7 +293,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         iterate_week = cutoff_week_test.union(nRow)
         l_cutoff_week_id = [row.week_id for row in iterate_week.collect()]
         
-        
+    print(l_cutoff_week_id)  
     # loop generate cutoffs
 
     for cutoff_week_id in sorted(l_cutoff_week_id):
@@ -346,13 +331,17 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
 
 
         
-        
+
+    
+print('scope: ', scope)
+print('filter_type: ', filter_type)
+print('filter_val: ', filter_val)        
         
 actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=False)        
 
 
 spark.stop()
