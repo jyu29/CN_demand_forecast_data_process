@@ -339,7 +339,7 @@ actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=False)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
 
 
 spark.stop()
