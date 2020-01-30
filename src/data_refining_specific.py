@@ -57,12 +57,10 @@ def read_parquet_s3(app, s3_path):
 
 def write_parquet_s3(spark_df, bucket, file_path):
     """Writing spark Dataframe into s3 as a parquet file.
-
     Parameters:
     spark_df (pyspark.sql.dataframe): the spark Dataframe.
     bucket (string): the s3 bucket name.
     file_path (string) : the table name or directory.
-
     Returns:
     """
     s3_path = 's3://{}/{}'.format(bucket, file_path)
@@ -341,7 +339,7 @@ actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=False)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
 
 
 spark.stop()
