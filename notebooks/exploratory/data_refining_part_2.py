@@ -291,6 +291,9 @@ def filter_data_scope(actual_sales, active_sales, model_info):
         actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
     
+    return actual_sales, active_sales
+    
+    
 # Generate training data used to forecast validation & test cutoffs
 def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True):
 
