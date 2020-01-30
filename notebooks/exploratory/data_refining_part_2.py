@@ -246,7 +246,7 @@ scope = 'domyos_nov_2019'
 first_test_cutoff = 201922
 
 
-filter_val, filter_type  = dict_scope[scope].values()
+filter_type, filter_val = dict_scope[scope].values()
 
 
 # Read and cache data
