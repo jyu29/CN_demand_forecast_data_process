@@ -246,7 +246,7 @@ scope = 'domyos_nov_2019'
 first_test_cutoff = 201922
 
 
-filter_type, filter_val = dict_scope[scope].values()
+filter_val, filter_type  = dict_scope[scope].values()
 
 
 # Read and cache data
@@ -350,7 +350,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         
 actual_sales, active_sales, model_info = read_clean_data()
 
-actual_sales, active_sales, model_info = filter_data_scope(actual_sales, active_sales, model_info)
+actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
 generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
 
