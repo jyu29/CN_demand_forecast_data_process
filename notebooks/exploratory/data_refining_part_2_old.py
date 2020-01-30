@@ -250,108 +250,110 @@ filter_type, filter_val = dict_scope[scope].values()
 
 
 # Read and cache data
-def read_clean_data():
-    
-    actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/actual_sales/')
-    actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/active_sales/')
-    active_sales.persist(StorageLevel.MEMORY_ONLY)
+actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/actual_sales/')
+actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/model_info/')
-    model_info.persist(StorageLevel.MEMORY_ONLY)
+active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/active_sales/')
+active_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    return actual_sales, active_sales, model_info
-    
+model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_2/model_info/')
+model_info.persist(StorageLevel.MEMORY_ONLY)
 
-    
 print('scope: ', scope)
 print('filter_type: ', filter_type)
 print('filter_val: ', filter_val)
 
 
 
-def filter_data_scope(actual_sales, active_sales, model_info):
+if scope != 'full_scope':
 
-    print('Filtering data depending on scope...')
+    actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
 
-    if scope != 'full_scope':
+    actual_sales = actual_sales.filter(actual_sales[filter_type].isin(filter_val))\
+                               .drop(filter_type)
+
+    active_sales = active_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
+
+    active_sales = active_sales.filter(active_sales[filter_type].isin(filter_val))\
+                               .drop(filter_type)
     
-        actual_sales = actual_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
-    
-        actual_sales = actual_sales.filter(actual_sales[filter_type].isin(filter_val))\
-                                   .drop(filter_type)
-    
-        active_sales = active_sales.join(model_info.select(model_info['model'], model_info[filter_type]), 'model', how='left')
-    
-        active_sales = active_sales.filter(active_sales[filter_type].isin(filter_val))\
-                                   .drop(filter_type)
-        
-        active_sales.persist(StorageLevel.MEMORY_ONLY)
-        actual_sales.persist(StorageLevel.MEMORY_ONLY)
+    active_sales.persist(StorageLevel.MEMORY_ONLY)
+    actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
     
 # Generate training data used to forecast validation & test cutoffs
-def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True):
 
-    current_cutoff = next_week(actual_sales.select(F.max('week_id')).collect()[0][0])
 
-    if only_last:
+current_cutoff = next_week(actual_sales.select(F.max('week_id')).collect()[0][0])
+
+
+cutoff_week_test = active_sales.where(active_sales.week_id >= first_test_cutoff).select(active_sales.week_id).distinct().orderBy('week_id')
+
+nRow = spark.createDataFrame([[current_cutoff]])
+cutoff_week_test = cutoff_week_test.union(nRow)
+
+cutoff_week_val = active_sales.where(active_sales.week_id < first_test_cutoff).select(active_sales.week_id).distinct().orderBy('week_id')
+
+max_cutoff_week_val = cutoff_week_val.select(F.max('week_id')).collect()[0][0]
+
+# keep the last 60 dates before test set for validation
+
+_sup_week = __add_week(max_cutoff_week_val, (-horizon +1))
+_inf_week = __add_week(max_cutoff_week_val, -(60 + horizon -1))
+
+
+cutoff_week_val = cutoff_week_val.where((cutoff_week_val.week_id > _inf_week) & (cutoff_week_val.week_id <= _sup_week))
+
+# keep only one cutoff every 10 dates
+idx_to_keep = ((np.arange(cutoff_week_val.count()) + 1) % 10 == 0)
+idx = np.arange(1, len(idx_to_keep)+1)
+idx_to_keep = np.c_[idx_to_keep, idx]
+
+nRow = spark.createDataFrame(idx_to_keep.tolist()).selectExpr('_1 as value', '_2 as id')
+cutoff_week_val = cutoff_week_val.withColumn('id', F.row_number().over(Window.orderBy('week_id')))
+cutoff_week_val = cutoff_week_val.join(nRow, 'id', how='inner').drop('id')
+cutoff_week_val = cutoff_week_val.where(cutoff_week_val.value == 1).drop('value')
+
+#weeks cutoff
+iterate_week = cutoff_week_val.union(cutoff_week_test)
+iterate_week = [row.week_id for row in iterate_week.collect()]
+
+
+# loop generate cutoffs
+
+for cutoff_week_id in sorted(iterate_week):
         
-        l_cutoff_week_id = [current_cutoff]
+    t0 = time.time()
+    print('Generating train data for cutoff', str(cutoff_week_id))
+
+    train_data_cutoff = active_sales.filter(active_sales.week_id < cutoff_week_id)
+
+    model_sold = train_data_cutoff.select(['model', 'y'])\
+                 .groupBy('model')\
+                 .agg(F.sum(train_data_cutoff.y).alias('qty_sold'))\
+                 .orderBy('model')
+
+    model_sold = model_sold.filter(model_sold.qty_sold > 0).select('model').orderBy('model')
+
+    last_week = train_data_cutoff.agg(F.max('week_id').alias('last_week'))
+
+    model_active = train_data_cutoff.groupBy('model').agg(F.max('week_id').alias('last_active_week'))
+
+    model_active = model_active.join(last_week, last_week.last_week == model_active.last_active_week, 'inner').select(model_active.model)
+
+    model_to_keep = model_active.join(model_sold, 'model', 'inner')
+
+    train_data_cutoff = train_data_cutoff.join(model_to_keep, 'model', how='inner')
+
+    # Reconstruct a fake history
+    train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
+
+    train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/scope/{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
     
-    else:
-        
-        cutoff_week_test = active_sales.where(active_sales.week_id >= first_test_cutoff).select(active_sales.week_id).distinct().orderBy('week_id')
+    t1 = time.time()
+    total = t1-t0
+    print('temps boucle {} {}:'.format(str(cutoff_week_id), total))
 
-        nRow = spark.createDataFrame([[current_cutoff]])
-        l_cutoff_week_id = cutoff_week_test.union(nRow)
-        
-        
-    # loop generate cutoffs
-
-    for cutoff_week_id in sorted(l_cutoff_week_id):
-
-        t0 = time.time()
-        print('Generating train data for cutoff', str(cutoff_week_id))
-
-        train_data_cutoff = active_sales.filter(active_sales.week_id < cutoff_week_id)
-
-        model_sold = train_data_cutoff.select(['model', 'y'])\
-                     .groupBy('model')\
-                     .agg(F.sum(train_data_cutoff.y).alias('qty_sold'))\
-                     .orderBy('model')
-
-        model_sold = model_sold.filter(model_sold.qty_sold > 0).select('model').orderBy('model')
-
-        last_week = train_data_cutoff.agg(F.max('week_id').alias('last_week'))
-
-        model_active = train_data_cutoff.groupBy('model').agg(F.max('week_id').alias('last_active_week'))
-
-        model_active = model_active.join(last_week, last_week.last_week == model_active.last_active_week, 'inner').select(model_active.model)
-
-        model_to_keep = model_active.join(model_sold, 'model', 'inner')
-
-        train_data_cutoff = train_data_cutoff.join(model_to_keep, 'model', how='inner')
-
-        # Reconstruct a fake history
-        train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
-
-        train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/scope/{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
-
-        t1 = time.time()
-        total = t1-t0
-        print('temps boucle {} {}:'.format(str(cutoff_week_id), total))
-
-
-        
-        
-        
-actual_sales, active_sales, model_info = read_clean_data()
-
-actual_sales, active_sales, model_info = filter_data_scope(actual_sales, active_sales, model_info)
-
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
-
-
+ 
 spark.stop()
