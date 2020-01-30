@@ -169,9 +169,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
     full = list_weeks.crossJoin(list_models)
     full_actives_sales = full.join(train_data_cutoff, ['week_id', 'model'], how='left')
-    #full_actives_sales = full_actives_sales[full_actives_sales['week_id'] < cutoff_week_id_test]
 
-    #full_actives_sales.describe().show()
     # add cluster infos
 
     mdl_inf = model_info.select(['model'] + cluster_keys)
@@ -198,7 +196,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
     complete_ts = complete_ts.join(model_scale_factor, ['model'], how='left')
 
-    # assert complete_ts.where(complete_ts.model_scale_factor.isNull()).count() == 0
+    assert complete_ts.where(complete_ts.model_scale_factor.isNull()).count() == 0
 
 
     #compute fake Y
