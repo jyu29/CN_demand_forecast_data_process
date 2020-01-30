@@ -296,7 +296,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
     print(l_cutoff_week_id)  
     # loop generate cutoffs
 
-    for cutoff_week_id in sorted(l_cutoff_week_id[:3]):
+    for cutoff_week_id in sorted(l_cutoff_week_id):
 
         t0 = time.time()
         print('Generating train data for cutoff', str(cutoff_week_id))
