@@ -6,47 +6,34 @@ from pyspark.ml.feature import StringIndexer
 import pyspark.sql.functions as F
 import sys
 
-spark = SparkSession.builder.getOrCreate()
+import utils as ut
 
+spark = SparkSession.builder.getOrCreate()
 spark.sparkContext.setLogLevel("ERROR")
 
-def read_parquet_s3(app, s3_path):
-    
-    df = app.read.parquet(s3_path)
-    path_sinature = ">> Parquet file read from " + s3_path
-        
-    return df
+## Configs 
+conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
+bucket_clean = conf.get_s3_path_clean()
+bucket_refine_global = conf.get_s3_path_refine_global()
+first_week_id = conf.get_first_week_id()
+purch_org = conf.get_purch_org()
+sales_org = conf.sales_org()
 
-def write_parquet_s3(spark_df, bucket, file_path):
-    """Writing spark Dataframe into s3 as a parquet file.
-    
-    Parameters:
-    spark_df (pyspark.sql.dataframe): the spark Dataframe.
-    bucket (string): the s3 bucket name.
-    file_path (string) : the table name or directory.
-    
-    Returns:
-    """
-    s3_path = 's3://{}/{}'.format(bucket, file_path)
-    spark_df.write.parquet(s3_path, mode="overwrite")
 
-first_week_id = 201501
-purch_org = 'Z001'
-sales_org = 'Z002'
-bucket = 's3://fcst-clean-dev/'
+## Load all needed clean data
+tdt = ut.read_parquet_s3(spark, bucket_clean, 'f_transaction_detail/*/')
+dyd = ut.read_parquet_s3(spark, bucket_clean, 'f_delivery_detail/*/')
 
-tdt = read_parquet_s3(spark, bucket + 'f_transaction_detail/*/')
-dyd = read_parquet_s3(spark, bucket + 'f_delivery_detail/*/')
+sku = ut.read_parquet_s3(spark, bucket_clean, 'd_sku/')
+bu = ut.read_parquet_s3(spark, bucket_clean, 'd_business_unit/')
 
-sku = read_parquet_s3(spark, bucket + 'd_sku/')
-bu = read_parquet_s3(spark, bucket + 'd_business_unit/')
+sapb = ut.read_parquet_s3(spark, bucket_clean, 'sites_attribut_0plant_branches_h/')
+sdm = ut.read_parquet_s3(spark, bucket_clean, 'd_sales_data_material_h/')
 
-sapb = read_parquet_s3(spark, bucket + 'sites_attribut_0plant_branches_h/')
-sdm = read_parquet_s3(spark, bucket + 'd_sales_data_material_h/')
+day = ut.read_parquet_s3(spark, bucket_clean, 'd_day/')
+week = ut.read_parquet_s3(spark, bucket_clean, 'd_week/')
 
-day = read_parquet_s3(spark, bucket + 'd_day/')
-week = read_parquet_s3(spark, bucket + 'd_week/')
-
+## Create Actual_Sales
 actual_sales_offline = tdt \
     .join(day,
           on=F.to_date(tdt.tdt_date_to_ordered, 'yyyy-MM-dd') == day.day_id_day,
@@ -115,6 +102,7 @@ actual_sales.persist(StorageLevel.MEMORY_ONLY)
 print("actual_sales length :", actual_sales.count())
 
 
+## Create Lifestage_Update
 lifestage_update = sdm \
     .join(sku, 
           on=F.regexp_replace(sdm.material_id, '^0*|\s','') == \
@@ -142,6 +130,7 @@ lifestage_update.persist(StorageLevel.MEMORY_ONLY)
 print("lifestage_update length :", lifestage_update.count())
 
 
+## Create Model_Info
 model_info = sku \
     .filter(sku.mdl_num_model_r3.isNotNull()) \
     .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
@@ -170,7 +159,7 @@ max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 
 actual_sales = actual_sales \
     .filter(actual_sales.week_id < max_week_id) \
-    .orderBy('model', 'date')
+    .orderBy('model', 'week_id')
 
 
 # Keep only usefull life stage values: models in actual sales
@@ -352,7 +341,8 @@ active_sales = complete_ts \
     .filter(complete_ts.lifestage == 1) \
     .join(model_start_date, on='model', how='inner') \
     .filter(complete_ts.date >= model_start_date.first_date) \
-    .drop('lifestage', 'first_date')
+    .drop('lifestage', 'first_date') \
+    .orderBy(['model', 'week_id'])
 
 
 model_info = model_info \
@@ -381,15 +371,17 @@ indexer = StringIndexer(inputCol='product_nature_label', outputCol='product_natu
 model_info = indexer \
     .fit(model_info) \
     .transform(model_info) \
-    .withColumn('product_nature', F.col('product_nature').cast('integer'))
+    .withColumn('product_nature', F.col('product_nature').cast('integer')) \
+    .orderBy('model')
 
 
 # Check duplicates rows
 assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
 assert model_info.count() == model_info.select('model').drop_duplicates().count()      
 
-write_parquet_s3(model_info.orderBy('model'), 'fcst-refined-demand-forecast-dev', 'part_1/model_info')
-write_parquet_s3(actual_sales.orderBy(['model', 'week_id']), 'fcst-refined-demand-forecast-dev', 'part_1/actual_sales')
-write_parquet_s3(active_sales.orderBy(['model', 'week_id']), 'fcst-refined-demand-forecast-dev', 'part_1/active_sales')
+# Write
+ut.write_parquet_s3(model_info, bucket_refine_global, 'model_info')
+ut.write_parquet_s3(actual_sales, bucket_refine_global, 'actual_sales')
+ut.write_parquet_s3(active_sales, bucket_refine_global, 'active_sales')
 
 spark.stop()

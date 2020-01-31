@@ -1,24 +1,16 @@
 import yaml
+import os
 
-def read_parquet_s3(app, s3_path):
-    
-    df = app.read.parquet(s3_path)
-    path_sinature = ">> Parquet file read from " + s3_path
-        
+def read_parquet_s3(app, bucket, file_path):
+    """ """
+    df = app.read.parquet(bucket + file_path)
     return df
 
+
 def write_parquet_s3(spark_df, bucket, file_path):
-    """Writing spark Dataframe into s3 as a parquet file.
+    """ """
+    spark_df.write.parquet(bucket + file_path, mode="overwrite")
     
-    Parameters:
-    spark_df (pyspark.sql.dataframe): the spark Dataframe.
-    bucket (string): the s3 bucket name.
-    file_path (string) : the table name or directory.
-    
-    Returns:
-    """
-    s3_path = 's3://{}/{}'.format(bucket, file_path)
-    spark_df.write.parquet(s3_path, mode="overwrite")
     
 class ProgramConfiguration():
     """
@@ -54,6 +46,17 @@ class ProgramConfiguration():
     def get_s3_path_refine_specific(self):
         return self._config_tech['s3_path_refine_specific']
     
+    # ------------------
+    
+    def get_first_week_id(self):
+        return self._config_func['first_week_id']
+    
+    def get_purch_org(self):
+        return self._config_func['purch_org']
+    
+    def get_sales_org(self):
+        return self._config_func['sales_org']
+    
     def get_scope(self):
         return self._config_func['scope']
        
@@ -62,6 +65,8 @@ class ProgramConfiguration():
     
     def get_filter_val(self):
         return self._config_func['filter_val']
-        
+    
+    # ------------------
+    
     def get_s3_path_refine_specific_scope(self):
         return self.get_s3_path_refine_specific() + '/' + self.get_scope() + '/'
