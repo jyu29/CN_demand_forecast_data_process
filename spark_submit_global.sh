@@ -1,5 +1,5 @@
 #!/bin/bash -x
-sudo pip-3.6 install PyYAML
+sudo pip-3.13 install PyYAML
 
 spark-submit \
     --deploy-mode client \
