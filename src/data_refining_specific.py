@@ -220,13 +220,13 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 # Read and cache data
 def read_clean_data():
     
-    actual_sales = ut.read_parquet_s3(spark, s3_path_refine_global + 'actual_sales/')
+    actual_sales = ut.read_parquet_s3(spark, s3_path_refine_global, 'actual_sales/')
     actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    active_sales = ut.read_parquet_s3(spark, s3_path_refine_global + 'active_sales/')
+    active_sales = ut.read_parquet_s3(spark, s3_path_refine_global, 'active_sales/')
     active_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    model_info = ut.read_parquet_s3(spark, s3_path_refine_global + 'model_info/')
+    model_info = ut.read_parquet_s3(spark, s3_path_refine_global, 'model_info/')
     model_info.persist(StorageLevel.MEMORY_ONLY)
 
     return actual_sales, active_sales, model_info
