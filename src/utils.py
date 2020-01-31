@@ -1,5 +1,25 @@
 import yaml
 
+def read_parquet_s3(app, s3_path):
+    
+    df = app.read.parquet(s3_path)
+    path_sinature = ">> Parquet file read from " + s3_path
+        
+    return df
+
+def write_parquet_s3(spark_df, bucket, file_path):
+    """Writing spark Dataframe into s3 as a parquet file.
+    
+    Parameters:
+    spark_df (pyspark.sql.dataframe): the spark Dataframe.
+    bucket (string): the s3 bucket name.
+    file_path (string) : the table name or directory.
+    
+    Returns:
+    """
+    s3_path = 's3://{}/{}'.format(bucket, file_path)
+    spark_df.write.parquet(s3_path, mode="overwrite")
+    
 class ProgramConfiguration():
     """
     Class used to handle and maintain all parameters of this program (timeouts, some other values...)
