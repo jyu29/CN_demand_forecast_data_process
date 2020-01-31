@@ -54,7 +54,7 @@ pipeline {
 
                 scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
 
-                ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "sudo chmod 755 /home/hadoop/${jenkins_job}/spark_submit_global.sh /home/hadoop/${jenkins_job}/spark_submit_specific.sh; export PYSPARK_PYTHON='/usr/bin/python3'; cd ${jenkins_job}; ./spark_submit_global.sh ${runenvironment}; ./spark_submit_specific.sh ${runenvironment}"
+                ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "sudo chmod 755 /home/hadoop/${jenkins_job}/spark_submit_global.sh /home/hadoop/${jenkins_job}/spark_submit_specific.sh; export PYSPARK_PYTHON='/usr/bin/python3'; cd ${jenkins_job}; ./spark_submit_global.sh ${Environment}; ./spark_submit_specific.sh ${Environment}"
                 ''')
             }
 
