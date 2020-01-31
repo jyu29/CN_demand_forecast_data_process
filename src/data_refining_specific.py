@@ -8,11 +8,17 @@ from datetime import datetime, timedelta
 import numpy as np
 import time
 import os
-# sys.path.insert(0,'../..')
-#import src.utils as ut
+import utils as ut
 
 
-print('test:', os.getcwd())
+
+## Configs 
+conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
+s3_path_refine_global = conf.get_s3_path_refine_global()
+s3_path_refine_specific = conf.get_s3_path_refine_specific()
+filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
+scope = conf.get_scope()
+first_test_cutoff = 201922
 
 
 conf = SparkConf().setAll([
@@ -39,35 +45,6 @@ spark = SparkSession.builder \
 
 spark.sparkContext.setLogLevel("ERROR")
 
-dict_scope = {'marco': {'filter_type' : 'family', 'filter_val' : [12151, 230]},
-              'racket_sports': {'filter_type' : 'department', 'filter_val' : [402, 403, 404, 406, 408, 473, 474]},
-              'full_scope': {'filter_type' : '', 'filter_val' : []},
-              "domyos_nov_2019": {"filter_type" : "family", "filter_val" : [224, 12072, 600]}}
-
-scope = 'domyos_nov_2019'
-first_test_cutoff = 201922
-
-filter_type, filter_val = dict_scope[scope].values()
-
-"""
-def read_parquet_s3(app, s3_path):
-
-    df = app.read.parquet(s3_path)
-    path_sinature = ">> Parquet file read from " + s3_path
-
-    return df
-"""
-
-def write_parquet_s3(spark_df, bucket, file_path):
-    """Writing spark Dataframe into s3 as a parquet file.
-    Parameters:
-    spark_df (pyspark.sql.dataframe): the spark Dataframe.
-    bucket (string): the s3 bucket name.
-    file_path (string) : the table name or directory.
-    Returns:
-    """
-    s3_path = 's3://{}/{}'.format(bucket, file_path)
-    spark_df.write.parquet(s3_path, mode="overwrite")
 
 
 def sup_week(week_id):
@@ -243,13 +220,13 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 # Read and cache data
 def read_clean_data():
     
-    actual_sales = ut.read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/actual_sales/')
+    actual_sales = ut.read_parquet_s3(spark, s3_path_refine_global + 'actual_sales/')
     actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/active_sales/')
+    active_sales = ut.read_parquet_s3(spark, s3_path_refine_global + 'active_sales/')
     active_sales.persist(StorageLevel.MEMORY_ONLY)
 
-    model_info = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/model_info/')
+    model_info = ut.read_parquet_s3(spark, s3_path_refine_global + 'model_info/')
     model_info.persist(StorageLevel.MEMORY_ONLY)
 
     return actual_sales, active_sales, model_info
@@ -326,7 +303,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         # Reconstruct a fake history
         train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
 
-        train_data_cutoff.write.parquet('s3://fcst-refined-demand-forecast-dev/scope/{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
+        train_data_cutoff.write.parquet(s3_path_refine_specific + '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
 
         t1 = time.time()
         total = t1-t0
