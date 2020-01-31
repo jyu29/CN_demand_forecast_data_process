@@ -1,11 +1,8 @@
 import sys
-
 from pyspark import SparkContext, SparkConf, StorageLevel
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType, BooleanType
 import pyspark.sql.functions as F
-from pyspark.ml.feature import StringIndexer
-
 import datetime
 from datetime import datetime, timedelta
 import numpy as np
@@ -155,7 +152,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
 
     df_date = actual_sales.select(['week_id', 'date']).distinct()
-    y_not_null = train_data_cutoff.where(train_data_cutoff.y.isNotNull())
+    y_not_null = train_data_cutoff.filter(train_data_cutoff.y.isNotNull())
 
     max_week = train_data_cutoff.select(F.max('week_id')).collect()[0][0]
     min_week = train_data_cutoff.select(F.min('week_id')).collect()[0][0]
@@ -213,7 +210,9 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
                                                       .otherwise('false'))
 
 
-    end_impl_period = complete_ts.filter(complete_ts.is_y_sup == True).select(['model', 'age']).groupBy('model').agg(F.min('age').alias('end_impl_period'))
+    end_impl_period = complete_ts.filter(complete_ts.is_y_sup == True) \
+                                 .select(['model', 'age']).groupBy('model') \
+                                 .agg(F.min('age').alias('end_impl_period'))
 
     complete_ts = complete_ts.join(end_impl_period, on=['model'], how='left')
 
