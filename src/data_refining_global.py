@@ -17,7 +17,7 @@ bucket_clean = conf.get_s3_path_clean()
 bucket_refine_global = conf.get_s3_path_refine_global()
 first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
-sales_org = conf.sales_org()
+sales_org = conf.get_sales_org()
 
 
 ## Load all needed clean data
