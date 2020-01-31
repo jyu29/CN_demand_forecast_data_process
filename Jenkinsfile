@@ -58,8 +58,6 @@ pipeline {
                 ''')
             }
 
-            }
-
         }
 
         stage('delete cluster') {
