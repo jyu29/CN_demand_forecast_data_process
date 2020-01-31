@@ -210,7 +210,9 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
                                                       .otherwise('false'))
 
 
-    end_impl_period = complete_ts.filter(complete_ts.is_y_sup == True).select(['model', 'age']).groupBy('model').agg(F.min('age').alias('end_impl_period'))
+    end_impl_period = complete_ts.filter(complete_ts.is_y_sup == True) \
+                                 .select(['model', 'age']).groupBy('model') \
+                                 .agg(F.min('age').alias('end_impl_period'))
 
     complete_ts = complete_ts.join(end_impl_period, on=['model'], how='left')
 
