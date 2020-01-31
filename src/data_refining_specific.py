@@ -12,7 +12,7 @@ import os
 #import src.utils as ut
 
 
-print(os.getcwd())
+print('test:', os.getcwd())
 
 
 conf = SparkConf().setAll([
