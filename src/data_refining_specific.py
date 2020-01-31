@@ -152,7 +152,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
 
     df_date = actual_sales.select(['week_id', 'date']).distinct()
-    y_not_null = train_data_cutoff.where(train_data_cutoff.y.isNotNull())
+    y_not_null = train_data_cutoff.filter(train_data_cutoff.y.isNotNull())
 
     max_week = train_data_cutoff.select(F.max('week_id')).collect()[0][0]
     min_week = train_data_cutoff.select(F.min('week_id')).collect()[0][0]
