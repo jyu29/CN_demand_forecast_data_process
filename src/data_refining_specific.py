@@ -1,5 +1,4 @@
 import sys
-
 from pyspark import SparkContext, SparkConf, StorageLevel
 from pyspark.sql import SparkSession, Window
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DateType, BooleanType
