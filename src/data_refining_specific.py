@@ -7,6 +7,7 @@ import datetime
 from datetime import datetime, timedelta
 import numpy as np
 import time
+sys.path.insert(0,'../..')
 import src.utils as ut
 
 
