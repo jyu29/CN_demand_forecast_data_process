@@ -7,6 +7,12 @@ import datetime
 from datetime import datetime, timedelta
 import numpy as np
 import time
+import os
+# sys.path.insert(0,'../..')
+#import src.utils as ut
+
+
+print('test:', os.getcwd())
 
 
 conf = SparkConf().setAll([
@@ -43,14 +49,14 @@ first_test_cutoff = 201922
 
 filter_type, filter_val = dict_scope[scope].values()
 
-
+"""
 def read_parquet_s3(app, s3_path):
 
     df = app.read.parquet(s3_path)
     path_sinature = ">> Parquet file read from " + s3_path
 
     return df
-
+"""
 
 def write_parquet_s3(spark_df, bucket, file_path):
     """Writing spark Dataframe into s3 as a parquet file.
@@ -237,7 +243,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 # Read and cache data
 def read_clean_data():
     
-    actual_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/actual_sales/')
+    actual_sales = ut.read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/actual_sales/')
     actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
     active_sales = read_parquet_s3(spark, 's3://fcst-refined-demand-forecast-dev/part_1/active_sales/')
