@@ -18,7 +18,6 @@ s3_path_refine_global = conf.get_s3_path_refine_global()
 s3_path_refine_specific = conf.get_s3_path_refine_specific()
 filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
 scope = conf.get_scope()
-#first_test_cutoff = 201922
 first_test_cutoff = conf.get_first_test_cutoff()
 
 conf = SparkConf().setAll([
@@ -196,7 +195,6 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         iterate_week = cutoff_week_test.union(nRow)
         l_cutoff_week_id = [row.week_id for row in iterate_week.collect()]
         
-    print(l_cutoff_week_id)  
     # loop generate cutoffs
 
     for cutoff_week_id in sorted(l_cutoff_week_id):
