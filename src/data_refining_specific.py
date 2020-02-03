@@ -18,8 +18,8 @@ s3_path_refine_global = conf.get_s3_path_refine_global()
 s3_path_refine_specific = conf.get_s3_path_refine_specific()
 filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
 scope = conf.get_scope()
-first_test_cutoff = 201922
-
+#first_test_cutoff = 201922
+first_test_cutoff = conf.get_first_test_cutoff()
 
 conf = SparkConf().setAll([
  ('spark.sql.shuffle.partitions', 110),
