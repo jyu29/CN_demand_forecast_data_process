@@ -259,7 +259,7 @@ def filter_data_scope(actual_sales, active_sales, model_info):
 # Generate training data used to forecast validation & test cutoffs
 def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True):
 
-    current_cutoff = next_week(actual_sales.select(F.max('week_id')).collect()[0][0])
+    current_cutoff = ut.next_week(actual_sales.select(F.max('week_id')).collect()[0][0])
 
     if only_last:
         
