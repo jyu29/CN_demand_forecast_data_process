@@ -66,8 +66,8 @@ class ProgramConfiguration():
     def get_filter_val(self):
         return self._config_func['filter_val']
     
-    def get_first_week_cutoff(self):
-        return self._config_func['first_week_cutoff']
+    def get_first_test_cutoff(self):
+        return self._config_func['first_test_cutoff']
     # ------------------
     
     def get_s3_path_refine_specific_scope(self):
