@@ -45,11 +45,11 @@ pipeline {
                     
                     EMRName=$"forecast-dev-emr-${cluster_name}-${BUILD_USER}"
                     
-                    cluster_id=$(aws emr list-clusters --active  --output=json | jq '.Clusters[] | select(.Name=="'${EMRName}'") | .Id ' -r)
+                    cluster_id=$(aws emr list-clusters --active --output=json | jq '.Clusters[] | select(.Name=="'${EMRName}'") | .Id ' -r)
                     
-                    instance_fleet_id=$(aws emr describe-cluster --cluster-id ${cluster_id}  --output=json | jq '.Cluster.InstanceFleets[] | select(.InstanceFleetType=="MASTER") | .Id ' -r)
+                    instance_fleet_id=$(aws emr describe-cluster --cluster-id ${cluster_id} --output=json | jq '.Cluster.InstanceFleets[] | select(.InstanceFleetType=="MASTER") | .Id ' -r)
                     
-                    master_ip=$(aws emr list-instances --cluster-id ${cluster_id}   --output=json | jq '.Instances[] | select(.InstanceFleetId=="'${instance_fleet_id}'") | .PrivateIpAddress ' -r)
+                    master_ip=$(aws emr list-instances --cluster-id ${cluster_id} --output=json | jq '.Instances[] | select(.InstanceFleetId=="'${instance_fleet_id}'") | .PrivateIpAddress ' -r)
     
                     scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
     
