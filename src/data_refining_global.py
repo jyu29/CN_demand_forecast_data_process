@@ -19,6 +19,7 @@ first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
+# ----------------------------------------------------------------------------------
 
 ## Load all needed clean data
 tdt = ut.read_parquet_s3(spark, bucket_clean, 'f_transaction_detail/*/')
@@ -32,6 +33,8 @@ sdm = ut.read_parquet_s3(spark, bucket_clean, 'd_sales_data_material_h/')
 
 day = ut.read_parquet_s3(spark, bucket_clean, 'd_day/')
 week = ut.read_parquet_s3(spark, bucket_clean, 'd_week/')
+
+# ----------------------------------------------------------------------------------
 
 ## Create Actual_Sales
 actual_sales_offline = tdt \
@@ -99,8 +102,12 @@ actual_sales = actual_sales_offline.union(actual_sales_online) \
     .repartition('model')
 
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
-print("actual_sales length :", actual_sales.count())
+actual_sales_count = actual_sales.count()
 
+print("actual_sales length :", actual_sales_count)
+assert actual_sales_count > 0
+
+# ----------------------------------------------------------------------------------
 
 ## Create Lifestage_Update
 lifestage_update = sdm \
@@ -127,8 +134,12 @@ lifestage_update = sdm \
     .repartition('model')
 
 lifestage_update.persist(StorageLevel.MEMORY_ONLY)
-print("lifestage_update length :", lifestage_update.count())
+lifestage_update_count = lifestage_update.count()
 
+print("lifestage_update length :", lifestage_update_count)
+assert lifestage_update_count > 0
+
+# ----------------------------------------------------------------------------------
 
 ## Create Model_Info
 model_info = sku \
@@ -152,8 +163,12 @@ model_info = sku \
     .repartition('model')
 
 model_info.persist(StorageLevel.MEMORY_ONLY)
-print("model_info length :", model_info.count())
+model_info_count = model_info.count()
 
+print("model_info length :", model_info_count)
+assert model_info_count > 0
+
+# ----------------------------------------------------------------------------------
 
 max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 
@@ -197,10 +212,11 @@ model_lifestage = model_lifestage \
     .groupby(['date', 'model']) \
     .agg(F.min('lifestage').alias('lifestage'))
 
-# This is a ffil by group in pyspark ==> OMG
-window = Window.partitionBy('model')\
-               .orderBy('date')\
-               .rowsBetween(-sys.maxsize, 0)
+# This is a ffil by group in pyspark
+window = Window \
+    .partitionBy('model') \
+    .orderBy('date') \
+    .rowsBetween(-sys.maxsize, 0)
 
 ffilled_lifestage = F.last(model_lifestage['lifestage'], ignorenulls=True).over(window)
 
@@ -234,7 +250,12 @@ model_lifestage = model_lifestage \
     .select(['date', 'model', 'lifestage'])
 
 model_lifestage.persist(StorageLevel.MEMORY_ONLY)
-print("model_lifestage length :", model_lifestage.count())
+model_lifestage_count = model_lifestage.count()
+
+print("model_lifestage length :", model_lifestage_count)
+assert model_lifestage_count > 0
+
+# ----------------------------------------------------------------------------------
 
 # Calculates all possible date/model combinations from actual sales
 all_sales_model = actual_sales.select('model').orderBy('model').drop_duplicates()
@@ -253,12 +274,15 @@ complete_ts = complete_ts.select(actual_sales.columns)
 # Fill NaN (no sales recorded) by 0
 complete_ts = complete_ts.fillna(0, subset=['y'])
 
-
 complete_ts = complete_ts.join(model_lifestage, ['date', 'model'], how='left')
 
 complete_ts.persist(StorageLevel.MEMORY_ONLY)
-print("complete_ts length :", complete_ts.count())
+complete_ts_count = complete_ts.count()
 
+print("complete_ts length :", complete_ts_count)
+assert complete_ts_count > 0
+
+# ----------------------------------------------------------------------------------
 
 def add_column_index(df, col_name): 
     new_schema = StructType(df.schema.fields + [StructField(col_name, LongType(), False),])
@@ -326,6 +350,13 @@ complete_ts = complete_ts \
 
 complete_ts = complete_ts.select(['week_id', 'date', 'model', 'y', 'lifestage'])
 
+complete_ts.persist(StorageLevel.MEMORY_ONLY)
+complete_ts_count = complete_ts.count()
+
+print("complete_ts length :", complete_ts_count)
+assert complete_ts_count > 0
+
+# ----------------------------------------------------------------------------------
 
 w = Window.partitionBy('model').orderBy('date')
 
@@ -343,6 +374,14 @@ active_sales = complete_ts \
     .filter(complete_ts.date >= model_start_date.first_date) \
     .drop('lifestage', 'first_date') \
     .orderBy(['model', 'week_id'])
+
+active_sales.persist(StorageLevel.MEMORY_ONLY)
+active_sales_count = active_sales.count()
+
+print("active_sales length :", active_sales_count)
+assert active_sales_count > 0
+
+# ----------------------------------------------------------------------------------
 
 
 model_info = model_info \
@@ -368,18 +407,27 @@ model_info = model_info \
     .drop('product_nature')
     
 indexer = StringIndexer(inputCol='product_nature_label', outputCol='product_nature')
+
 model_info = indexer \
     .fit(model_info) \
     .transform(model_info) \
     .withColumn('product_nature', F.col('product_nature').cast('integer')) \
     .orderBy('model')
 
+model_info.persist(StorageLevel.MEMORY_ONLY)
+model_info_count = model_info.count()
+
+print("model_info length :", model_info_count)
+assert model_info_count > 0
+
+# ----------------------------------------------------------------------------------
 
 # Check duplicates rows
 assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
-assert model_info.count() == model_info.select('model').drop_duplicates().count()      
+assert model_info.count() == model_info.select('model').drop_duplicates().count()
 
 # Write
+print("writing tables...")
 ut.write_parquet_s3(model_info, bucket_refine_global, 'model_info')
 ut.write_parquet_s3(actual_sales, bucket_refine_global, 'actual_sales')
 ut.write_parquet_s3(active_sales, bucket_refine_global, 'active_sales')
