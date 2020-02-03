@@ -302,9 +302,12 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
 
         # Reconstruct a fake history
         train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
-
-        train_data_cutoff.write.parquet(s3_path_refine_specific + '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
-
+        
+        path_cutoff = '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id))
+        #train_data_cutoff.write.parquet(s3_path_refine_specific + '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id)), mode="overwrite")
+        
+        ut.write_parquet_s3(train_data_cutoff, s3_path_refine_specific, path_cutoff)
+        
         t1 = time.time()
         total = t1-t0
         print('temps boucle {} {}:'.format(str(cutoff_week_id), total))
