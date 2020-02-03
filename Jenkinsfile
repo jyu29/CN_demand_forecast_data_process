@@ -37,9 +37,8 @@ pipeline {
         }
 
         stage('spark app deployment and execution') {
-            //wrap([$class: 'BuildUser']) {
-                steps {
-                    wrap([$class: 'BuildUser']) {
+            steps {
+                wrap([$class: 'BuildUser']) {
                     sh('''
                     
                     export https_proxy=http://proxy-internet-aws-eu.subsidia.org:3128
