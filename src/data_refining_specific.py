@@ -47,83 +47,6 @@ spark.sparkContext.setLogLevel("ERROR")
 
 
 
-def sup_week(week_id):
-
-    week_id = str(week_id)
-    y, w = int(week_id[:4]), int(week_id[4:])
-
-    if w == 1:
-        w = '52'
-        y = str(y - 1)
-
-    elif len(str(w))==1:
-        w = w - 1
-        y = str(y)
-        w = '0' + str(w)
-
-    elif w == 10:
-        w = w - 1
-        y = str(y)
-        w = '0' + str(w)
-
-    else:
-        w = str(w - 1)
-        y = str(y)
-
-    n_wk = y + w
-    return int(n_wk)
-
-
-def next_week(week_id):
-    week_id = str(week_id)
-    y, w = int(week_id[:4]), int(week_id[4:])
-
-    if w == 9:
-        w = '10'
-        y = str(y)
-    elif len(str(w))==1:
-        w = w + 1
-        y = str(y)
-        w = '0' + str(w)
-    elif w == 52:
-        w = '01'
-        y = str(y + 1)
-    else:
-        w = str(w + 1)
-        y = str(y)
-    n_wk = y + w
-    return int(n_wk)
-
-
-def __add_week(week, nb):
-    if nb < 0 :
-        for i in range(abs(nb)):
-            week = sup_week(week)
-    else:
-        for i in range(nb):
-            week = next_week(week)
-
-    return week
-
-
-def find_weeks(start, end):
-    l = [int(start), int(end)]
-    start = str(start)+'0'
-    start = datetime.strptime(start, '%Y%W%w')
-    end = sup_week(end)
-    end = str(end)+'0'
-    end = datetime.strptime(end, '%Y%W%w')
-
-
-    for i in range((end - start).days + 1):
-        d = (start + timedelta(days=i)).isocalendar()[:2] # e.g. (2011, 52)
-        yearweek = '{}{:02}'.format(*d) # e.g. "201152"
-        l.append(int(yearweek))
-
-
-    return sorted(set(l))
-
-
 def reconstruct_history(train_data_cutoff, actual_sales, model_info,
                         cluster_keys=['product_nature', 'family'], min_ts_len=160):
 
@@ -141,7 +64,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     min_week = train_data_cutoff.select(F.min('week_id')).collect()[0][0]
 
 
-    list_weeks = find_weeks(min_week, max_week)
+    list_weeks = ut.find_weeks(min_week, max_week)
     list_weeks = spark.createDataFrame(list_weeks, IntegerType()).selectExpr('value as week_id')
     list_models = train_data_cutoff.select(train_data_cutoff.model).distinct()
 
