@@ -5,6 +5,7 @@ from pyspark.ml.feature import StringIndexer
 
 import pyspark.sql.functions as F
 import sys
+import datetime
 
 import utils as ut
 
@@ -18,6 +19,10 @@ bucket_refine_global = conf.get_s3_path_refine_global()
 first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
+
+shifted_date = datetime.datetime.today() + datetime.timedelta(days=1)
+current_week_id = int(str(shifted_date.isocalendar()[0]) + str(shifted_date.isocalendar()[1]).zfill(2))
+print("Current week id:", current_week_id)
 
 # ----------------------------------------------------------------------------------
 
@@ -56,6 +61,7 @@ actual_sales_offline = tdt \
           how='inner') \
     .filter(tdt.the_to_type == 'offline') \
     .filter(week.wee_id_week >= first_week_id) \
+    .filter(week.wee_id_week < current_week_id) \
     .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
     .filter(sku.mdl_num_model_r3.isNotNull()) \
     .filter(sapb.purch_org == purch_org) \
@@ -85,6 +91,7 @@ actual_sales_online = dyd \
           how='inner') \
     .filter(dyd.the_to_type == 'online') \
     .filter(week.wee_id_week >= first_week_id) \
+    .filter(week.wee_id_week < current_week_id) \
     .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
     .filter(sku.mdl_num_model_r3.isNotNull()) \
     .filter(sapb.purch_org == purch_org) \
@@ -99,7 +106,9 @@ actual_sales = actual_sales_offline.union(actual_sales_online) \
     .groupby(['week_id', 'date', 'model']) \
     .agg(F.sum('f_qty_item').alias('y')) \
     .filter(F.col('y') > 0) \
+    .orderBy('model', 'week_id') \
     .repartition('model')
+    
 
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
 actual_sales_count = actual_sales.count()
@@ -169,13 +178,6 @@ print("model_info length :", model_info_count)
 assert model_info_count > 0
 
 # ----------------------------------------------------------------------------------
-
-max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
-
-actual_sales = actual_sales \
-    .filter(actual_sales.week_id < max_week_id) \
-    .orderBy('model', 'week_id')
-
 
 # Keep only usefull life stage values: models in actual sales
 lifestage_update = lifestage_update.join(actual_sales.select('model').drop_duplicates(), 
