@@ -112,10 +112,14 @@ actual_sales = actual_sales_offline.union(actual_sales_online) \
 
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
 actual_sales_count = actual_sales.count()
+max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 
-print("actual_sales length :", actual_sales_count)
+print("actual_sales length:", actual_sales_count)
+print("max week id in actual_sales:", max_week_id)
+
 assert actual_sales_count > 0
-
+assert ut.next_week(max_week_id) == current_week_id
+                 
 # ----------------------------------------------------------------------------------
 
 ## Create Lifestage_Update
@@ -145,7 +149,7 @@ lifestage_update = sdm \
 lifestage_update.persist(StorageLevel.MEMORY_ONLY)
 lifestage_update_count = lifestage_update.count()
 
-print("lifestage_update length :", lifestage_update_count)
+print("lifestage_update length:", lifestage_update_count)
 assert lifestage_update_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -174,7 +178,7 @@ model_info = sku \
 model_info.persist(StorageLevel.MEMORY_ONLY)
 model_info_count = model_info.count()
 
-print("model_info length :", model_info_count)
+print("model_info length:", model_info_count)
 assert model_info_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -254,7 +258,7 @@ model_lifestage = model_lifestage \
 model_lifestage.persist(StorageLevel.MEMORY_ONLY)
 model_lifestage_count = model_lifestage.count()
 
-print("model_lifestage length :", model_lifestage_count)
+print("model_lifestage length:", model_lifestage_count)
 assert model_lifestage_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -281,7 +285,7 @@ complete_ts = complete_ts.join(model_lifestage, ['date', 'model'], how='left')
 complete_ts.persist(StorageLevel.MEMORY_ONLY)
 complete_ts_count = complete_ts.count()
 
-print("complete_ts length :", complete_ts_count)
+print("complete_ts length:", complete_ts_count)
 assert complete_ts_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -355,7 +359,7 @@ complete_ts = complete_ts.select(['week_id', 'date', 'model', 'y', 'lifestage'])
 complete_ts.persist(StorageLevel.MEMORY_ONLY)
 complete_ts_count = complete_ts.count()
 
-print("complete_ts length :", complete_ts_count)
+print("complete_ts length:", complete_ts_count)
 assert complete_ts_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -380,7 +384,7 @@ active_sales = complete_ts \
 active_sales.persist(StorageLevel.MEMORY_ONLY)
 active_sales_count = active_sales.count()
 
-print("active_sales length :", active_sales_count)
+print("active_sales length:", active_sales_count)
 assert active_sales_count > 0
 
 # ----------------------------------------------------------------------------------
@@ -419,7 +423,7 @@ model_info = indexer \
 model_info.persist(StorageLevel.MEMORY_ONLY)
 model_info_count = model_info.count()
 
-print("model_info length :", model_info_count)
+print("model_info length:", model_info_count)
 assert model_info_count > 0
 
 # ----------------------------------------------------------------------------------
