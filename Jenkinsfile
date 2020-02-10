@@ -35,9 +35,9 @@ pipeline {
                 wrap([$class: 'BuildUser']) {
                     sh('''
                     
-                    export https_proxy=${https_proxy}
+                    export https_proxy="${https_proxy}"
                     
-                    EMRName=$"forecast-emr-${BUILD_TAG}"
+                    EMRName="forecast-emr-${BUILD_TAG}"
                     
                     cluster_id=$(aws emr list-clusters --active --output=json | jq '.Clusters[] | select(.Name=="'${EMRName}'") | .Id ' -r)
                     
