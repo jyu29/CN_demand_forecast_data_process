@@ -10,7 +10,7 @@ pipeline {
 
             build job: 'EMR-CREATE-PERSISTENT-CLUSTER',
                 parameters: [
-                    string(name: 'nameOfCluster', value: ${BUILD_TAG}),
+                    string(name: 'nameOfCluster', value: '${BUILD_TAG}'),
                     string(name: 'projectTag', value: 'forecastinfra'),
                     string(name: 'versionEMR', value: 'emr-5.26.0'),
                     string(name: 'instanceTypeMaster', value: 'c5.2xlarge'),
