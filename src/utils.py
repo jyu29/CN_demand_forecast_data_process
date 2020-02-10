@@ -1,6 +1,8 @@
 import yaml
 import os
-import datetime
+import isoweek
+import numpy as np
+
 from datetime import datetime, timedelta
 
 
@@ -15,8 +17,51 @@ def write_parquet_s3(spark_df, bucket, file_path):
     spark_df.write.parquet(bucket + file_path, mode="overwrite")
     
 
-def sup_week(week_id):
+def get_current_week_id():
+    shifted_date = datetime.today() + timedelta(days=1)
+    current_week_id = int(str(shifted_date.isocalendar()[0]) + str(shifted_date.isocalendar()[1]).zfill(2))
+    return current_week_id
 
+
+def get_next_week_id(week_id):
+    '''
+    ARGUMENTS:
+    
+    date ( integer ): week identifier in the format 'year'+'week_number'
+    
+    RETURNS:
+    
+    next week in the same format as the date argument
+    '''
+    if not(isinstance(week_id, (int, np.integer))):
+        return 'DATE ARGUMENT NOT AN INT'
+    if len(str(week_id)) != 6:
+        return 'UNVALID DATE FORMAT'
+
+    year = week_id // 100
+    week = week_id % 100
+
+    if week < 52:
+        return week_id + 1
+    elif week == 52:
+        last_week = isoweek.Week.last_week_of_year(year).week
+        if last_week == 52:
+            return (week_id // 100 + 1) * 100 + 1
+        elif last_week == 53:
+            return week_id + 1
+        else:
+            return 'UNVALID ISOWEEK.LASTWEEK NUMBER'
+    elif week == 53:
+        if isoweek.Week.last_week_of_year(year).week == 52:
+            return 'UNVALID WEEK NUMBER'
+        else:
+            return (date // 100 + 1) * 100 + 1
+    else:
+        return 'UNVALID DATE'
+
+
+def sup_week(week_id):
+    """ """
     week_id = str(week_id)
     y, w = int(week_id[:4]), int(week_id[4:])
 
@@ -40,28 +85,6 @@ def sup_week(week_id):
 
     n_wk = y + w
     return int(n_wk)
-
-
-def next_week(week_id):
-    week_id = str(week_id)
-    y, w = int(week_id[:4]), int(week_id[4:])
-
-    if w == 9:
-        w = '10'
-        y = str(y)
-    elif len(str(w))==1:
-        w = w + 1
-        y = str(y)
-        w = '0' + str(w)
-    elif w == 52:
-        w = '01'
-        y = str(y + 1)
-    else:
-        w = str(w + 1)
-        y = str(y)
-    n_wk = y + w
-    return int(n_wk)
-
 
 def __add_week(week, nb):
     if nb < 0 :
@@ -124,9 +147,7 @@ class ProgramConfiguration():
     
     def get_s3_path_refine_specific(self):
         return self._config_tech['s3_path_refine_specific']
-    
-    # ------------------
-    
+        
     def get_first_week_id(self):
         return self._config_func['first_week_id']
     
@@ -147,7 +168,6 @@ class ProgramConfiguration():
     
     def get_first_test_cutoff(self):
         return self._config_func['first_test_cutoff']
-    # ------------------
     
     def get_s3_path_refine_specific_scope(self):
         return self.get_s3_path_refine_specific() + '/' + self.get_scope() + '/'
