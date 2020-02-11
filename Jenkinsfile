@@ -62,4 +62,15 @@ pipeline {
             }
         }
     }
-}
+
+    post {
+        failure {
+            mail to: "forecastunited@decathlon.net",
+            subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
+        }
+        unstable {
+            mail to: "forecastunited@decathlon.net",
+            subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
+        }   
+    }   
+}   
