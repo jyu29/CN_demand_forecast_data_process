@@ -4,7 +4,7 @@ echo "Technical environment configuration file: $1"
 echo "Execute only last cutoff? $2"
 
 technical_conf_file="conf/$1.yml"
-only_last=$2
+only_last="$2"
 
 sudo pip-3.6 install -r requirements.txt
 
