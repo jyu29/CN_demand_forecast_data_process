@@ -20,4 +20,4 @@ spark-submit \
     --master yarn \
     --driver-memory 5g \
     --py-files src/utils.py \
-    src/data_refining_specific.py $technical_conf_file conf/functional.yml only_last
+    src/data_refining_specific.py $technical_conf_file conf/functional.yml $only_last
