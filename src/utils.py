@@ -59,6 +59,15 @@ def get_next_week_id(week_id):
     else:
         return 'UNVALID DATE'
 
+    
+def get_next_n_week(week_id, n):
+    next_n_week = [week_id]
+    for i in range(n - 1):
+        week_id = get_next_week_id(week_id)
+        next_n_week.append(week_id)
+        
+    return next_n_week
+
 
 def sup_week(week_id):
     """ """
