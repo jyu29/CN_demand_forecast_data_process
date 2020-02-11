@@ -1,8 +1,10 @@
 #!/bin/bash -x
+
 echo "Technical environment configuration file: $1"
+echo "Execute only last cutoff? $2"
 
 technical_conf_file="conf/$1.yml"
-echo "The technical configuration file is $technical_conf_file"
+only_last=$2
 
 sudo pip-3.6 install -r requirements.txt
 
@@ -18,4 +20,4 @@ spark-submit \
     --master yarn \
     --driver-memory 5g \
     --py-files src/utils.py \
-    src/data_refining_specific.py $technical_conf_file conf/functional.yml
+    src/data_refining_specific.py $technical_conf_file conf/functional.yml only_last
