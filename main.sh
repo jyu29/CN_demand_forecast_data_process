@@ -8,12 +8,12 @@ only_last="$2"
 
 sudo pip-3.6 install -r requirements.txt
 
-#spark-submit \
-#    --deploy-mode client \
-#    --master yarn \
-#    --driver-memory 5g \
-#    --py-files src/utils.py \
-#    src/data_refining_global.py $technical_conf_file conf/functional.yml
+spark-submit \
+    --deploy-mode client \
+    --master yarn \
+    --driver-memory 5g \
+    --py-files src/utils.py \
+    src/data_refining_global.py $technical_conf_file conf/functional.yml
     
 spark-submit \
     --deploy-mode client \
