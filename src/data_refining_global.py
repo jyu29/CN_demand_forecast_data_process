@@ -20,8 +20,7 @@ first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
-shifted_date = datetime.datetime.today() + datetime.timedelta(days=1)
-current_week_id = int(str(shifted_date.isocalendar()[0]) + str(shifted_date.isocalendar()[1]).zfill(2))
+current_week_id = ut.get_current_week_id() 
 print("Current week id:", current_week_id)
 
 # ----------------------------------------------------------------------------------
@@ -118,7 +117,7 @@ print("actual_sales length:", actual_sales_count)
 print("max week id in actual_sales:", max_week_id)
 
 assert actual_sales_count > 0
-assert ut.next_week(max_week_id) == current_week_id
+assert ut.get_next_week_id(max_week_id) == current_week_id
                  
 # ----------------------------------------------------------------------------------
 
