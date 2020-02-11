@@ -37,6 +37,7 @@ spark.sparkContext.setLogLevel("ERROR")
 
 ## Run Configs
 conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
+only_last = sys.argv[3]
 s3_path_refine_global = conf.get_s3_path_refine_global()
 s3_path_refine_specific = conf.get_s3_path_refine_specific()
 filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
@@ -190,7 +191,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 # ----------------------------------------------------------------------------------
 
 # Generate training data used to forecast validation & test cutoffs
-def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True):
+def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last):
 
     current_cutoff = ut.get_next_week_id(actual_sales.select(F.max('week_id')).collect()[0][0])
 
@@ -257,6 +258,6 @@ actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=True)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=only_last)        
 
 spark.stop()
