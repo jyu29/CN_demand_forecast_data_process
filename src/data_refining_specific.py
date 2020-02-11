@@ -252,7 +252,8 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
 
 print('scope: ', scope)
 print('filter_type: ', filter_type)
-print('filter_val: ', filter_val)        
+print('filter_val: ', filter_val) 
+print('only_last: ', only_last)
         
 actual_sales, active_sales, model_info = read_clean_data()
 
