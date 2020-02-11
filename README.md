@@ -24,8 +24,8 @@ The first one (`data_refining_global.py`) formats the data  in a global way so t
 
 The second one (`data_refining_specific.py`), creates the training data for the modeling brick for a given scope and period (cutoff). Concretely, the script:
 - reads the data tables provided by the previous part.
-- 
-- 
+- filter the data by scope
+- Generate training data used to forecast validation & test cutoffs with history reconstruction.
 
 ## Scheduling
 
