@@ -37,7 +37,7 @@ spark.sparkContext.setLogLevel("ERROR")
 
 ## Run Configs
 conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
-only_last = sys.argv[3]
+only_last = eval(sys.argv[3])
 s3_path_refine_global = conf.get_s3_path_refine_global()
 s3_path_refine_specific = conf.get_s3_path_refine_specific()
 filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
