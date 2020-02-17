@@ -167,7 +167,7 @@ model_info = sku \
             sku.dpt_num_department.alias('department'),
             sku.unv_label.alias('department_label'),
             sku.unv_num_univers.alias('univers'),
-            sku.mdl_label.alias('univers_label'),
+            sku.unv_label.alias('univers_label'),
             sku.pnt_num_product_nature.alias('product_nature'),
             sku.product_nature_label.alias('product_nature_label'),
             sku.category_label.alias('category_label')) \
