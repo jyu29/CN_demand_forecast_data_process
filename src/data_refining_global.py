@@ -20,7 +20,7 @@ first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
-current_week_id = ut.get_current_week_id()
+current_week_id = 202007#ut.get_current_week_id()
 print("Current week id:", current_week_id)
 
 # ----------------------------------------------------------------------------------
@@ -162,9 +162,10 @@ print(df.describe(['evolution']).show())
 critical_evolution_threshold = -30
 min_evolution = df.select(F.min('evolution')).collect()[0][0]
 
-print(df.filter(df.y == min_evolution).show())
+print(df.filter(df.evolution == min_evolution).show())
 
-print(df.withColumn("execution_day", F.current_timestamp()).show(10))
+# Write it ???
+# df.withColumn("execution_day", F.current_timestamp())
 assert min_evolution > critical_evolution_threshold, "There is an abnormal decreasing of data !"
 
 # ----------------------------------------------------------------------------------
