@@ -15,7 +15,7 @@ spark-submit \
     --py-files src/utils.py \
     src/data_refining_global.py $technical_conf_file conf/functional.yml
 echo  $? > code_status
-my_exit_code= $(cat code_status)
+my_exit_code=$(cat code_status)
 
 if [ "$my_exit_code" != "0" ]
 then
