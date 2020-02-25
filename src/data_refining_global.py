@@ -20,7 +20,7 @@ first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
-current_week_id = ut.get_current_week_id() 
+current_week_id = ut.get_current_week_id()
 print("Current week id:", current_week_id)
 
 # ----------------------------------------------------------------------------------
@@ -45,18 +45,18 @@ actual_sales_offline = tdt \
     .join(day,
           on=F.to_date(tdt.tdt_date_to_ordered, 'yyyy-MM-dd') == day.day_id_day,
           how='inner') \
-    .join(week, 
-          on=day.wee_id_week == week.wee_id_week, 
+    .join(week,
+          on=day.wee_id_week == week.wee_id_week,
           how='inner') \
     .join(sku,
-          on=tdt.sku_idr_sku == sku.sku_idr_sku, 
+          on=tdt.sku_idr_sku == sku.sku_idr_sku,
           how='inner') \
-    .join(bu, 
-          on=tdt.but_idr_business_unit == bu.but_idr_business_unit, 
+    .join(bu,
+          on=tdt.but_idr_business_unit == bu.but_idr_business_unit,
           how='inner') \
     .join(sapb,
           on=bu.but_num_business_unit.cast('string') == \
-             F.regexp_replace(sapb.plant_id, '^0*|\s',''),
+             F.regexp_replace(sapb.plant_id, '^0*|\s', ''),
           how='inner') \
     .filter(tdt.the_to_type == 'offline') \
     .filter(week.wee_id_week >= first_week_id) \
@@ -69,24 +69,25 @@ actual_sales_offline = tdt \
     .select(week.wee_id_week.cast('int').alias('week_id'),
             week.day_first_day_week.alias('date'),
             sku.mdl_num_model_r3.alias('model'),
+            day.day_id_day.alias('week_day'),
             tdt.f_qty_item)
 
 actual_sales_online = dyd \
     .join(day,
           on=F.to_date(dyd.tdt_date_to_ordered, 'yyyy-MM-dd') == day.day_id_day,
           how='inner') \
-    .join(week, 
-          on=day.wee_id_week == week.wee_id_week, 
+    .join(week,
+          on=day.wee_id_week == week.wee_id_week,
           how='inner') \
-    .join(sku, 
-          on=dyd.sku_idr_sku == sku.sku_idr_sku, 
+    .join(sku,
+          on=dyd.sku_idr_sku == sku.sku_idr_sku,
           how='inner') \
-    .join(bu, 
-          on=dyd.but_idr_business_unit_economical == bu.but_idr_business_unit, 
+    .join(bu,
+          on=dyd.but_idr_business_unit_economical == bu.but_idr_business_unit,
           how='inner') \
     .join(sapb,
           on=bu.but_num_business_unit.cast('string') == \
-             F.regexp_replace(sapb.plant_id, '^0*|\s',''),
+             F.regexp_replace(sapb.plant_id, '^0*|\s', ''),
           how='inner') \
     .filter(dyd.the_to_type == 'online') \
     .filter(week.wee_id_week >= first_week_id) \
@@ -99,15 +100,19 @@ actual_sales_online = dyd \
     .select(week.wee_id_week.cast('int').alias('week_id'),
             week.day_first_day_week.alias('date'),
             sku.mdl_num_model_r3.alias('model'),
+            day.day_id_day.alias('week_day'),
             dyd.f_qty_item)
 
 actual_sales = actual_sales_offline.union(actual_sales_online) \
+    .withColumn("week_day_name", F.date_format(F.col("week_day"), "EEEE")) \
+    .withColumn('f_qty_item_critical',
+                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == 202008), 0).
+                otherwise(F.col('f_qty_item'))) \
     .groupby(['week_id', 'date', 'model']) \
-    .agg(F.sum('f_qty_item').alias('y')) \
+    .agg(F.sum('f_qty_item').alias('y'),
+         F.sum('f_qty_item_critical').alias('y_critical')) \
     .filter(F.col('y') > 0) \
-    .orderBy('model', 'week_id') \
     .repartition('model')
-    
 
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
 actual_sales_count = actual_sales.count()
@@ -118,13 +123,58 @@ print("max week id in actual_sales:", max_week_id)
 
 assert actual_sales_count > 0
 assert ut.get_next_week_id(max_week_id) == current_week_id
-                 
+
+# ----------------------------------------------------------------------------------
+y_type = 'y_critical'
+
+sanity_check_df = actual_sales \
+    .withColumn('window_partition', F.lit(1)) \
+    .select('window_partition', 'week_id', y_type)
+
+sanity_check_df = sanity_check_df \
+    .groupby(['window_partition', 'week_id']) \
+    .agg(F.sum(y_type).alias('y'))
+
+w = Window().partitionBy("window_partition").orderBy(F.asc("week_id"))
+sanity_check_df = sanity_check_df \
+    .withColumn('lag1',
+                F.lag(sanity_check_df.y, count=1, default=0).over(w)) \
+    .withColumn('lag2',
+                F.lag(sanity_check_df.y, count=2, default=0).over(w)) \
+    .withColumn('lag3',
+                F.lag(sanity_check_df.y, count=3, default=0).over(w)) \
+    .withColumn('lag4',
+                F.lag(sanity_check_df.y, count=4, default=0).over(w))
+
+sanity_check_df = sanity_check_df \
+    .filter(sanity_check_df.lag4 > 0)
+
+sanity_check_df = sanity_check_df \
+    .withColumn('mean_lag',
+                (F.col("lag1") + F.col("lag2") + F.col("lag3") + F.col("lag4")) / 4)
+sanity_check_df = sanity_check_df \
+    .withColumn('evolution', ((F.col('y') - F.col('mean_lag')) / F.col('mean_lag')) * 100)
+
+df = sanity_check_df \
+    .filter(sanity_check_df.evolution < 0)
+print(df.describe(['evolution']).show())
+
+critical_evolution_threshold = -30
+min_evolution = df.select(F.min('evolution')).collect()[0][0]
+
+print(df.filter(df.y == min_evolution).show())
+
+print(df.withColumn("execution_day", F.current_timestamp()).show(10))
+assert min_evolution > critical_evolution_threshold, "There is an abnormal decreasing of data !"
+
+# ----------------------------------------------------------------------------------
+
 # ----------------------------------------------------------------------------------
 
 ## Create Lifestage_Update
 lifestage_update = sdm \
-    .join(sku, 
-          on=F.regexp_replace(sdm.material_id, '^0*|\s','') == \
+    .join(sku,
+          on=F.regexp_replace(sdm.material_id, '^0*|\s', '') == \
              sku.mdl_num_model_r3.cast('string'),
           how='inner') \
     .filter(sdm.sales_org == sales_org) \
@@ -137,8 +187,8 @@ lifestage_update = sdm \
     .withColumn("date_end",
                 F.when(sdm.date_end == '2999-12-31',
                        F.to_date(F.lit('2100-12-31'), 'yyyy-MM-dd')) \
-                       .otherwise(sdm.date_end)) \
-    .select(sku.mdl_num_model_r3.alias('model'), 
+                .otherwise(sdm.date_end)) \
+    .select(sku.mdl_num_model_r3.alias('model'),
             sdm.date_begin,
             "date_end",
             sdm.lifestage.cast('int').alias('lifestage')) \
@@ -183,7 +233,7 @@ assert model_info_count > 0
 # ----------------------------------------------------------------------------------
 
 # Keep only usefull life stage values: models in actual sales
-lifestage_update = lifestage_update.join(actual_sales.select('model').drop_duplicates(), 
+lifestage_update = lifestage_update.join(actual_sales.select('model').drop_duplicates(),
                                          on='model', how='inner')
 
 # Calculates all possible date/model combinations associated with a life stage update
@@ -228,13 +278,13 @@ ffilled_lifestage = F.last(model_lifestage['lifestage'], ignorenulls=True).over(
 model_lifestage = model_lifestage.withColumn('lifestage', ffilled_lifestage)
 
 model_lifestage = model_lifestage \
-    .withColumn('lifestage_shift', 
+    .withColumn('lifestage_shift',
                 F.lag(model_lifestage['lifestage']) \
-                      .over(Window.partitionBy("model").orderBy(F.desc('date'))))
+                .over(Window.partitionBy("model").orderBy(F.desc('date'))))
 
 model_lifestage = model_lifestage \
     .withColumn('diff_shift', model_lifestage['lifestage'] - \
-                              model_lifestage['lifestage_shift'])
+                model_lifestage['lifestage_shift'])
 
 df_cut_date = model_lifestage.filter(model_lifestage.diff_shift > 0)
 
@@ -248,7 +298,7 @@ model_lifestage = model_lifestage.join(df_cut_date, on=['model'], how='left')
 model_lifestage = model_lifestage \
     .withColumn('cut_date', F.when(F.col('cut_date').isNull(),
                                    F.to_date(F.lit('1993-04-15'), 'yyyy-MM-dd')) \
-                                   .otherwise(F.col('cut_date')))
+                .otherwise(F.col('cut_date')))
 
 model_lifestage = model_lifestage \
     .filter(model_lifestage.date >= model_lifestage.cut_date) \
@@ -269,7 +319,7 @@ all_sales_date = actual_sales.select('date').orderBy('date').drop_duplicates()
 date_model = all_sales_model.crossJoin(all_sales_date)
 
 # Add corresponding week id
-date_model = date_model.join(actual_sales.select(['date', 'week_id']).drop_duplicates(), 
+date_model = date_model.join(actual_sales.select(['date', 'week_id']).drop_duplicates(),
                              on=['date'], how='inner')
 
 # Add actual sales
@@ -287,27 +337,29 @@ complete_ts_count = complete_ts.count()
 print("complete_ts length:", complete_ts_count)
 assert complete_ts_count > 0
 
+
 # ----------------------------------------------------------------------------------
 
-def add_column_index(df, col_name): 
-    new_schema = StructType(df.schema.fields + [StructField(col_name, LongType(), False),])
-    return df.rdd.zipWithIndex().map(lambda row: row[0] + (row[1], )).toDF(schema=new_schema)
+def add_column_index(df, col_name):
+    new_schema = StructType(df.schema.fields + [StructField(col_name, LongType(), False), ])
+    return df.rdd.zipWithIndex().map(lambda row: row[0] + (row[1],)).toDF(schema=new_schema)
+
+
 # find models respecting the first condition
 w = Window.partitionBy('model').orderBy('date')
 
 first_lifestage = complete_ts.filter(complete_ts.lifestage.isNotNull()) \
-                             .withColumn('rn', F.row_number().over(w))
+    .withColumn('rn', F.row_number().over(w))
 
 first_lifestage = first_lifestage.filter(first_lifestage.rn == 1).drop('rn')
 
-
 first_lifestage = first_lifestage \
     .filter(first_lifestage.lifestage == 1) \
-    .select(first_lifestage.model, 
+    .select(first_lifestage.model,
             first_lifestage.date.alias('first_lifestage_date'))
 
 # Create the mask (rows to be completed) for theses models
-complete_ts = add_column_index(complete_ts, 'idx') # save original indexes
+complete_ts = add_column_index(complete_ts, 'idx')  # save original indexes
 complete_ts.cache()
 
 mask = complete_ts
@@ -339,18 +391,18 @@ mask = mask.join(ts_start_date, on='model', how='left')
 mask = mask \
     .withColumn('start_date', F.when(F.col('start_date').isNull(),
                                      F.to_date(F.lit('1993-04-15'), 'yyyy-MM-dd')) \
-                                     .otherwise(F.col('start_date'))) \
+                .otherwise(F.col('start_date'))) \
     .withColumn('is_model_start', F.col('date') > F.col('start_date')) \
     .withColumn('to_fill', F.col('is_active') & \
-                           F.col('is_model_start') & \
-                           F.col('lifestage').isNull())
+                F.col('is_model_start') & \
+                F.col('lifestage').isNull())
 
 mask = mask.filter(mask.to_fill == True).select(['idx', 'to_fill'])
 
 # Fill the eligible rows under all conditions
 complete_ts = complete_ts.join(mask, on='idx', how='left')
 complete_ts = complete_ts \
-    .withColumn('lifestage', 
+    .withColumn('lifestage',
                 F.when(F.col('to_fill') == True, F.lit(1)).otherwise(F.col('lifestage')))
 
 complete_ts = complete_ts.select(['week_id', 'date', 'model', 'y', 'lifestage'])
@@ -372,7 +424,6 @@ model_start_date = model_start_date \
     .drop('rn', 'week_id', 'y') \
     .select(F.col("model"), F.col("date").alias("first_date"))
 
-
 active_sales = complete_ts \
     .filter(complete_ts.lifestage == 1) \
     .join(model_start_date, on='model', how='inner') \
@@ -390,7 +441,7 @@ assert active_sales_count > 0
 
 
 model_info = model_info \
-    .withColumn('category_label', 
+    .withColumn('category_label',
                 F.when(model_info.category_label == 'SOUS RAYON POUB', F.lit(None)) \
                 .otherwise(model_info.category_label)) \
     .fillna('UNKNOWN')
@@ -398,19 +449,19 @@ model_info = model_info \
 # Due to a discrepant seasonal behaviour between LOW SOCKS and HIGH SOCKS, we chose to split
 # the product nature 'SOCKS' into two different product natures 'LOW SOCKS' and 'HIGH SOCKS'
 model_info = model_info \
-    .withColumn('product_nature_label', 
+    .withColumn('product_nature_label',
                 F.when((model_info.product_nature_label == 'SOCKS') & \
-                       (model_info.model_label.contains(' LOW')), 
+                       (model_info.model_label.contains(' LOW')),
                        F.lit('LOW SOCKS')) \
-                 .when((model_info.product_nature_label == 'SOCKS') & \
-                       (model_info.model_label.contains(' MID')), 
-                       F.lit('MID SOCKS')) \
-                 .when((model_info.product_nature_label == 'SOCKS') & \
-                       (model_info.model_label.contains(' HIGH')), 
-                       F.lit('HIGH SOCKS')) \
-                 .otherwise(model_info.product_nature_label)) \
+                .when((model_info.product_nature_label == 'SOCKS') & \
+                      (model_info.model_label.contains(' MID')),
+                      F.lit('MID SOCKS')) \
+                .when((model_info.product_nature_label == 'SOCKS') & \
+                      (model_info.model_label.contains(' HIGH')),
+                      F.lit('HIGH SOCKS')) \
+                .otherwise(model_info.product_nature_label)) \
     .drop('product_nature')
-    
+
 indexer = StringIndexer(inputCol='product_nature_label', outputCol='product_nature')
 
 model_info = indexer \
