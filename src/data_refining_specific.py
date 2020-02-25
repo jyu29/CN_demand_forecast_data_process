@@ -12,19 +12,19 @@ import utils as ut
 
 ## Spark Configs
 conf = SparkConf().setAll([
- ('spark.sql.shuffle.partitions', 110),
- ('spark.default.parallelism', 110),
- ('spark.autoBroadcastJoinThreshold', 15485760),
- ('spark.dynamicAllocation.enabled', 'false'),
- ('spark.executor.instances', 11),
- ('spark.executor.memory', '19g'),
- ('spark.driver.memory', '19g'),
- ('spark.driver.cores', 5),
- ('spark.memory.storageFraction', 0.4),   
- ('spark.memory.fraction', 0.6),
- ('spark.executor.memoryOverhead', '2g'),
- ('spark.executor.cores', 5),
- ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
+    ('spark.sql.shuffle.partitions', 110),
+    ('spark.default.parallelism', 110),
+    ('spark.autoBroadcastJoinThreshold', 15485760),
+    ('spark.dynamicAllocation.enabled', 'false'),
+    ('spark.executor.instances', 11),
+    ('spark.executor.memory', '19g'),
+    ('spark.driver.memory', '19g'),
+    ('spark.driver.cores', 5),
+    ('spark.memory.storageFraction', 0.4),
+    ('spark.memory.fraction', 0.6),
+    ('spark.executor.memoryOverhead', '2g'),
+    ('spark.executor.cores', 5),
+    ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
 ])
 
 spark = SparkSession.builder \
@@ -44,11 +44,11 @@ filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
 scope = conf.get_scope()
 first_test_cutoff = conf.get_first_test_cutoff()
 
+
 # ----------------------------------------------------------------------------------
 
 ## Read and cache data
 def read_clean_data():
-    
     actual_sales = ut.read_parquet_s3(spark, s3_path_refine_global, 'actual_sales/')
     actual_sales.persist(StorageLevel.MEMORY_ONLY)
 
@@ -60,50 +60,49 @@ def read_clean_data():
 
     return actual_sales, active_sales, model_info
 
+
 # ----------------------------------------------------------------------------------
 
 ## Filter on scope
 def filter_data_scope(actual_sales, active_sales, model_info):
-
     print('Filtering data depending on scope...')
 
     if scope != 'full_scope':
-    
         actual_sales = actual_sales \
-            .join(model_info.select(model_info['model'], model_info[filter_type]), 
-                  on='model', 
+            .join(model_info.select(model_info['model'], model_info[filter_type]),
+                  on='model',
                   how='left')
-    
+
         actual_sales = actual_sales \
             .filter(actual_sales[filter_type].isin(filter_val)) \
             .drop(filter_type)
-    
+
         active_sales = active_sales \
-            .join(model_info.select(model_info['model'], model_info[filter_type]), 
-                  on='model', 
+            .join(model_info.select(model_info['model'], model_info[filter_type]),
+                  on='model',
                   how='left')
-    
+
         active_sales = active_sales \
             .filter(active_sales[filter_type].isin(filter_val)) \
             .drop(filter_type)
-        
+
         active_sales.persist(StorageLevel.MEMORY_ONLY)
         actual_sales.persist(StorageLevel.MEMORY_ONLY)
-    
+
     return actual_sales, active_sales
+
 
 # ----------------------------------------------------------------------------------
 
 ## Reconstruction function
 def reconstruct_history(train_data_cutoff, actual_sales, model_info,
                         cluster_keys=['product_nature', 'family'], min_ts_len=160):
-
     last_week = train_data_cutoff.agg(F.max('week_id').alias('last_week'))
     model_to_keep = train_data_cutoff.groupBy('model').agg(F.max('week_id').alias('last_active_week'))
-    model_to_keep = model_to_keep.join(last_week, 
+    model_to_keep = model_to_keep.join(last_week,
                                        on=last_week.last_week == model_to_keep.last_active_week,
                                        how='inner').select(model_to_keep.model)
-    
+
     train_data_cutoff = train_data_cutoff.join(model_to_keep, on='model', how='inner')
 
     df_date = actual_sales.select(['week_id', 'date']).drop_duplicates()
@@ -132,12 +131,12 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     all_sales = all_sales.groupBy(join_key).agg(F.mean('y').alias('mean_cluster_y'))
 
     # Add it to complete_ts
-    complete_ts = complete_ts.join(all_sales, 
-                                   on=['week_id', 'date', 'product_nature', 'family'], 
+    complete_ts = complete_ts.join(all_sales,
+                                   on=['week_id', 'date', 'product_nature', 'family'],
                                    how='left')
 
     # Scale factor
-    complete_ts = complete_ts.withColumn('row_scale_factor', 
+    complete_ts = complete_ts.withColumn('row_scale_factor',
                                          complete_ts.y / complete_ts.mean_cluster_y)
 
     model_scale_factor = complete_ts \
@@ -150,22 +149,22 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
 
     # Compute fake Y
     complete_ts = complete_ts \
-        .withColumn('fake_y', 
+        .withColumn('fake_y',
                     (complete_ts.mean_cluster_y * complete_ts.model_scale_factor).cast('int'))
     complete_ts = complete_ts.fillna(0, subset=['fake_y'])
 
     start_end = y_not_null \
         .groupBy('model') \
         .agg(F.min('date').alias('start_date'), F.max('date').alias('end_date'))
-    
+
     complete_ts = complete_ts.join(start_end, 'model', how='left')
 
     complete_ts = complete_ts \
-        .withColumn('age', (F.datediff(F.col('date'), F.col('start_date'))) / (7) + 1 ) \
-        .withColumn('length', (F.datediff(F.col('end_date'), F.col('date'))) / (7) + 1 ) \
+        .withColumn('age', (F.datediff(F.col('date'), F.col('start_date'))) / (7) + 1) \
+        .withColumn('length', (F.datediff(F.col('end_date'), F.col('date'))) / (7) + 1) \
         .withColumn('is_y_sup', F.when(complete_ts.y.isNull(), 'false') \
-                                 .when(complete_ts.y > complete_ts.fake_y, 'true') \
-                                 .otherwise('false'))
+                    .when(complete_ts.y > complete_ts.fake_y, 'true') \
+                    .otherwise('false'))
 
     end_impl_period = complete_ts \
         .filter(complete_ts.is_y_sup == True) \
@@ -175,7 +174,7 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
     complete_ts = complete_ts.join(end_impl_period, on=['model'], how='left')
 
     complete_ts = complete_ts \
-        .withColumn('y', 
+        .withColumn('y',
                     F.when(((complete_ts.age <= 0) & (complete_ts.length <= min_ts_len)) | \
                            ((complete_ts.age > 0) & (complete_ts.age < complete_ts.end_impl_period)),
                            complete_ts.fake_y.cast('int')) \
@@ -187,12 +186,12 @@ def reconstruct_history(train_data_cutoff, actual_sales, model_info,
         .orderBy(['week_id', 'model'])
 
     return complete_ts
-    
+
+
 # ----------------------------------------------------------------------------------
 
 # Generate training data used to forecast validation & test cutoffs
 def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last):
-
     current_cutoff = ut.get_next_week_id(actual_sales.select(F.max('week_id')).collect()[0][0])
 
     if only_last:
@@ -207,10 +206,9 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         nRow = spark.createDataFrame([[current_cutoff]])
         iterate_week = cutoff_week_test.union(nRow)
         l_cutoff_week_id = [row.week_id for row in iterate_week.collect()]
-        
+
     # loop generate cutoffs
     for cutoff_week_id in sorted(l_cutoff_week_id):
-
         t0 = time.time()
         print('Generating train data for cutoff', str(cutoff_week_id))
 
@@ -228,37 +226,40 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         model_active = train_data_cutoff.groupBy('model').agg(F.max('week_id').alias('last_active_week'))
 
         model_active = model_active \
-            .join(last_week, 
-                  on=last_week.last_week == model_active.last_active_week, 
+            .join(last_week,
+                  on=last_week.last_week == model_active.last_active_week,
                   how='inner') \
             .select(model_active.model)
 
         model_to_keep = model_active.join(model_sold, 'model', 'inner')
-        
+
         train_data_cutoff = train_data_cutoff.join(model_to_keep, on='model', how='inner')
 
         # Reconstruct a fake history
         train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
-        
+
         path_cutoff = '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id))
-        
+
         ut.write_parquet_s3(train_data_cutoff, s3_path_refine_specific, path_cutoff)
-        
+
         t1 = time.time()
-        total = t1-t0
+        total = t1 - t0
         print('Loop time {} {}:'.format(str(cutoff_week_id), total))
+
 
 # ----------------------------------------------------------------------------------
 
 print('scope: ', scope)
 print('filter_type: ', filter_type)
-print('filter_val: ', filter_val) 
+print('filter_val: ', filter_val)
 print('only_last: ', only_last)
-        
+
+assert 1 == 2, "Crash test"
+
 actual_sales, active_sales, model_info = read_clean_data()
 
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
-generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=only_last)        
+generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=only_last)
 
 spark.stop()
