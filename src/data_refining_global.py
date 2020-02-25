@@ -106,7 +106,7 @@ actual_sales_online = dyd \
 actual_sales = actual_sales_offline.union(actual_sales_online) \
     .withColumn("week_day_name", F.date_format(F.col("week_day"), "EEEE")) \
     .withColumn('f_qty_item_critical',
-                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == current_week_id), 0).
+                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == (current_week_id-1)), 0).
                 otherwise(F.col('f_qty_item'))) \
     .groupby(['week_id', 'date', 'model']) \
     .agg(F.sum('f_qty_item').alias('y'),
@@ -157,12 +157,12 @@ sanity_check_df = sanity_check_df \
 
 df = sanity_check_df \
     .filter(sanity_check_df.evolution < 0)
-print(df.describe(['evolution']).show())
+df.describe(['evolution']).show()
 
 critical_evolution_threshold = -30
 min_evolution = df.select(F.min('evolution')).collect()[0][0]
 
-print(df.filter(df.evolution == min_evolution).show())
+df.filter(df.evolution == min_evolution).drop('window_partition').show()
 
 # Write it ???
 # df.withColumn("execution_day", F.current_timestamp())
