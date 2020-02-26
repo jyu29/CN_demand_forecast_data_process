@@ -15,6 +15,8 @@ spark-submit \
     --executor-cores 5 \
     --num-executors 8 \
     --executor-memory 36g \
+    --conf spark.memory.fraction=0.1 \
+    --conf spark.memory.storageFraction=0.9 \
     --conf spark.executor.memoryOverhead=4g \
     --conf spark.dynamicAllocation.enabled=false \
     --conf spark.default.parallelism=80 \
@@ -41,6 +43,8 @@ spark-submit \
     --executor-cores 5 \
     --num-executors 8 \
     --executor-memory 36g \
+    --conf spark.memory.fraction=0.1 \
+    --conf spark.memory.storageFraction=0.9 \
     --conf spark.executor.memoryOverhead=4g \
     --conf spark.dynamicAllocation.enabled=false \
     --conf spark.default.parallelism=80 \
