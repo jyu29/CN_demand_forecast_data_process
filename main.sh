@@ -12,8 +12,20 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --driver-memory 5g \
+    --executor-cores 5 \
+    --num-executors 8 \
+    --executor-memory 36g \
+    --conf spark.executor.memoryOverhead=4g \
+    --conf spark.dynamicAllocation.enabled=false \
+    --conf spark.default.parallelism=80 \
+    --conf spark.sql.shuffle.partitions=80 \
+    --conf spark.yarn.am.cores=5 \
+    --conf spark.yarn.am.memory=36g \
+    --conf spark.yarn.am.memoryOverhead=4g \
+    --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
+    --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
-    src/data_refining_global.py $technical_conf_file conf/functional.yml
+    src/data_refining_global.py $technical_conf_file conf/functional.yml $only_last
 echo  $? > code_status
 my_exit_code=$(cat code_status)
 
@@ -26,6 +38,18 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --driver-memory 5g \
+    --executor-cores 5 \
+    --num-executors 8 \
+    --executor-memory 36g \
+    --conf spark.executor.memoryOverhead=4g \
+    --conf spark.dynamicAllocation.enabled=false \
+    --conf spark.default.parallelism=80 \
+    --conf spark.sql.shuffle.partitions=80 \
+    --conf spark.yarn.am.cores=5 \
+    --conf spark.yarn.am.memory=36g \
+    --conf spark.yarn.am.memoryOverhead=4g \
+    --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
+    --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
     src/data_refining_specific.py $technical_conf_file conf/functional.yml $only_last
 echo  $? > code_status
