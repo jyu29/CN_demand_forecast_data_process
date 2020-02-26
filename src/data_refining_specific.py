@@ -239,6 +239,25 @@ print('only_last: ', only_last)
 
 actual_sales, active_sales, model_info = read_clean_data()
 
+print("====> Counting(cache) [actual_sales] took ")
+start = time.time()
+actual_sales_count = actual_sales.count()
+ut.get_timer(starting_time=start)
+print("Count actual_sales = {}".format(actual_sales_count))
+
+print("====> Counting(cache) actual_sales took ")
+start = time.time()
+active_sales_count = active_sales.count()
+ut.get_timer(starting_time=start)
+print("Count active_sales = {}".format(active_sales_count))
+
+print("====> Counting(cache) actual_sales took ")
+start = time.time()
+model_info_count = model_info.count()
+ut.get_timer(starting_time=start)
+print("Count model_info = {}".format(model_info_count))
+
+
 actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
 generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last=only_last)

@@ -5,6 +5,7 @@ from pyspark.ml.feature import StringIndexer
 
 import pyspark.sql.functions as F
 import sys
+import time
 import datetime
 
 import utils as ut
@@ -17,6 +18,7 @@ conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
 bucket_clean = conf.get_s3_path_clean()
 bucket_refine_global = conf.get_s3_path_refine_global()
 first_week_id = conf.get_first_week_id()
+percentage_of_critical_decrease = - conf.get_percentage_of_critical_decrease()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
@@ -69,7 +71,6 @@ actual_sales_offline = tdt \
     .select(week.wee_id_week.cast('int').alias('week_id'),
             week.day_first_day_week.alias('date'),
             sku.mdl_num_model_r3.alias('model'),
-            day.day_id_day.alias('week_day'),
             tdt.f_qty_item)
 
 actual_sales_online = dyd \
@@ -100,41 +101,50 @@ actual_sales_online = dyd \
     .select(week.wee_id_week.cast('int').alias('week_id'),
             week.day_first_day_week.alias('date'),
             sku.mdl_num_model_r3.alias('model'),
-            day.day_id_day.alias('week_day'),
             dyd.f_qty_item)
 
 actual_sales = actual_sales_offline.union(actual_sales_online) \
-    .withColumn("week_day_name", F.date_format(F.col("week_day"), "EEEE")) \
-    .withColumn('f_qty_item_critical',
-                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == 202008), 0).
-                otherwise(F.col('f_qty_item'))) \
     .groupby(['week_id', 'date', 'model']) \
-    .agg(F.sum('f_qty_item').alias('y'),
-         F.sum('f_qty_item_critical').alias('y_critical')) \
+    .agg(F.sum('f_qty_item').alias('y')) \
     .filter(F.col('y') > 0) \
     .repartition('model')
 
 actual_sales.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [actual_sales] took ")
+start = time.time()
 actual_sales_count = actual_sales.count()
+ut.get_timer(starting_time=start)
+print("====> Collecting [max_week_id] took ")
+start = time.time()
 max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
-
 print("actual_sales length:", actual_sales_count)
 print("max week id in actual_sales:", max_week_id)
+
 
 assert actual_sales_count > 0
 assert ut.get_next_week_id(max_week_id) == current_week_id
 
-# ----------------------------------------------------------------------------------
-y_type = 'y'
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+# Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales
+# for a specific  week ?)
+print(">>> Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales for a specific  week ? "
+      "It took")
 
+print("The threshold percentage of critical decrease is: {}%".format(percentage_of_critical_decrease))
+start = time.time()
+
+# Defining  'window_partition' variable which will allow us to calculate 'lag' values.
 sanity_check_df = actual_sales \
     .withColumn('window_partition', F.lit(1)) \
-    .select('window_partition', 'week_id', y_type)
+    .select('window_partition', 'week_id', 'y')
 
+# Total sales per week.
 sanity_check_df = sanity_check_df \
     .groupby(['window_partition', 'week_id']) \
-    .agg(F.sum(y_type).alias('y'))
+    .agg(F.sum('y').alias('y'))
 
+# 4 'lag' values for each week.
 w = Window().partitionBy("window_partition").orderBy(F.asc("week_id"))
 sanity_check_df = sanity_check_df \
     .withColumn('lag1',
@@ -146,29 +156,37 @@ sanity_check_df = sanity_check_df \
     .withColumn('lag4',
                 F.lag(sanity_check_df.y, count=4, default=0).over(w))
 
+# Keep only weeks with the 4 complete 'lag' values.
 sanity_check_df = sanity_check_df \
     .filter(sanity_check_df.lag4 > 0)
 
+# For each week, compute the mean values of the 4 'lag'.
 sanity_check_df = sanity_check_df \
     .withColumn('mean_lag',
                 (F.col("lag1") + F.col("lag2") + F.col("lag3") + F.col("lag4")) / 4)
 sanity_check_df = sanity_check_df \
     .withColumn('evolution', ((F.col('y') - F.col('mean_lag')) / F.col('mean_lag')) * 100)
 
+# Keeping only negative evolution rates.
 df = sanity_check_df \
     .filter(sanity_check_df.evolution < 0)
 df.describe(['evolution']).show()
 
-critical_evolution_threshold = -30
+# Getting the minimum of the negative evolution rates.
 min_evolution = df.select(F.min('evolution')).collect()[0][0]
 
+# Show the week for which the evolution rates is
+# the minimum.
 df.filter(df.evolution == min_evolution).drop('window_partition').show()
 
-# Write it ???
-# df.withColumn("execution_day", F.current_timestamp())
-assert min_evolution > critical_evolution_threshold, "There is an abnormal decreasing of data !"
+print("*** Writing sanity check table [data_sanity_check]")
+ut.write_parquet_s3(df.withColumn("execution_day", F.current_timestamp()), bucket_refine_global, 'data_sanity_check')
+ut.get_timer(starting_time=start)
 
-# ----------------------------------------------------------------------------------
+assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 # ----------------------------------------------------------------------------------
 
@@ -197,8 +215,10 @@ lifestage_update = sdm \
     .repartition('model')
 
 lifestage_update.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [lifestage_update] took ")
+start = time.time()
 lifestage_update_count = lifestage_update.count()
-
+ut.get_timer(starting_time=start)
 print("lifestage_update length:", lifestage_update_count)
 assert lifestage_update_count > 0
 
@@ -226,8 +246,10 @@ model_info = sku \
     .repartition('model')
 
 model_info.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [model_info] (1st time) took ")
+start = time.time()
 model_info_count = model_info.count()
-
+ut.get_timer(starting_time=start)
 print("model_info length:", model_info_count)
 assert model_info_count > 0
 
@@ -306,8 +328,10 @@ model_lifestage = model_lifestage \
     .select(['date', 'model', 'lifestage'])
 
 model_lifestage.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [model_lifestage] took ")
+start = time.time()
 model_lifestage_count = model_lifestage.count()
-
+ut.get_timer(starting_time=start)
 print("model_lifestage length:", model_lifestage_count)
 assert model_lifestage_count > 0
 
@@ -333,7 +357,10 @@ complete_ts = complete_ts.fillna(0, subset=['y'])
 complete_ts = complete_ts.join(model_lifestage, ['date', 'model'], how='left')
 
 complete_ts.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [complete_ts] (1st time) took ")
+start = time.time()
 complete_ts_count = complete_ts.count()
+ut.get_timer(starting_time=start)
 
 print("complete_ts length:", complete_ts_count)
 assert complete_ts_count > 0
@@ -409,8 +436,10 @@ complete_ts = complete_ts \
 complete_ts = complete_ts.select(['week_id', 'date', 'model', 'y', 'lifestage'])
 
 complete_ts.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [complete_ts] (2nd time) took ")
+start = time.time()
 complete_ts_count = complete_ts.count()
-
+ut.get_timer(starting_time=start)
 print("complete_ts length:", complete_ts_count)
 assert complete_ts_count > 0
 
@@ -433,7 +462,10 @@ active_sales = complete_ts \
     .orderBy(['model', 'week_id'])
 
 active_sales.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) active_sales took ")
+start = time.time()
 active_sales_count = active_sales.count()
+ut.get_timer(starting_time=start)
 
 print("active_sales length:", active_sales_count)
 assert active_sales_count > 0
@@ -472,8 +504,10 @@ model_info = indexer \
     .orderBy('model')
 
 model_info.persist(StorageLevel.MEMORY_ONLY)
+print("====> Counting(cache) [model_info] (2nd time) took ")
+start = time.time()
 model_info_count = model_info.count()
-
+ut.get_timer(starting_time=start)
 print("model_info length:", model_info_count)
 assert model_info_count > 0
 
@@ -485,8 +519,20 @@ assert model_info.count() == model_info.select('model').drop_duplicates().count(
 
 # Write
 print("writing tables...")
+
+print("====> Writing table [model_info]")
+start = time.time()
 ut.write_parquet_s3(model_info, bucket_refine_global, 'model_info')
+ut.get_timer(starting_time=start)
+
+print("====> Writing table [actual_sales]")
+start = time.time()
 ut.write_parquet_s3(actual_sales, bucket_refine_global, 'actual_sales')
+ut.get_timer(starting_time=start)
+
+print("====> Writing table [active_sales]")
+start = time.time()
 ut.write_parquet_s3(active_sales, bucket_refine_global, 'active_sales')
+ut.get_timer(starting_time=start)
 
 spark.stop()
