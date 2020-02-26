@@ -11,24 +11,7 @@ import utils as ut
 # ----------------------------------------------------------------------------------
 
 ## Spark Configs
-conf = SparkConf().setAll([
-    ('spark.sql.shuffle.partitions', 110),
-    ('spark.default.parallelism', 110),
-    ('spark.autoBroadcastJoinThreshold', 15485760),
-    ('spark.dynamicAllocation.enabled', 'false'),
-    ('spark.executor.instances', 11),
-    ('spark.executor.memory', '19g'),
-    ('spark.driver.memory', '19g'),
-    ('spark.driver.cores', 5),
-    ('spark.memory.storageFraction', 0.4),
-    ('spark.memory.fraction', 0.6),
-    ('spark.executor.memoryOverhead', '2g'),
-    ('spark.executor.cores', 5),
-    ('spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version', 2)
-])
-
 spark = SparkSession.builder \
-    .config(conf=conf) \
     .getOrCreate()
 
 spark.sparkContext.setLogLevel("ERROR")
