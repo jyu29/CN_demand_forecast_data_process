@@ -1,10 +1,7 @@
 first_week_id: 201501
 purch_org: Z001
 sales_org: Z002
-scope: domyos_nov_2019
-filter_type: family
-filter_val: 
-  - 224 
-  - 12072
-  - 600
+scope: full_scope
+filter_type:
+filter_val:
 first_test_cutoff: 201922
