@@ -20,7 +20,7 @@ first_week_id = conf.get_first_week_id()
 purch_org = conf.get_purch_org()
 sales_org = conf.get_sales_org()
 
-current_week_id = 202007#ut.get_current_week_id()
+current_week_id = ut.get_current_week_id()
 print("Current week id:", current_week_id)
 
 # ----------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ actual_sales_online = dyd \
 actual_sales = actual_sales_offline.union(actual_sales_online) \
     .withColumn("week_day_name", F.date_format(F.col("week_day"), "EEEE")) \
     .withColumn('f_qty_item_critical',
-                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == 202006), 0).
+                F.when((F.col('week_day_name').isin(['Saturday', 'Sunday'])) & (F.col('week_id') == 202008), 0).
                 otherwise(F.col('f_qty_item'))) \
     .groupby(['week_id', 'date', 'model']) \
     .agg(F.sum('f_qty_item').alias('y'),
