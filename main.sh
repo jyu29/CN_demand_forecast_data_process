@@ -14,6 +14,8 @@ spark-submit \
     --driver-memory 5g \
     --conf spark.dynamicAllocation.enabled=true \
     --conf spark.maximizeResourceAllocation=true \
+    --conf spark.dynamicAllocation.minExecutors=2 \
+    --conf spark.dynamicAllocation.maxExecutors=50 \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
