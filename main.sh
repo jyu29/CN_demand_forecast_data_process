@@ -12,18 +12,10 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --driver-memory 5g \
-    --executor-cores 5 \
-    --num-executors 8 \
-    --executor-memory 36g \
-    --conf spark.memory.fraction=0.4 \
-    --conf spark.memory.storageFraction=0.6 \
-    --conf spark.executor.memoryOverhead=4g \
-    --conf spark.dynamicAllocation.enabled=false \
-    --conf spark.default.parallelism=80 \
-    --conf spark.sql.shuffle.partitions=80 \
-    --conf spark.yarn.am.cores=5 \
-    --conf spark.yarn.am.memory=36g \
-    --conf spark.yarn.am.memoryOverhead=4g \
+    --conf spark.dynamicAllocation.enabled=true \
+    --conf spark.maximizeResourceAllocation=true \
+    --conf spark.dynamicAllocation.minExecutors=2 \
+    --conf spark.dynamicAllocation.maxExecutors=22 \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
@@ -42,16 +34,14 @@ spark-submit \
     --driver-memory 5g \
     --executor-cores 5 \
     --num-executors 8 \
-    --executor-memory 36g \
-    --conf spark.memory.fraction=0.1 \
-    --conf spark.memory.storageFraction=0.9 \
-    --conf spark.executor.memoryOverhead=4g \
+    --executor-memory 16g \
+    --conf spark.executor.memoryOverhead=2g \
     --conf spark.dynamicAllocation.enabled=false \
     --conf spark.default.parallelism=80 \
     --conf spark.sql.shuffle.partitions=80 \
     --conf spark.yarn.am.cores=5 \
-    --conf spark.yarn.am.memory=36g \
-    --conf spark.yarn.am.memoryOverhead=4g \
+    --conf spark.yarn.am.memory=16g \
+    --conf spark.yarn.am.memoryOverhead=2g \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \

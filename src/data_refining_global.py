@@ -128,11 +128,10 @@ assert ut.get_next_week_id(max_week_id) == current_week_id
 # ----------------------------------------------------------------------------------------------------------------------
 # Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales
 # for a specific  week ?)
-print(">>> Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales for a specific  week ? "
-      "It took")
-
-print("The threshold percentage of critical decrease is: {}%".format(percentage_of_critical_decrease))
+print(">>> Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales for a specific  week ? )"
+      "\n It took")
 start = time.time()
+print("*** The threshold percentage of critical decrease is: {}%".format(percentage_of_critical_decrease))
 
 # Defining  'window_partition' variable which will allow us to calculate 'lag' values.
 sanity_check_df = actual_sales \
@@ -168,19 +167,20 @@ sanity_check_df = sanity_check_df \
     .withColumn('evolution', ((F.col('y') - F.col('mean_lag')) / F.col('mean_lag')) * 100)
 
 # Keeping only negative evolution rates.
-df = sanity_check_df \
+sanity_check_df = sanity_check_df \
     .filter(sanity_check_df.evolution < 0)
-df.describe(['evolution']).show()
+sanity_check_df.describe(['evolution']).show()
 
 # Getting the minimum of the negative evolution rates.
-min_evolution = df.select(F.min('evolution')).collect()[0][0]
+min_evolution = sanity_check_df.select(F.min('evolution')).collect()[0][0]
 
 # Show the week for which the evolution rates is
 # the minimum.
-df.filter(df.evolution == min_evolution).drop('window_partition').show()
+sanity_check_df.filter(sanity_check_df.evolution == min_evolution).drop('window_partition').show()
 
 print("*** Writing sanity check table [data_sanity_check]")
-ut.write_parquet_s3(df.withColumn("execution_day", F.current_timestamp()), bucket_refine_global, 'data_sanity_check')
+ut.write_parquet_s3(sanity_check_df.withColumn("execution_day", F.current_timestamp()), bucket_refine_global,
+                    'sanity_check_df')
 ut.get_timer(starting_time=start)
 
 assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
