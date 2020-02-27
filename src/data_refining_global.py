@@ -114,10 +114,12 @@ print("====> Counting(cache) [actual_sales] took ")
 start = time.time()
 actual_sales_count = actual_sales.count()
 ut.get_timer(starting_time=start)
+print("actual_sales length:", actual_sales_count)
+
 print("====> Collecting [max_week_id] took ")
 start = time.time()
 max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
-print("actual_sales length:", actual_sales_count)
+ut.get_timer(starting_time=start)
 print("max week id in actual_sales:", max_week_id)
 
 
@@ -129,7 +131,7 @@ assert ut.get_next_week_id(max_week_id) == current_week_id
 # Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales
 # for a specific  week ?)
 print(">>> Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales for a specific  week ? )"
-      "\n It took")
+      "\nIt took...")
 start = time.time()
 print("*** The threshold percentage of critical decrease is: {}%".format(percentage_of_critical_decrease))
 
