@@ -68,6 +68,11 @@ pipeline {
     }
 
     post {
+        always{
+             build job: 'EMR-DELETE-PERSISTENT-CLUSTER',
+                parameters: [
+                string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
+        }
         failure {
             mail to: "forecastunited@decathlon.net",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
