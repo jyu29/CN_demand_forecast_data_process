@@ -57,14 +57,6 @@ pipeline {
             }
         }
 
-        stage("delete cluster") {
-            steps {
-                build job: "EMR-DELETE-PERSISTENT-CLUSTER",
-                    parameters: [
-                        string(name: "nameOfCluster", value: "${BUILD_TAG}")
-                   ]
-            }
-        }
     }
 
     post {
