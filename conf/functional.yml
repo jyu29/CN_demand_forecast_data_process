@@ -2,7 +2,4 @@ first_week_id: 201501
 percentage_of_critical_decrease: 30
 purch_org: Z001
 sales_org: Z002
-scope: full_scope
-filter_type:
-filter_val:
 first_test_cutoff: 201922

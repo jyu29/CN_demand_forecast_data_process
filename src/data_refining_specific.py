@@ -23,8 +23,6 @@ conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
 only_last = eval(sys.argv[3])
 s3_path_refine_global = conf.get_s3_path_refine_global()
 s3_path_refine_specific = conf.get_s3_path_refine_specific()
-filter_type, filter_val = conf.get_filter_type(), conf.get_filter_val()
-scope = conf.get_scope()
 first_test_cutoff = conf.get_first_test_cutoff()
 
 
@@ -42,30 +40,6 @@ def read_clean_data():
     model_info.persist(StorageLevel.MEMORY_ONLY)
 
     return actual_sales, active_sales, model_info
-
-
-# ----------------------------------------------------------------------------------
-
-## Filter on scope
-def filter_data_scope(actual_sales, active_sales, model_info):
-    print('Filtering data depending on scope...')
-
-    if scope != 'full_scope':
-        actual_sales = actual_sales \
-            .join(model_info.select(['model'] + [filter_type]), on='model', how='left') \
-            .filter(F.col(filter_type).isin(filter_val)) \
-            .drop(filter_type)
-
-        active_sales = active_sales \
-            .join(model_info.select(['model'] + [filter_type]), on='model', how='left') \
-            .filter(F.col(filter_type).isin(filter_val)) \
-            .drop(filter_type)
-
-        active_sales.persist(StorageLevel.MEMORY_ONLY)
-        actual_sales.persist(StorageLevel.MEMORY_ONLY)
-
-    return actual_sales, active_sales
-
 
 # ----------------------------------------------------------------------------------
 
@@ -228,7 +202,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         # Reconstruct a fake history
         train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
 
-        cutoff_path = '{}/train_data_cutoff/train_data_cutoff_{}'.format(scope, str(cutoff_week_id))
+        cutoff_path = '{}/train_data_cutoff/train_data_cutoff_{}'.format(str(cutoff_week_id))
 
         ut.write_parquet_s3(train_data_cutoff, s3_path_refine_specific, cutoff_path)
 
@@ -238,10 +212,6 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
 
 
 # ----------------------------------------------------------------------------------
-
-print('scope: ', scope)
-print('filter_type: ', filter_type)
-print('filter_val: ', filter_val)
 print('only_last: ', only_last)
 
 actual_sales, active_sales, model_info = read_clean_data()
@@ -263,9 +233,6 @@ start = time.time()
 model_info_count = model_info.count()
 ut.get_timer(starting_time=start)
 print("Count model_info = {}".format(model_info_count))
-
-
-actual_sales, active_sales = filter_data_scope(actual_sales, active_sales, model_info)
 
 assert actual_sales.count() > 0
 assert active_sales.count() > 0

@@ -1,3 +1,3 @@
-s3_path_clean: s3://fcst-clean-prod/
-s3_path_refine_global: s3://fcst-workspace/Z21GABDO/global/
-s3_path_refine_specific: s3://fcst-workspace/Z21GABDO/specific/
+s3_path_clean: s3://fcst-clean-dev/
+s3_path_refine_global: s3://fcst-refined-demand-forecast-dev/global/
+s3_path_refine_specific: s3://fcst-refined-demand-forecast-dev/specific/

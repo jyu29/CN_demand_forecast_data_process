@@ -12,6 +12,8 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --driver-memory 5g \
+    --conf spark.memory.fraction=0.2 \
+    --conf spark.memory.storageFraction=0.8 \
     --conf spark.dynamicAllocation.enabled=true \
     --conf spark.maximizeResourceAllocation=true \
     --conf spark.dynamicAllocation.minExecutors=2 \
@@ -32,18 +34,18 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --driver-memory 5g \
-    --executor-cores 5 \
-    --num-executors 8 \
-    --executor-memory 36g \
-    --conf spark.memory.fraction=0.1 \
-    --conf spark.memory.storageFraction=0.9 \
-    --conf spark.executor.memoryOverhead=4g \
+    --executor-cores 8 \
+    --num-executors 2 \
+    --executor-memory 50g \
+    --conf spark.memory.fraction=0.3 \
+    --conf spark.memory.storageFraction=0.7 \
+    --conf spark.executor.memoryOverhead=6g \
     --conf spark.dynamicAllocation.enabled=false \
-    --conf spark.default.parallelism=80 \
-    --conf spark.sql.shuffle.partitions=80 \
-    --conf spark.yarn.am.cores=5 \
-    --conf spark.yarn.am.memory=36g \
-    --conf spark.yarn.am.memoryOverhead=4g \
+    --conf spark.default.parallelism=16 \
+    --conf spark.sql.shuffle.partitions=16 \
+    --conf spark.yarn.am.cores=8 \
+    --conf spark.yarn.am.memory=50g \
+    --conf spark.yarn.am.memoryOverhead=6g \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
