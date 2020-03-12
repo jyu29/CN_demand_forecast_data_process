@@ -202,7 +202,7 @@ def generate_cutoff_train_data(actual_sales, active_sales, model_info, only_last
         # Reconstruct a fake history
         train_data_cutoff = reconstruct_history(train_data_cutoff, actual_sales, model_info)
 
-        cutoff_path = '{}/train_data_cutoff/train_data_cutoff_{}'.format(str(cutoff_week_id))
+        cutoff_path = 'train_data_cutoff/train_data_cutoff_{}'.format(str(cutoff_week_id))
 
         ut.write_parquet_s3(train_data_cutoff, s3_path_refine_specific, cutoff_path)
 
