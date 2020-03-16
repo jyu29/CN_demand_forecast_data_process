@@ -15,6 +15,8 @@ spark.sparkContext.setLogLevel("ERROR")
 
 ## Configs 
 conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
+apply_the_sanity_check = eval(sys.argv[3])
+
 bucket_clean = conf.get_s3_path_clean()
 bucket_refine_global = conf.get_s3_path_refine_global()
 first_week_id = conf.get_first_week_id()
@@ -185,7 +187,10 @@ ut.write_parquet_s3(sanity_check_df.withColumn("execution_day", F.current_timest
                     'sanity_check_df')
 ut.get_timer(starting_time=start)
 
-assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
+if apply_the_sanity_check:
+    assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
+else:
+    print("************ Deactivate the application of DLIGHT data sanity-check ************")
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
