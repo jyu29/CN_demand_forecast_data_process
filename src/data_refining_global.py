@@ -188,6 +188,7 @@ ut.write_parquet_s3(sanity_check_df.withColumn("execution_day", F.current_timest
 ut.get_timer(starting_time=start)
 
 if apply_the_sanity_check:
+    print("************* Activate the application of DLIGHT data sanity-check *************")
     assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
 else:
     print("************ Deactivate the application of DLIGHT data sanity-check ************")
