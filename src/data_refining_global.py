@@ -122,7 +122,6 @@ max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
 ut.get_timer(starting_time=start)
 print("max week id in actual_sales:", max_week_id)
 
-
 assert actual_sales_count > 0
 assert ut.get_next_week_id(max_week_id) == current_week_id
 
@@ -185,7 +184,8 @@ ut.write_parquet_s3(sanity_check_df.withColumn("execution_day", F.current_timest
                     'sanity_check_df')
 ut.get_timer(starting_time=start)
 
-assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
+print("************ Quick-fix: Deactivation of DLIGHT Data Sanity Check ************")
+# assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
