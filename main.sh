@@ -2,9 +2,11 @@
 
 echo "Technical environment configuration file: $1"
 echo "Execute only last cutoff? $2"
+echo "Apply the sanity-check for sales data? $3"
 
 technical_conf_file="conf/$1.yml"
 only_last="$2"
+apply_the_sanity_check="$3"
 
 sudo pip-3.6 install -r requirements.txt
 
@@ -21,7 +23,7 @@ spark-submit \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'"\
     --py-files src/utils.py \
-    src/data_refining_global.py $technical_conf_file conf/functional.yml $only_last
+    src/data_refining_global.py $technical_conf_file conf/functional.yml $apply_the_sanity_check
 echo  $? > code_status
 my_exit_code=$(cat code_status)
 
