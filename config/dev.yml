@@ -50,10 +50,8 @@ technical_parameters:
         spark.executor.instances : 8
         spark.default.parallelism : 80
         spark.sql.shuffle.partitions : 80
-        spark.driver.cores : 5
-        spark.driver.memory : "36g"
-        spark.driver.memoryOverhead : "4g"
-        spark.memory.fraction : 0.2
-        spark.memory.storageFraction : 0.8
+        spark.yarn.am.cores : 5
+        spark.yarn.am.memory : "36g"
+        spark.yarn.am.memoryOverhead : "4g"
         yarn.nodemanager.vmem-check-enabled : "false"
         yarn.nodemanager.pmem-check-enabled : "false"
