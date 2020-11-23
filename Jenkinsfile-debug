@@ -8,11 +8,13 @@ pipeline {
             steps {
                 wrap([$class: "BuildUser"]) {
                     sh('''
-
+                    
                     export https_proxy="${https_proxy}"
-
+                    
                     master_ip=${master_ip}
 
+                    ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "sudo rm -rf /home/hadoop/${JOB_NAME}"
+                    
                     scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
 
                     ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "export PYSPARK_PYTHON='/usr/bin/python3'; sudo chmod 755 /home/hadoop/${JOB_NAME}/main.sh; cd /home/hadoop/${JOB_NAME}; ./main_spark.sh ${env}"
