@@ -2,7 +2,6 @@ import time
 import datetime
 import pprint
 import yaml
-import s3fs
 from datetime import datetime, timedelta
 
 def read_yml(file_path):
@@ -11,13 +10,8 @@ def read_yml(file_path):
     :param file_path: (string) full path to the yaml file
     :return: (dict) data loaded
     """
-    if file_path[:2] == "s3":
-        fs = s3fs.S3FileSystem()
-        with fs.open(file_path, 'r') as f:
-            yaml_dict = yaml.safe_load(f)
-    else:
-        with open(file_path) as f:
-            yaml_dict = yaml.safe_load(f)
+    with open(file_path) as f:
+        yaml_dict = yaml.safe_load(f)
 
     return yaml_dict
 
@@ -27,7 +21,6 @@ def pretty_print_dict(dict_to_print):
     Pretty prints a dictionary
     :param dict_to_print: python dictionary
     """
-
     pprint.pprint(dict_to_print)
     
     
