@@ -38,3 +38,18 @@ functional_parameters:
   - Z106
   - Z112
   - Z115
+technical_parameters:
+    spark_conf:
+        spark.maximizeResourceAllocation : "false"
+        spark.dynamicAllocation.enabled : "false"
+        spark.executors.cores : 5
+        spark.executor.memory : "3g"
+        spark.executor.memoryOverhead : "1g"
+        spark.executor.instances : 8
+        spark.default.parallelism : 80
+        spark.sql.shuffle.partitions : 80
+        spark.yarn.am.cores : 5
+        spark.yarn.am.memory : "3g"
+        spark.yarn.am.memoryOverhead : "1g"
+    
+

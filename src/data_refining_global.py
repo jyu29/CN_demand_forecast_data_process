@@ -3,16 +3,16 @@
 import sys
 import time
 import utils as ut
-from pyspark import SparkContext, StorageLevel
+from functools import reduce
+from pyspark import SparkContext, SparkConf, StorageLevel
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from functools import reduce
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-## Get Params & setting up Spark Session
+## Get Params
 
-print("Getting parameters...")
+print('Getting parameters...')
 params = ut.read_yml(sys.argv[1])
 ut.pretty_print_dict(params)
 
@@ -28,11 +28,20 @@ list_puch_org = params['functional_parameters']['list_puch_org']
 
 current_week = ut.get_current_week()
 
-spark = SparkSession.builder.getOrCreate()
-spark.sparkContext.setLogLevel("ERROR") # Output only Spark's ERROR.
+print('Current week: {}'.format(current_week))
+print('==> Refined data will be uploaded up to this week (excluded).')
 
-print("Current week: {}".format(current_week))
-print("Refined data will be uploaded up to this week (excluded).")
+# ---------------------------------------------------------------------------------------------------------------------
+
+## Set up Spark Session
+
+print('Setting up Spark Session...')
+
+list_conf = list(params['technical_parameters']['spark_conf'].items())
+spark_conf = SparkConf().setAll(list_conf)
+
+spark = SparkSession.builder.getOrCreate(conf=spark_conf)
+spark.sparkContext.setLogLevel('ERROR') # Output only Spark's ERROR.
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -69,11 +78,11 @@ cer = cex \
     .orderBy('cur_idr_currency_base') \
     .persist(StorageLevel.MEMORY_ONLY)
 
-print("====> counting(cache) [current_exchange_rate] took ")
+print('====> counting(cache) [current_exchange_rate] took ')
 start = time.time()
 cer_count = cer.count()
 ut.get_timer(starting_time=start)
-print("[current_exchange_rate] length:", cer_count)
+print('[current_exchange_rate] length:', cer_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -147,11 +156,11 @@ model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
     .orderBy('model_id', 'week_id') \
     .persist(StorageLevel.MEMORY_ONLY)
 
-print("====> counting(cache) [model_week_sales] took ")
+print('====> counting(cache) [model_week_sales] took ')
 start = time.time()
 model_week_sales_count = model_week_sales.count()
 ut.get_timer(starting_time=start)
-print("[model_week_sales] length:", model_week_sales_count)
+print('[model_week_sales] length:', model_week_sales_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -188,11 +197,11 @@ model_week_tree = sku \
     .orderBy('week_id', 'model_id') \
     .persist(StorageLevel.MEMORY_ONLY)
 
-print("====> counting(cache) [model_week_tree] took ")
+print('====> counting(cache) [model_week_tree] took ')
 start = time.time()
 model_week_tree_count = model_week_tree.count()
 ut.get_timer(starting_time=start)
-print("[model_week_tree] length:", model_week_tree_count)
+print('[model_week_tree] length:', model_week_tree_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -230,17 +239,17 @@ model_week_mrp = smu \
     .orderBy('model_id', 'week_id') \
     .persist(StorageLevel.MEMORY_ONLY)
 
-print("====> counting(cache) [model_week_mrp] took ")
+print('====> counting(cache) [model_week_mrp] took ')
 start = time.time()
 model_week_mrp_count = model_week_mrp.count()
 ut.get_timer(starting_time=start)
-print("[model_week_mrp] length:", model_week_mrp_count)
+print('[model_week_mrp] length:', model_week_mrp_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 ## Reduce tables according to the models found in model_week_sales
 
-print("====> Reducing tables according to the models found in model_week_sales...")
+print('====> Reducing tables according to the models found in model_week_sales...')
 
 model_week_tree = model_week_tree.join(model_week_sales.select('model_id').drop_duplicates(), 
                                        on='model_id',  
@@ -250,8 +259,8 @@ model_week_mrp = model_week_mrp.join(model_week_sales.select('model_id').drop_du
                                      on='model_id',  
                                      how='inner')
 
-print("[model_week_tree] (new) length:", model_week_tree.count())
-print("[model_week_mrp] (new) length:", model_week_mrp.count())
+print('[model_week_tree] (new) length:', model_week_tree.count())
+print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -259,7 +268,7 @@ print("[model_week_mrp] (new) length:", model_week_mrp.count())
 
 # MRP are available since 201939 only.  
 # We have to fill weeks between 201924 and 201938 using the 201939 values.
-print("====> Filling missing MRP...")
+print('====> Filling missing MRP...')
 
 model_week_mrp_201939 = model_week_mrp.filter(model_week_mrp['week_id'] == 201939)
 
@@ -274,12 +283,12 @@ def unionAll(dfs):
 
 model_week_mrp = unionAll(l_df)
 
-print("[model_week_mrp] (new) length:", model_week_mrp.count())
+print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
 ## Split sales, price & turnover into 3 tables
-print("====> Spliting sales, price & turnover into 3 tables...")
+print('====> Spliting sales, price & turnover into 3 tables...')
 
 model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
 model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
@@ -290,34 +299,34 @@ model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sale
 ## Save refined global tables
 
 # Check duplicates rows
-assert model_week_sales.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
-assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
-assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
-assert model_week_tree.groupBy(['model_id', 'week_id']).count().select(max("count")).collect()[0][0] == 1
-assert model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max("count")).collect()[0][0] == 1
+assert model_week_sales.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+assert model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
+assert model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
 
 # Write
-print("====> Writing table [model_week_sales]")
+print('====> Writing table [model_week_sales]')
 start = time.time()
 ut.write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
 ut.get_timer(starting_time=start)
 
-print("====> Writing table [model_week_price]")
+print('====> Writing table [model_week_price]')
 start = time.time()
 ut.write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
 ut.get_timer(starting_time=start)
 
-print("====> Writing table [model_week_turnover]")
+print('====> Writing table [model_week_turnover]')
 start = time.time()
 ut.write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
 ut.get_timer(starting_time=start)
 
-print("====> Writing table [model_week_tree]")
+print('====> Writing table [model_week_tree]')
 start = time.time()
 ut.write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
 ut.get_timer(starting_time=start)
 
-print("====> Writing table [model_week_mrp]")
+print('====> Writing table [model_week_mrp]')
 start = time.time()
 ut.write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
 ut.get_timer(starting_time=start)
