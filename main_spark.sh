@@ -12,16 +12,17 @@ sudo pip-3.6 install -r requirements.txt
 spark-submit \
     --deploy-mode client \
     --master yarn \
-    --driver-memory 5g \
-    --conf spark.memory.fraction=0.2 \
-    --conf spark.memory.storageFraction=0.8 \
-    --conf spark.dynamicAllocation.enabled=true \
-    --conf spark.maximizeResourceAllocation=true \
-    --conf spark.sql.crossJoin.enabled=true \
-    --conf spark.dynamicAllocation.minExecutors=2 \
-    --conf spark.dynamicAllocation.maxExecutors=50 \
-    --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'" \
-    --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'" \
+    --conf spark.maximizeResourceAllocation=false
+    --conf spark.dynamicAllocation.enabled=false
+    --conf spark.executors.cores=5
+    --conf spark.executor.memory=3g 
+    --conf spark.executor.memoryOverhead=1g 
+    --conf spark.executor.instances=8
+    --conf spark.default.parallelism=80
+    --conf spark.sql.shuffle.partitions=80
+    --conf spark.yarn.am.cores=5
+    --conf spark.yarn.am.memory=3g 
+    --conf spark.yarn.am.memoryOverhead=1g 
 	--py-files src/utils.py \
 	./src/data_refining_global.py $technical_conf_file
 
