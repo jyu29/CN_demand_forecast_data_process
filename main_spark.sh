@@ -10,11 +10,7 @@ echo "Technical configuration file: $technical_conf_file"
 sudo pip-3.6 install -r requirements.txt
 
 spark-submit \
-    --deploy-mode client \
     --master yarn \
-	--conf spark.yarn.isPython=true \
-	--conf spark.serializer=org.apache.spark.serializer.KryoSerializer \
-    --conf 'spark.executorEnv.PYTHONPATH=/usr/lib/spark/python/lib/py4j-src.zip:/usr/lib/spark/python/:<CPS>{{PWD}}/pyspark.zip<CPS>{{PWD}}/py4j-src.zip' \
 	--py-files src/utils.py \
 	./src/data_refining_global.py $technical_conf_file
 
