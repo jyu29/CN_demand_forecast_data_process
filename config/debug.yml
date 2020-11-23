@@ -55,8 +55,6 @@ technical_parameters:
         spark.driver.memoryOverhead : "4g"
         spark.memory.fraction : 0.2
         spark.memory.storageFraction : 0.8
-        spark.executor.extraJavaOptions : "-XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:InitiatingHeapOccupancyPercent=35 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:OnOutOfMemoryError='kill -9 %p'"
-        spark.driver.extraJavaOptions : "-XX:+UseG1GC -XX:+UnlockDiagnosticVMOptions -XX:+G1SummarizeConcMark -XX:InitiatingHeapOccupancyPercent=35 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:OnOutOfMemoryError='kill -9 %p'"
         yarn.nodemanager.vmem-check-enabled : "false"
         yarn.nodemanager.pmem-check-enabled : "false"
         
