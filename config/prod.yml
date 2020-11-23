@@ -40,7 +40,6 @@ functional_parameters:
   - Z115
 technical_parameters:
     spark_conf:
-        spark.submit.deployMode : "cluster"
         spark.yarn.isPython : "true"
         spark.serializer : "org.apache.spark.serializer.KryoSerializer"
         spark.maximizeResourceAllocation : "false"
