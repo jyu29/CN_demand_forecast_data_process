@@ -3,14 +3,14 @@ import datetime
 import pprint
 import yaml
 import s3fs
-    
+from datetime import datetime, timedelta
+
 def read_yml(file_path):
     """
     Read a local yaml file and return a python dictionary
     :param file_path: (string) full path to the yaml file
     :return: (dict) data loaded
     """
-
     if file_path[:2] == "s3":
         fs = s3fs.S3FileSystem()
         with fs.open(file_path, 'r') as f:
@@ -29,6 +29,38 @@ def pretty_print_dict(dict_to_print):
     """
 
     pprint.pprint(dict_to_print)
+    
+    
+def to_uri(bucket, key):
+    """
+    List all files under a S3 bucket
+    :param bucket: (string) name of the S3 bucket
+    :param key: (string) S3 key
+    :return: (string) URI format
+    """
+    return 's3://{}/{}'.format(bucket, key)
+
+
+def read_parquet_s3(app, bucket, key):
+    """
+    Read parquet files on s3 and return a spark dataframe
+    :app: (SparkSession) spark app
+    :param bucket: (string) name of the S3 bucket
+    :param key: (string) S3 key
+    :return: (SparkDataframe)
+    """
+    df = app.read.parquet(to_uri(bucket, key))
+    return df
+
+
+def write_parquet_s3(df, bucket, key, mode='overwrite'):
+    """
+    Write a SparkDataframe to parquet files on a S3 bucket
+    :df: (SparkDataframe)
+    :param bucket: (string) name of the S3 bucket
+    :param key: (string) S3 key
+    """
+    df.write.parquet(to_uri(bucket, key), mode=mode)
 
 
 def get_current_week():
@@ -37,18 +69,9 @@ def get_current_week():
     is Sunday, with format 'YYYYWW'
     :return current week (international standard ISO 8601) with format 'YYYYWW'
     """
-    today = datetime.date.today()
-    return date_to_week_id(today)
-
-
-def to_uri(bucket, key):
-    """
-    List all files under a S3 bucket
-    :param bucket: (string) name of the S3 bucket
-    :param key: (string) S3 key
-    :return: (string) URI format
-    """
-    return f's3://{bucket}/{key}'
+    shifted_date = datetime.today() + timedelta(days=1)
+    current_week_id = int(str(shifted_date.isocalendar()[0]) + str(shifted_date.isocalendar()[1]).zfill(2))
+    return current_week_id
 
 
 def get_timer(starting_time):
@@ -56,7 +79,6 @@ def get_timer(starting_time):
     Displays the time that has elapsed between the input timer and the current time.
     :param starting_time: (timecode) timecode from Python 'time' package
     """
-    
     end_time = time.time()
     minutes, seconds = divmod(int(end_time - starting_time), 60)
     print("{} minute(s) {} second(s)".format(int(minutes), seconds))

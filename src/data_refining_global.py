@@ -1,546 +1,325 @@
-from pyspark import SparkContext, SparkConf, StorageLevel
-from pyspark.sql import SparkSession, Window
-from pyspark.sql.types import *
-from pyspark.ml.feature import StringIndexer
+## Requirements
 
-import pyspark.sql.functions as F
 import sys
 import time
-import datetime
-
 import utils as ut
+from pyspark import SparkContext, SparkConf, StorageLevel
+from pyspark.sql.functions import *
+from functools import reduce
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+## Get Params & setting up Spark Session
+
+print("Getting parameters...")
+params = ut.read_yml(sys.argv[1])
+ut.pretty_print_dict(params)
+
+bucket_clean = params['buckets']['clean']
+bucket_refined = params['buckets']['refined']
+
+path_clean_datalake = params['paths']['clean_datalake']
+path_refined_global = params['paths']['refined_global']
+
+first_historical_week = params['functional_parameters']['first_historical_week']
+first_backtesting_cutoff = params['functional_parameters']['first_backtesting_cutoff']
+list_puch_org = params['functional_parameters']['list_puch_org']
+
+current_week = ut.get_current_week()
 
 spark = SparkSession.builder.getOrCreate()
-spark.sparkContext.setLogLevel("ERROR")
+spark.sparkContext.setLogLevel("ERROR") # Output only Spark's ERROR.
 
-## Configs 
-conf = ut.ProgramConfiguration(sys.argv[1], sys.argv[2])
-apply_the_sanity_check = eval(sys.argv[3])
+print("Current week: {}".format(current_week))
+print("Refined data will be uploaded up to this week (excluded).")
 
-bucket_clean = conf.get_s3_path_clean()
-bucket_refine_global = conf.get_s3_path_refine_global()
-first_week_id = conf.get_first_week_id()
-percentage_of_critical_decrease = - conf.get_percentage_of_critical_decrease()
-purch_org = conf.get_purch_org()
-sales_org = conf.get_sales_org()
-
-current_week_id = ut.get_current_week_id()
-print("Current week id:", current_week_id)
-
-# ----------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------
 
 ## Load all needed clean data
-tdt = ut.read_parquet_s3(spark, bucket_clean, 'f_transaction_detail/*/')
-dyd = ut.read_parquet_s3(spark, bucket_clean, 'f_delivery_detail/*/')
 
-sku = ut.read_parquet_s3(spark, bucket_clean, 'd_sku/')
-bu = ut.read_parquet_s3(spark, bucket_clean, 'd_business_unit/')
+tdt = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_transaction_detail/*/')
+dyd = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_delivery_detail/*/')
+cex = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_currency_exchange')
 
-sapb = ut.read_parquet_s3(spark, bucket_clean, 'sites_attribut_0plant_branches_h/')
-sdm = ut.read_parquet_s3(spark, bucket_clean, 'd_sales_data_material_h/')
+sku = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku/')
+but = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_business_unit/')
 
-day = ut.read_parquet_s3(spark, bucket_clean, 'd_day/')
-week = ut.read_parquet_s3(spark, bucket_clean, 'd_week/')
+sapb = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'sites_attribut_0plant_branches_h/')
+sdm = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sales_data_material_h/')
+gdw = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_warehouse_h/')
 
-# ----------------------------------------------------------------------------------
+day = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_day/')
+week = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_week/')
 
-## Create Actual_Sales
-actual_sales_offline = tdt \
-    .join(day,
-          on=F.to_date(tdt.tdt_date_to_ordered, 'yyyy-MM-dd') == day.day_id_day,
-          how='inner') \
-    .join(week,
-          on=day.wee_id_week == week.wee_id_week,
-          how='inner') \
-    .join(sku,
-          on=tdt.sku_idr_sku == sku.sku_idr_sku,
-          how='inner') \
-    .join(bu,
-          on=tdt.but_idr_business_unit == bu.but_idr_business_unit,
-          how='inner') \
+# ---------------------------------------------------------------------------------------------------------------------
+
+## Get current CRE exchange rate
+
+cer = cex \
+    .filter(cex['cpt_idr_cur_price'] == 6) \
+    .filter(cex['cur_idr_currency_restit'] == 32) \
+    .filter(current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
+    .select(cex['cur_idr_currency_base'], 
+            cex['cur_idr_currency_restit'],
+            cex['hde_share_price']) \
+    .groupby(cex['cur_idr_currency_base'], 
+             cex['cur_idr_currency_restit']) \
+    .agg(mean(cex['hde_share_price']).alias('exchange_rate')) \
+    .orderBy('cur_idr_currency_base') \
+    .persist(StorageLevel.MEMORY_ONLY)
+
+print("====> counting(cache) [current_exchange_rate] took ")
+start = time.time()
+cer_count = cer.count()
+get_timer(starting_time=start)
+print("[current_exchange_rate] length:", cer_count)
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+## Create model_week_sales
+
+# Offline
+model_week_sales_offline = tdt \
+    .join(day, on=to_date(tdt['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
+    .join(week, on=day['wee_id_week'] == week['wee_id_week'], how='inner') \
+    .join(sku, on=tdt['sku_idr_sku'] == sku['sku_idr_sku'], how='inner') \
+    .join(but, on=tdt['but_idr_business_unit'] == but['but_idr_business_unit'], how='inner') \
+    .join(cer, on=tdt['cur_idr_currency'] == cer['cur_idr_currency_base'], how='inner') \
     .join(sapb,
-          on=bu.but_num_business_unit.cast('string') == \
-             F.regexp_replace(sapb.plant_id, '^0*|\s', ''),
+          on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
           how='inner') \
-    .filter(tdt.the_to_type == 'offline') \
-    .filter(week.wee_id_week >= first_week_id) \
-    .filter(week.wee_id_week < current_week_id) \
-    .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
-    .filter(sku.mdl_num_model_r3.isNotNull()) \
-    .filter(sapb.purch_org == purch_org) \
-    .filter(sapb.sapsrc == 'PRT') \
-    .filter(F.current_timestamp().between(sapb.date_begin, sapb.date_end)) \
-    .select(week.wee_id_week.cast('int').alias('week_id'),
-            week.day_first_day_week.alias('date'),
-            sku.mdl_num_model_r3.alias('model'),
-            tdt.f_qty_item)
+    .filter(tdt['the_to_type'] == 'offline') \
+    .filter(tdt['tdt_type_detail'] == 'sale') \
+    .filter(day['wee_id_week'] >= first_historical_week) \
+    .filter(day['wee_id_week'] < current_week) \
+    .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
+    .filter(sku['mdl_num_model_r3'].isNotNull()) \
+    .filter(but['but_num_typ_but'] == 7) \
+    .filter(sapb['sapsrc'] == 'PRT') \
+    .filter(sapb['purch_org'].isin(list_puch_org)) \
+    .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end'])) \
+    .select(sku['mdl_num_model_r3'].alias('model_id'),
+            day['wee_id_week'].cast('int').alias('week_id'),
+            week['day_first_day_week'].alias('date'),
+            tdt['f_qty_item'],
+            tdt['f_pri_regular_sales_unit'],
+            tdt['f_to_tax_in'],
+            cer['exchange_rate'])
 
-actual_sales_online = dyd \
-    .join(day,
-          on=F.to_date(dyd.tdt_date_to_ordered, 'yyyy-MM-dd') == day.day_id_day,
-          how='inner') \
-    .join(week,
-          on=day.wee_id_week == week.wee_id_week,
-          how='inner') \
-    .join(sku,
-          on=dyd.sku_idr_sku == sku.sku_idr_sku,
-          how='inner') \
-    .join(bu,
-          on=dyd.but_idr_business_unit_economical == bu.but_idr_business_unit,
-          how='inner') \
+# Online
+model_week_sales_online = dyd \
+    .join(day, on=to_date(dyd['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
+    .join(week, on=day['wee_id_week'] == week['wee_id_week'], how='inner') \
+    .join(sku, on=dyd['sku_idr_sku'] == sku['sku_idr_sku'], how='inner') \
+    .join(but, on=dyd['but_idr_business_unit_economical'] == but['but_idr_business_unit'], how='inner') \
+    .join(cer, on=dyd['cur_idr_currency'] == cer['cur_idr_currency_base'], how='inner') \
     .join(sapb,
-          on=bu.but_num_business_unit.cast('string') == \
-             F.regexp_replace(sapb.plant_id, '^0*|\s', ''),
+          on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
           how='inner') \
-    .filter(dyd.the_to_type == 'online') \
-    .filter(week.wee_id_week >= first_week_id) \
-    .filter(week.wee_id_week < current_week_id) \
-    .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
-    .filter(sku.mdl_num_model_r3.isNotNull()) \
-    .filter(sapb.purch_org == purch_org) \
-    .filter(sapb.sapsrc == 'PRT') \
-    .filter(F.current_timestamp().between(sapb.date_begin, sapb.date_end)) \
-    .select(week.wee_id_week.cast('int').alias('week_id'),
-            week.day_first_day_week.alias('date'),
-            sku.mdl_num_model_r3.alias('model'),
-            dyd.f_qty_item)
+    .filter(dyd['the_to_type'] == 'online') \
+    .filter(dyd['tdt_type_detail'] == 'sale') \
+    .filter(day['wee_id_week'] >= first_historical_week) \
+    .filter(day['wee_id_week'] < current_week) \
+    .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
+    .filter(sku['mdl_num_model_r3'].isNotNull()) \
+    .filter(but['but_num_typ_but'] == 7) \
+    .filter(sapb['sapsrc'] == 'PRT') \
+    .filter(sapb['purch_org'].isin(list_puch_org)) \
+    .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end'])) \
+    .select(sku['mdl_num_model_r3'].alias('model_id'),
+            day['wee_id_week'].cast('int').alias('week_id'),
+            week['day_first_day_week'].alias('date'),
+            dyd['f_qty_item'],
+            dyd['f_tdt_pri_regular_sales_unit'],
+            dyd['f_to_tax_in'],
+            cer['exchange_rate'])
 
-actual_sales = actual_sales_offline.union(actual_sales_online) \
-    .groupby(['week_id', 'date', 'model']) \
-    .agg(F.sum('f_qty_item').alias('y')) \
-    .filter(F.col('y') > 0) \
-    .repartition('model')
+# Omni
+model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
+    .groupby(['model_id', 'week_id', 'date']) \
+    .agg(sum('f_qty_item').alias('sales_quantity'),
+         mean(col('f_pri_regular_sales_unit') * col('exchange_rate')).alias('average_price'),
+         sum(col('f_to_tax_in') * col('exchange_rate')).alias('sum_turnover')) \
+    .filter(col('sales_quantity') > 0) \
+    .filter(col('average_price') > 0) \
+    .filter(col('sum_turnover') > 0) \
+    .orderBy('model_id', 'week_id') \
+    .persist(StorageLevel.MEMORY_ONLY)
 
-actual_sales.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [actual_sales] took ")
+print("====> counting(cache) [model_week_sales] took ")
 start = time.time()
-actual_sales_count = actual_sales.count()
-ut.get_timer(starting_time=start)
-print("actual_sales length:", actual_sales_count)
+model_week_sales_count = model_week_sales.count()
+get_timer(starting_time=start)
+print("[model_week_sales] length:", model_week_sales_count)
 
-print("====> Collecting [max_week_id] took ")
+# ---------------------------------------------------------------------------------------------------------------------
+
+## Create model_week_tree
+
+model_week_tree = sku \
+    .join(week, on=week['day_first_day_week'].between(sku['sku_date_begin'], sku['sku_date_end']), how='inner') \
+    .filter(sku['sku_num_sku_r3'].isNotNull()) \
+    .filter(sku['mdl_num_model_r3'].isNotNull()) \
+    .filter(sku['fam_num_family'].isNotNull()) \
+    .filter(sku['sdp_num_sub_department'].isNotNull()) \
+    .filter(sku['dpt_num_department'].isNotNull()) \
+    .filter(sku['unv_num_univers'].isNotNull()) \
+    .filter(sku['pnt_num_product_nature'].isNotNull()) \
+    .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
+    .filter(week['wee_id_week'] >= first_backtesting_cutoff) \
+    .filter(week['wee_id_week'] < current_week) \
+    .groupBy(week['wee_id_week'].cast('int').alias('week_id'),
+             sku['mdl_num_model_r3'].alias('model_id'),
+             when(sku['mdl_label'].isNull(), 'UNKNOWN').otherwise(sku['mdl_label']).alias('model_label'),
+             sku['fam_num_family'].alias('family_id'),
+             sku['family_label'],
+             sku['sdp_num_sub_department'].alias('sub_department_id'),
+             sku['sdp_label'].alias('sub_department_label'),
+             sku['dpt_num_department'].alias('department_id'),
+             sku['dpt_label'].alias('department_label'),
+             sku['unv_num_univers'].alias('univers_id'),
+             sku['unv_label'].alias('univers_label'),
+             sku['pnt_num_product_nature'].alias('product_nature_id'),
+             when(sku['product_nature_label'].isNull(), 
+                  'UNDEFINED').otherwise(sku['product_nature_label']).alias('product_nature_label')) \
+    .agg(max(sku['brd_label_brand']).alias('brand_label'),
+         max(sku['brd_type_brand_libelle']).alias('brand_type')) \
+    .orderBy('week_id', 'model_id') \
+    .persist(StorageLevel.MEMORY_ONLY)
+
+print("====> counting(cache) [model_week_tree] took ")
 start = time.time()
-max_week_id = actual_sales.select(F.max('week_id')).collect()[0][0]
-ut.get_timer(starting_time=start)
-print("max week id in actual_sales:", max_week_id)
+model_week_tree_count = model_week_tree.count()
+get_timer(starting_time=start)
+print("[model_week_tree] length:", model_week_tree_count)
 
+# ---------------------------------------------------------------------------------------------------------------------
 
-assert actual_sales_count > 0
-assert ut.get_next_week_id(max_week_id) == current_week_id
+## Create model_week_mrp
 
-# ----------------------------------------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------------------------------------
-# Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales
-# for a specific  week ?)
-print(">>> Sanity check for DLIGHT DATA Ingestion (Do we have some abnormal decrease of sales for a specific  week ? )"
-      "\nIt took...")
-start = time.time()
-print("*** The threshold percentage of critical decrease is: {}%".format(percentage_of_critical_decrease))
-
-# Defining  'window_partition' variable which will allow us to calculate 'lag' values.
-sanity_check_df = actual_sales \
-    .withColumn('window_partition', F.lit(1)) \
-    .select('window_partition', 'week_id', 'y')
-
-# Total sales per week.
-sanity_check_df = sanity_check_df \
-    .groupby(['window_partition', 'week_id']) \
-    .agg(F.sum('y').alias('y'))
-
-# 4 'lag' values for each week.
-w = Window().partitionBy("window_partition").orderBy(F.asc("week_id"))
-sanity_check_df = sanity_check_df \
-    .withColumn('lag1',
-                F.lag(sanity_check_df.y, count=1, default=0).over(w)) \
-    .withColumn('lag2',
-                F.lag(sanity_check_df.y, count=2, default=0).over(w)) \
-    .withColumn('lag3',
-                F.lag(sanity_check_df.y, count=3, default=0).over(w)) \
-    .withColumn('lag4',
-                F.lag(sanity_check_df.y, count=4, default=0).over(w))
-
-# Keep only weeks with the 4 complete 'lag' values.
-sanity_check_df = sanity_check_df \
-    .filter(sanity_check_df.lag4 > 0)
-
-# For each week, compute the mean values of the 4 'lag'.
-sanity_check_df = sanity_check_df \
-    .withColumn('mean_lag',
-                (F.col("lag1") + F.col("lag2") + F.col("lag3") + F.col("lag4")) / 4)
-sanity_check_df = sanity_check_df \
-    .withColumn('evolution', ((F.col('y') - F.col('mean_lag')) / F.col('mean_lag')) * 100)
-
-# Keeping only negative evolution rates.
-sanity_check_df = sanity_check_df \
-    .filter(sanity_check_df.evolution < 0)
-sanity_check_df.describe(['evolution']).show()
-
-# Getting the minimum of the negative evolution rates.
-min_evolution = sanity_check_df.select(F.min('evolution')).collect()[0][0]
-
-# Show the week for which the evolution rates is
-# the minimum.
-sanity_check_df.filter(sanity_check_df.evolution == min_evolution).drop('window_partition').show()
-
-print("*** Writing sanity check table [data_sanity_check]")
-ut.write_parquet_s3(sanity_check_df.withColumn("execution_day", F.current_timestamp()), bucket_refine_global,
-                    'sanity_check_df')
-ut.get_timer(starting_time=start)
-
-if apply_the_sanity_check:
-    print("************* Activate the application of DLIGHT data sanity-check *************")
-    assert min_evolution > percentage_of_critical_decrease, "There is an abnormal decreasing of data !"
-else:
-    print("************ Deactivate the application of DLIGHT data sanity-check ************")
-# ----------------------------------------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-# ----------------------------------------------------------------------------------
-
-## Create Lifestage_Update
-lifestage_update = sdm \
-    .join(sku,
-          on=F.regexp_replace(sdm.material_id, '^0*|\s', '') == \
-             sku.mdl_num_model_r3.cast('string'),
-          how='inner') \
-    .filter(sdm.sales_org == sales_org) \
-    .filter(sdm.sap_source == 'PRT') \
-    .filter(sdm.lifestage != '') \
-    .filter(sdm.distrib_channel == '02') \
-    .filter(sku.mdl_num_model_r3.isNotNull()) \
-    .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
-    .filter(F.current_timestamp().between(sku.sku_date_begin, sku.sku_date_end)) \
-    .withColumn("date_end",
-                F.when(sdm.date_end == '2999-12-31',
-                       F.to_date(F.lit('2100-12-31'), 'yyyy-MM-dd')) \
-                .otherwise(sdm.date_end)) \
-    .select(sku.mdl_num_model_r3.alias('model'),
-            sdm.date_begin,
-            "date_end",
-            sdm.lifestage.cast('int').alias('lifestage')) \
+# get sku mrp update
+smu = gdw \
+    .join(sapb, on=gdw['sdw_plant_id'] == sapb['plant_id'], how='inner') \
+    .join(sku, on=sku['sku_num_sku_r3'] == regexp_replace(gdw['sdw_material_id'], '^0*|\s', ''), how='inner') \
+    .filter(gdw['sdw_sap_source'] == 'PRT') \
+    .filter(gdw['sdw_material_mrp'] != '    ') \
+    .filter(sapb['sapsrc'] == 'PRT') \
+    .filter(sapb['purch_org'].isin(list_puch_org)) \
+    .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end'])) \
+    .filter(sku['mdl_num_model_r3'].isNotNull()) \
+    .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
+    .filter(current_timestamp().between(sku['sku_date_begin'], sku['sku_date_end'])) \
+    .select(gdw['date_begin'],
+            gdw['date_end'],
+            sku['sku_num_sku_r3'].alias('sku_id'),
+            sku['mdl_num_model_r3'].alias('model_id'),
+            gdw['sdw_material_mrp'].cast('int').alias('mrp')) \
     .drop_duplicates() \
-    .repartition('model')
+    .persist(StorageLevel.MEMORY_ONLY)
 
-lifestage_update.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [lifestage_update] took ")
-start = time.time()
-lifestage_update_count = lifestage_update.count()
-ut.get_timer(starting_time=start)
-print("lifestage_update length:", lifestage_update_count)
-assert lifestage_update_count > 0
-
-# ----------------------------------------------------------------------------------
-
-## Create Model_Info
-model_info = sku \
-    .filter(sku.mdl_num_model_r3.isNotNull()) \
-    .filter(~sku.unv_num_univers.isin([0, 14, 89, 90])) \
-    .filter(F.current_timestamp().between(sku.sku_date_begin, sku.sku_date_end)) \
-    .select(sku.mdl_num_model_r3.alias('model'),
-            sku.mdl_label.alias('model_label'),
-            sku.fam_num_family.alias('family'),
-            sku.family_label.alias('family_label'),
-            sku.sdp_num_sub_department.alias('sub_department'),
-            sku.sdp_label.alias('sub_department_label'),
-            sku.dpt_num_department.alias('department'),
-            sku.unv_label.alias('department_label'),
-            sku.unv_num_univers.alias('univers'),
-            sku.unv_label.alias('univers_label'),
-            sku.pnt_num_product_nature.alias('product_nature'),
-            sku.product_nature_label.alias('product_nature_label'),
-            sku.category_label.alias('category_label')) \
+# calculate model week mrp
+model_week_mrp = smu \
+    .join(day, on=day['day_id_day'].between(smu['date_begin'], smu['date_end']), how='inner') \
+    .filter(day['wee_id_week'] >= '201939') \
+    .filter(day['wee_id_week'] < current_week) \
+    .select(day['wee_id_week'].cast('int').alias('week_id'),
+            smu['model_id'],
+            when(smu['mrp'].isin(2, 5), True).otherwise(False).alias('is_mrp_active')) \
     .drop_duplicates() \
-    .repartition('model')
+    .orderBy('model_id', 'week_id') \
+    .persist(StorageLevel.MEMORY_ONLY)
 
-model_info.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [model_info] (1st time) took ")
+print("====> counting(cache) [model_week_mrp] took ")
 start = time.time()
-model_info_count = model_info.count()
-ut.get_timer(starting_time=start)
-print("model_info length:", model_info_count)
-assert model_info_count > 0
+model_week_mrp_count = model_week_mrp.count()
+get_timer(starting_time=start)
+print("[model_week_mrp] length:", model_week_mrp_count)
 
-# ----------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------------------------------------------
 
-# Keep only usefull life stage values: models in actual sales
-lifestage_update = lifestage_update.join(actual_sales.select('model').drop_duplicates(),
-                                         on='model', how='inner')
+## Reduce tables according to the models found in model_week_sales
 
-# Calculates all possible date/model combinations associated with a life stage update
-min_date = lifestage_update.select(F.min('date_begin')).collect()[0][0]
-
-all_lifestage_date = actual_sales \
-    .filter(actual_sales.date >= min_date) \
-    .select('date') \
-    .drop_duplicates() \
-    .orderBy('date')
+print("====> Reducing tables according to the models found in model_week_sales...")
 
-all_lifestage_model = lifestage_update.select('model').drop_duplicates().orderBy('model')
+model_week_tree = model_week_tree.join(model_week_sales.select('model_id').drop_duplicates(), 
+                                       on='model_id',  
+                                       how='inner')
 
-date_model = all_lifestage_date.crossJoin(all_lifestage_model)
+model_week_mrp = model_week_mrp.join(model_week_sales.select('model_id').drop_duplicates(), 
+                                     on='model_id',  
+                                     how='inner')
 
-# Calculate lifestage by date
-model_lifestage = date_model.join(lifestage_update, on='model', how='left')
-model_lifestage = model_lifestage \
-    .filter((model_lifestage.date >= model_lifestage.date_begin) &
-            (model_lifestage.date <= model_lifestage.date_end)) \
-    .drop('date_begin', 'date_end')
+print("[model_week_tree] (new) length:", model_week_tree.count())
+print("[model_week_mrp] (new) length:", model_week_mrp.count())
 
-# The previous filter removes combinations that do not match the update dates.
-# But sometimes the update dates do not cover all periods, 
-# which causes some dates to disappear, even during the model's activity periods.
-# To avoid this problem, we must merge again with all combinations to be sure 
-# not to lose anything.
-model_lifestage = date_model.join(model_lifestage, on=['date', 'model'], how='left')
+# ---------------------------------------------------------------------------------------------------------------------
 
-model_lifestage = model_lifestage \
-    .groupby(['date', 'model']) \
-    .agg(F.min('lifestage').alias('lifestage'))
+## Fill missing MRP
 
-# This is a ffil by group in pyspark
-window = Window \
-    .partitionBy('model') \
-    .orderBy('date') \
-    .rowsBetween(-sys.maxsize, 0)
+# MRP are available since 201939 only.  
+# We have to fill weeks between 201924 and 201938 using the 201939 values.
+print("====> Filling missing MRP...")
 
-ffilled_lifestage = F.last(model_lifestage['lifestage'], ignorenulls=True).over(window)
+model_week_mrp_201939 = model_week_mrp.filter(model_week_mrp['week_id'] == 201939)
 
-model_lifestage = model_lifestage.withColumn('lifestage', ffilled_lifestage)
+l_df = []
+for w in range(201924, 201939):
+    df = model_week_mrp_201939.withColumn('week_id', lit(w))
+    l_df.append(df)
+l_df.append(model_week_mrp)
 
-model_lifestage = model_lifestage \
-    .withColumn('lifestage_shift',
-                F.lag(model_lifestage['lifestage']) \
-                .over(Window.partitionBy("model").orderBy(F.desc('date'))))
+def unionAll(dfs):
+    return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
 
-model_lifestage = model_lifestage \
-    .withColumn('diff_shift', model_lifestage['lifestage'] - \
-                model_lifestage['lifestage_shift'])
+model_week_mrp = unionAll(l_df)
 
-df_cut_date = model_lifestage.filter(model_lifestage.diff_shift > 0)
+print("[model_week_mrp] (new) length:", model_week_mrp.count())
 
-df_cut_date = df_cut_date \
-    .groupBy('model') \
-    .agg(F.max('date').alias('cut_date'))
+# ---------------------------------------------------------------------------------------------------------------------
 
-model_lifestage = model_lifestage.join(df_cut_date, on=['model'], how='left')
+## Split sales, price & turnover into 3 tables
+print("====> Spliting sales, price & turnover into 3 tables...")
 
-# if no cut_date, fill by an old one
-model_lifestage = model_lifestage \
-    .withColumn('cut_date', F.when(F.col('cut_date').isNull(),
-                                   F.to_date(F.lit('1993-04-15'), 'yyyy-MM-dd')) \
-                .otherwise(F.col('cut_date')))
+model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
+model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
+model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-model_lifestage = model_lifestage \
-    .filter(model_lifestage.date >= model_lifestage.cut_date) \
-    .select(['date', 'model', 'lifestage'])
+# ---------------------------------------------------------------------------------------------------------------------
 
-model_lifestage.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [model_lifestage] took ")
-start = time.time()
-model_lifestage_count = model_lifestage.count()
-ut.get_timer(starting_time=start)
-print("model_lifestage length:", model_lifestage_count)
-assert model_lifestage_count > 0
-
-# ----------------------------------------------------------------------------------
-
-# Calculates all possible date/model combinations from actual sales
-all_sales_model = actual_sales.select('model').orderBy('model').drop_duplicates()
-all_sales_date = actual_sales.select('date').orderBy('date').drop_duplicates()
-
-date_model = all_sales_model.crossJoin(all_sales_date)
-
-# Add corresponding week id
-date_model = date_model.join(actual_sales.select(['date', 'week_id']).drop_duplicates(),
-                             on=['date'], how='inner')
-
-# Add actual sales
-complete_ts = date_model.join(actual_sales, on=['date', 'model', 'week_id'], how='left')
-complete_ts = complete_ts.select(actual_sales.columns)
-
-# Fill NaN (no sales recorded) by 0
-complete_ts = complete_ts.fillna(0, subset=['y'])
-
-complete_ts = complete_ts.join(model_lifestage, ['date', 'model'], how='left')
-
-complete_ts.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [complete_ts] (1st time) took ")
-start = time.time()
-complete_ts_count = complete_ts.count()
-ut.get_timer(starting_time=start)
-
-print("complete_ts length:", complete_ts_count)
-assert complete_ts_count > 0
-
-
-# ----------------------------------------------------------------------------------
-
-def add_column_index(df, col_name):
-    new_schema = StructType(df.schema.fields + [StructField(col_name, LongType(), False), ])
-    return df.rdd.zipWithIndex().map(lambda row: row[0] + (row[1],)).toDF(schema=new_schema)
-
-
-# find models respecting the first condition
-w = Window.partitionBy('model').orderBy('date')
-
-first_lifestage = complete_ts.filter(complete_ts.lifestage.isNotNull()) \
-    .withColumn('rn', F.row_number().over(w))
-
-first_lifestage = first_lifestage.filter(first_lifestage.rn == 1).drop('rn')
-
-first_lifestage = first_lifestage \
-    .filter(first_lifestage.lifestage == 1) \
-    .select(first_lifestage.model,
-            first_lifestage.date.alias('first_lifestage_date'))
-
-# Create the mask (rows to be completed) for theses models
-complete_ts = add_column_index(complete_ts, 'idx')  # save original indexes
-complete_ts.cache()
-
-mask = complete_ts
-
-# keep only models respecting the first condition
-mask = mask.join(first_lifestage, on='model', how='inner')
-
-# Look only before the first historized lifestage date
-mask = mask.filter(mask.date <= mask.first_lifestage_date)
-
-w = Window.partitionBy('model').orderBy(F.desc('date'))
-
-mask = mask \
-    .withColumn('cumsum_y', F.sum('y').over(w)) \
-    .withColumn('lag_cumsum_y', F.lag('cumsum_y').over(w)) \
-    .fillna(0, subset=['lag_cumsum_y']) \
-    .withColumn('is_active', F.col('cumsum_y') > F.col('lag_cumsum_y'))
-
-ts_start_date = mask \
-    .filter(mask.is_active == False) \
-    .withColumn('rn', F.row_number().over(w)) \
-    .filter(F.col('rn') == 1) \
-    .select('model', F.col('date').alias('start_date'))
-
-mask = mask.join(ts_start_date, on='model', how='left')
-
-# Case model start date unknown (older than first week recorded here)
-# ==> fill by an old date
-mask = mask \
-    .withColumn('start_date', F.when(F.col('start_date').isNull(),
-                                     F.to_date(F.lit('1993-04-15'), 'yyyy-MM-dd')) \
-                .otherwise(F.col('start_date'))) \
-    .withColumn('is_model_start', F.col('date') > F.col('start_date')) \
-    .withColumn('to_fill', F.col('is_active') & \
-                F.col('is_model_start') & \
-                F.col('lifestage').isNull())
-
-mask = mask.filter(mask.to_fill == True).select(['idx', 'to_fill'])
-
-# Fill the eligible rows under all conditions
-complete_ts = complete_ts.join(mask, on='idx', how='left')
-complete_ts = complete_ts \
-    .withColumn('lifestage',
-                F.when(F.col('to_fill') == True, F.lit(1)).otherwise(F.col('lifestage')))
-
-complete_ts = complete_ts.select(['week_id', 'date', 'model', 'y', 'lifestage'])
-
-complete_ts.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [complete_ts] (2nd time) took ")
-start = time.time()
-complete_ts_count = complete_ts.count()
-ut.get_timer(starting_time=start)
-print("complete_ts length:", complete_ts_count)
-assert complete_ts_count > 0
-
-# ----------------------------------------------------------------------------------
-
-w = Window.partitionBy('model').orderBy('date')
-
-model_start_date = actual_sales.withColumn('rn', F.row_number().over(w))
-
-model_start_date = model_start_date \
-    .filter(model_start_date.rn == 1) \
-    .drop('rn', 'week_id', 'y') \
-    .select(F.col("model"), F.col("date").alias("first_date"))
-
-active_sales = complete_ts \
-    .filter(complete_ts.lifestage == 1) \
-    .join(model_start_date, on='model', how='inner') \
-    .filter(complete_ts.date >= model_start_date.first_date) \
-    .drop('lifestage', 'first_date') \
-    .orderBy(['model', 'week_id'])
-
-active_sales.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) active_sales took ")
-start = time.time()
-active_sales_count = active_sales.count()
-ut.get_timer(starting_time=start)
-
-print("active_sales length:", active_sales_count)
-assert active_sales_count > 0
-
-# ----------------------------------------------------------------------------------
-
-
-model_info = model_info \
-    .withColumn('category_label',
-                F.when(model_info.category_label == 'SOUS RAYON POUB', F.lit(None)) \
-                .otherwise(model_info.category_label)) \
-    .fillna('UNKNOWN')
-
-# Due to a discrepant seasonal behaviour between LOW SOCKS and HIGH SOCKS, we chose to split
-# the product nature 'SOCKS' into two different product natures 'LOW SOCKS' and 'HIGH SOCKS'
-model_info = model_info \
-    .withColumn('product_nature_label',
-                F.when((model_info.product_nature_label == 'SOCKS') & \
-                       (model_info.model_label.contains(' LOW')),
-                       F.lit('LOW SOCKS')) \
-                .when((model_info.product_nature_label == 'SOCKS') & \
-                      (model_info.model_label.contains(' MID')),
-                      F.lit('MID SOCKS')) \
-                .when((model_info.product_nature_label == 'SOCKS') & \
-                      (model_info.model_label.contains(' HIGH')),
-                      F.lit('HIGH SOCKS')) \
-                .otherwise(model_info.product_nature_label)) \
-    .drop('product_nature')
-
-indexer = StringIndexer(inputCol='product_nature_label', outputCol='product_nature')
-
-model_info = indexer \
-    .fit(model_info) \
-    .transform(model_info) \
-    .withColumn('product_nature', F.col('product_nature').cast('integer')) \
-    .orderBy('model')
-
-model_info.persist(StorageLevel.MEMORY_ONLY)
-print("====> Counting(cache) [model_info] (2nd time) took ")
-start = time.time()
-model_info_count = model_info.count()
-ut.get_timer(starting_time=start)
-print("model_info length:", model_info_count)
-assert model_info_count > 0
-
-# ----------------------------------------------------------------------------------
+## Save refined global tables
 
 # Check duplicates rows
-assert active_sales.groupBy(['date', 'model']).count().select(F.max("count")).collect()[0][0] == 1
-assert model_info.count() == model_info.select('model').drop_duplicates().count()
+assert model_week_sales.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
+assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
+assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max("count")).collect()[0][0] == 1
+assert model_week_tree.groupBy(['model_id', 'week_id']).count().select(max("count")).collect()[0][0] == 1
+assert model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max("count")).collect()[0][0] == 1
 
 # Write
-print("writing tables...")
-
-print("====> Writing table [model_info]")
+print("====> Writing table [model_week_sales]")
 start = time.time()
-ut.write_parquet_s3(model_info, bucket_refine_global, 'model_info')
-ut.get_timer(starting_time=start)
+ut.write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
+get_timer(starting_time=start)
 
-print("====> Writing table [actual_sales]")
+print("====> Writing table [model_week_price]")
 start = time.time()
-ut.write_parquet_s3(actual_sales, bucket_refine_global, 'actual_sales')
-ut.get_timer(starting_time=start)
+ut.write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
+get_timer(starting_time=start)
 
-print("====> Writing table [active_sales]")
+print("====> Writing table [model_week_turnover]")
 start = time.time()
-ut.write_parquet_s3(active_sales, bucket_refine_global, 'active_sales')
-ut.get_timer(starting_time=start)
+ut.write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
+get_timer(starting_time=start)
+
+print("====> Writing table [model_week_tree]")
+start = time.time()
+ut.write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
+get_timer(starting_time=start)
+
+print("====> Writing table [model_week_mrp]")
+start = time.time()
+ut.write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
+get_timer(starting_time=start)
+
 
 spark.stop()
