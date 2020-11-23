@@ -3,7 +3,8 @@
 import sys
 import time
 import utils as ut
-from pyspark import SparkContext, SparkConf, StorageLevel
+from pyspark import SparkContext, StorageLevel
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from functools import reduce
 
