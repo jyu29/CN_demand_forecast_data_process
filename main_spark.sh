@@ -23,7 +23,7 @@ spark-submit \
     --conf spark.executor.extraJavaOptions="-verbose:gc -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'" \
     --conf spark.driver.extraJavaOptions="-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 -XX:+CMSClassUnloadingEnabled -XX:OnOutOfMemoryError='kill -9 %p'" \
 	--py-files src/utils.py \
-	/src/data_refining_global.py $technical_conf_file
+	./src/data_refining_global.py $technical_conf_file
 
 echo $? > code_status
 my_exit_code=$(cat code_status)
