@@ -11,7 +11,7 @@ pipeline {
 
                     export https_proxy="${https_proxy}"
 
-                    master_ip=$(master_ip)
+                    master_ip=${master_ip}
 
                     scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
 
