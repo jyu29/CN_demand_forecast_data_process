@@ -43,11 +43,11 @@ technical_parameters:
         spark.maximizeResourceAllocation : "false"
         spark.dynamicAllocation.enabled : "false"
         spark.executors.cores : 5
-        spark.executor.memory : "3g"
-        spark.executor.memoryOverhead : "1g"
+        spark.executor.memory : "36g"
+        spark.executor.memoryOverhead : "4g"
         spark.executor.instances : 8
         spark.default.parallelism : 80
         spark.sql.shuffle.partitions : 80
         spark.yarn.am.cores : 5
-        spark.yarn.am.memory : "3g"
-        spark.yarn.am.memoryOverhead : "1g"
+        spark.yarn.am.memory : "36g"
+        spark.yarn.am.memoryOverhead : "4g"
