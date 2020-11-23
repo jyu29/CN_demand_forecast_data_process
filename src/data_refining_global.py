@@ -72,7 +72,7 @@ cer = cex \
 print("====> counting(cache) [current_exchange_rate] took ")
 start = time.time()
 cer_count = cer.count()
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 print("[current_exchange_rate] length:", cer_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
 print("====> counting(cache) [model_week_sales] took ")
 start = time.time()
 model_week_sales_count = model_week_sales.count()
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 print("[model_week_sales] length:", model_week_sales_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ model_week_tree = sku \
 print("====> counting(cache) [model_week_tree] took ")
 start = time.time()
 model_week_tree_count = model_week_tree.count()
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 print("[model_week_tree] length:", model_week_tree_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ model_week_mrp = smu \
 print("====> counting(cache) [model_week_mrp] took ")
 start = time.time()
 model_week_mrp_count = model_week_mrp.count()
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 print("[model_week_mrp] length:", model_week_mrp_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -300,27 +300,27 @@ assert model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max("count
 print("====> Writing table [model_week_sales]")
 start = time.time()
 ut.write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 
 print("====> Writing table [model_week_price]")
 start = time.time()
 ut.write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 
 print("====> Writing table [model_week_turnover]")
 start = time.time()
 ut.write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 
 print("====> Writing table [model_week_tree]")
 start = time.time()
 ut.write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 
 print("====> Writing table [model_week_mrp]")
 start = time.time()
 ut.write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 
 
 spark.stop()
