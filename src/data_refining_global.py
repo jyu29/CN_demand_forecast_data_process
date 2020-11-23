@@ -40,7 +40,7 @@ print('Setting up Spark Session...')
 list_conf = list(params['technical_parameters']['spark_conf'].items())
 spark_conf = SparkConf().setAll(list_conf)
 
-spark = SparkSession.builder.getOrCreate(conf=spark_conf)
+spark = SparkSession.builder.config(conf=spark_conf).getOrCreate()
 spark.sparkContext.setLogLevel('ERROR') # Output only Spark's ERROR.
 
 # ---------------------------------------------------------------------------------------------------------------------
