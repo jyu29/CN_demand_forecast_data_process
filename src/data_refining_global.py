@@ -140,7 +140,7 @@ model_week_sales_online = dyd \
             day['wee_id_week'].cast('int').alias('week_id'),
             week['day_first_day_week'].alias('date'),
             dyd['f_qty_item'],
-            dyd['f_tdt_pri_regular_sales_unit'],
+            dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
             dyd['f_to_tax_in'],
             cer['exchange_rate'])
 

@@ -42,6 +42,7 @@ technical_parameters:
     spark_conf:
         spark.yarn.isPython : "true"
         spark.serializer : "org.apache.spark.serializer.KryoSerializer"
+        spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version : 2
         spark.maximizeResourceAllocation : "false"
         spark.dynamicAllocation.enabled : "false"
         spark.executor.cores : 5
