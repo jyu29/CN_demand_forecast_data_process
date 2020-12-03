@@ -231,7 +231,7 @@ model_week_mrp = smu \
 print("====> counting(cache) [model_week_mrp] took ")
 start = time.time()
 model_week_mrp_count = model_week_mrp.count()
-get_timer(starting_time=start)
+ut.get_timer(starting_time=start)
 print("[model_week_mrp] length:", model_week_mrp_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
