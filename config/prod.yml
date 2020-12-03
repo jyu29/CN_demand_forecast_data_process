@@ -14,6 +14,7 @@ functional_parameters:
   - Z004
   - Z005
   - Z006
+  - Z008
   - Z011
   - Z012
   - Z013
@@ -24,24 +25,31 @@ functional_parameters:
   - Z026
   - Z027
   - Z028
+  - Z042
   - Z060
   - Z061
   - Z065
+  - Z066
+  - Z078
   - Z091
   - Z093
   - Z094
   - Z095
   - Z096
+  - Z098
+  - Z101
   - Z102
   - Z104
   - Z105
   - Z106
+  - Z107
   - Z112
   - Z115
 technical_parameters:
     spark_conf:
         spark.yarn.isPython : "true"
         spark.serializer : "org.apache.spark.serializer.KryoSerializer"
+        spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version : 2
         spark.maximizeResourceAllocation : "false"
         spark.dynamicAllocation.enabled : "false"
         spark.executor.cores : 5
@@ -50,10 +58,6 @@ technical_parameters:
         spark.executor.instances : 8
         spark.default.parallelism : 80
         spark.sql.shuffle.partitions : 80
-        spark.driver.cores : 5
-        spark.driver.memory : "36g"
-        spark.driver.memoryOverhead : "4g"
-        spark.memory.fraction : 0.2
-        spark.memory.storageFraction : 0.8
-        yarn.nodemanager.vmem-check-enabled : "false"
-        yarn.nodemanager.pmem-check-enabled : "false"
+        spark.yarn.am.cores : 5
+        spark.yarn.am.memory : "36g"
+        spark.yarn.am.memoryOverhead : "4g"

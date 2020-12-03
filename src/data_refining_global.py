@@ -4,7 +4,7 @@ import sys
 import time
 import utils as ut
 from functools import reduce
-from pyspark import SparkContext, SparkConf, StorageLevel
+from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 
@@ -63,8 +63,10 @@ week = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_week/')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
-## Get current CRE exchange rate
+## Create model_week_sales
 
+# Get current CRE exchange rate
+# /!\ TO DO: get a dynamic exchange rate when the right data source is identified
 cer = cex \
     .filter(cex['cpt_idr_cur_price'] == 6) \
     .filter(cex['cur_idr_currency_restit'] == 32) \
@@ -74,21 +76,9 @@ cer = cex \
             cex['hde_share_price']) \
     .groupby(cex['cur_idr_currency_base'], 
              cex['cur_idr_currency_restit']) \
-    .agg(mean(cex['hde_share_price']).alias('exchange_rate')) \
-    .orderBy('cur_idr_currency_base') \
-    .persist(StorageLevel.MEMORY_ONLY)
+    .agg(mean(cex['hde_share_price']).alias('exchange_rate'))
 
-print('====> counting(cache) [current_exchange_rate] took ')
-start = time.time()
-cer_count = cer.count()
-ut.get_timer(starting_time=start)
-print('[current_exchange_rate] length:', cer_count)
-
-# ---------------------------------------------------------------------------------------------------------------------
-
-## Create model_week_sales
-
-# Offline
+# Get offline sales
 model_week_sales_offline = tdt \
     .join(day, on=to_date(tdt['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
     .join(week, on=day['wee_id_week'] == week['wee_id_week'], how='inner') \
@@ -116,7 +106,7 @@ model_week_sales_offline = tdt \
             tdt['f_to_tax_in'],
             cer['exchange_rate'])
 
-# Online
+# Get online sales
 model_week_sales_online = dyd \
     .join(day, on=to_date(dyd['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
     .join(week, on=day['wee_id_week'] == week['wee_id_week'], how='inner') \
@@ -144,7 +134,7 @@ model_week_sales_online = dyd \
             dyd['f_to_tax_in'],
             cer['exchange_rate'])
 
-# Omni
+# Create model week sales
 model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
     .groupby(['model_id', 'week_id', 'date']) \
     .agg(sum('f_qty_item').alias('sales_quantity'),
@@ -154,13 +144,13 @@ model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
     .filter(col('average_price') > 0) \
     .filter(col('sum_turnover') > 0) \
     .orderBy('model_id', 'week_id') \
-    .persist(StorageLevel.MEMORY_ONLY)
+    .cache()
 
-print('====> counting(cache) [model_week_sales] took ')
+print("====> counting(cache) [model_week_sales] took ")
 start = time.time()
 model_week_sales_count = model_week_sales.count()
 ut.get_timer(starting_time=start)
-print('[model_week_sales] length:', model_week_sales_count)
+print("[model_week_sales] length:", model_week_sales_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -180,28 +170,28 @@ model_week_tree = sku \
     .filter(week['wee_id_week'] < current_week) \
     .groupBy(week['wee_id_week'].cast('int').alias('week_id'),
              sku['mdl_num_model_r3'].alias('model_id'),
-             when(sku['mdl_label'].isNull(), 'UNKNOWN').otherwise(sku['mdl_label']).alias('model_label'),
              sku['fam_num_family'].alias('family_id'),
-             sku['family_label'],
              sku['sdp_num_sub_department'].alias('sub_department_id'),
-             sku['sdp_label'].alias('sub_department_label'),
              sku['dpt_num_department'].alias('department_id'),
-             sku['dpt_label'].alias('department_label'),
              sku['unv_num_univers'].alias('univers_id'),
-             sku['unv_label'].alias('univers_label'),
-             sku['pnt_num_product_nature'].alias('product_nature_id'),
-             when(sku['product_nature_label'].isNull(), 
-                  'UNDEFINED').otherwise(sku['product_nature_label']).alias('product_nature_label')) \
-    .agg(max(sku['brd_label_brand']).alias('brand_label'),
+             sku['pnt_num_product_nature'].alias('product_nature_id')) \
+    .agg(max(when(sku['mdl_label'].isNull(), 'UNKNOWN').otherwise(sku['mdl_label'])).alias('model_label'),
+         max(sku['family_label']).alias('family_label'),
+         max(sku['sdp_label']).alias('sub_department_label'),
+         max(sku['dpt_label']).alias('department_label'),
+         max(sku['unv_label']).alias('univers_label'),
+         max(when(sku['product_nature_label'].isNull(), 
+                  'UNDEFINED').otherwise(sku['product_nature_label'])).alias('product_nature_label'),
+         max(sku['brd_label_brand']).alias('brand_label'),
          max(sku['brd_type_brand_libelle']).alias('brand_type')) \
     .orderBy('week_id', 'model_id') \
-    .persist(StorageLevel.MEMORY_ONLY)
+    .cache()
 
-print('====> counting(cache) [model_week_tree] took ')
+print("====> counting(cache) [model_week_tree] took ")
 start = time.time()
 model_week_tree_count = model_week_tree.count()
 ut.get_timer(starting_time=start)
-print('[model_week_tree] length:', model_week_tree_count)
+print("[model_week_tree] length:", model_week_tree_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -225,25 +215,24 @@ smu = gdw \
             sku['mdl_num_model_r3'].alias('model_id'),
             gdw['sdw_material_mrp'].cast('int').alias('mrp')) \
     .drop_duplicates() \
-    .persist(StorageLevel.MEMORY_ONLY)
+    .cache()
 
 # calculate model week mrp
 model_week_mrp = smu \
     .join(day, on=day['day_id_day'].between(smu['date_begin'], smu['date_end']), how='inner') \
     .filter(day['wee_id_week'] >= '201939') \
     .filter(day['wee_id_week'] < current_week) \
-    .select(day['wee_id_week'].cast('int').alias('week_id'),
-            smu['model_id'],
-            when(smu['mrp'].isin(2, 5), True).otherwise(False).alias('is_mrp_active')) \
-    .drop_duplicates() \
+    .groupBy(day['wee_id_week'].cast('int').alias('week_id'),
+             smu['model_id']) \
+    .agg(max(when(smu['mrp'].isin(2, 5), True).otherwise(False)).alias('is_mrp_active')) \
     .orderBy('model_id', 'week_id') \
-    .persist(StorageLevel.MEMORY_ONLY)
+    .cache()
 
-print('====> counting(cache) [model_week_mrp] took ')
+print("====> counting(cache) [model_week_mrp] took ")
 start = time.time()
 model_week_mrp_count = model_week_mrp.count()
-ut.get_timer(starting_time=start)
-print('[model_week_mrp] length:', model_week_mrp_count)
+get_timer(starting_time=start)
+print("[model_week_mrp] length:", model_week_mrp_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -293,6 +282,8 @@ print('====> Spliting sales, price & turnover into 3 tables...')
 model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
 model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
 model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
+
+print("Done")
 
 # ---------------------------------------------------------------------------------------------------------------------
 
