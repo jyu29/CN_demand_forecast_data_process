@@ -56,7 +56,7 @@ but = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_business_
 
 sapb = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'sites_attribut_0plant_branches_h/')
 gdw = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_warehouse_h/')
-gdc = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_cutomer/')
+gdc = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_customer/')
 
 day = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_day/')
 week = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_week/')
