@@ -267,7 +267,7 @@ l_df.append(model_week_mrp)
 def unionAll(dfs):
     return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
 
-model_week_mrp = unionAll(l_df)
+model_week_mrp = unionAll(l_df).cache()
 
 print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
