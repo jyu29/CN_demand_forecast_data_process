@@ -211,8 +211,7 @@ smu = gdw \
             sku['sku_num_sku_r3'].alias('sku_id'),
             sku['mdl_num_model_r3'].alias('model_id'),
             gdw['sdw_material_mrp'].cast('int').alias('mrp')) \
-    .drop_duplicates() \
-    .cache()
+    .drop_duplicates()
 
 # calculate model week mrp
 model_week_mrp = smu \
@@ -254,7 +253,7 @@ print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
 # MRP are available since 201939 only.  
 # We have to fill weeks between 201924 and 201938 using the 201939 values.
-print('====> Filling missing MRP...')
+print("====> Filling missing MRP...")
 
 model_week_mrp_201939 = model_week_mrp.filter(model_week_mrp['week_id'] == 201939)
 
@@ -267,9 +266,11 @@ l_df.append(model_week_mrp)
 def unionAll(dfs):
     return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
 
-model_week_mrp = unionAll(l_df).cache()
+model_week_mrp = unionAll(l_df) \
+    .coalesce(int(spark.conf.get("spark.sql.shuffle.partitions"))) \
+    .cache()
 
-print('[model_week_mrp] (new) length:', model_week_mrp.count())
+print("[model_week_mrp] (new) length:", model_week_mrp.count())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
