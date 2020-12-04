@@ -143,11 +143,11 @@ model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
     .orderBy('model_id', 'week_id') \
     .cache()
 
-print("====> counting(cache) [model_week_sales] took ")
+print('====> counting(cache) [model_week_sales] took ')
 start = time.time()
 model_week_sales_count = model_week_sales.count()
 ut.get_timer(starting_time=start)
-print("[model_week_sales] length:", model_week_sales_count)
+print('[model_week_sales] length:', model_week_sales_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -164,7 +164,7 @@ model_week_tree = sku \
     .filter(sku['pnt_num_product_nature'].isNotNull()) \
     .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
     .filter(week['wee_id_week'] >= first_backtesting_cutoff) \
-    .filter(week['wee_id_week'] < current_week) \
+    .filter(week['wee_id_week'] <= current_week) \
     .groupBy(week['wee_id_week'].cast('int').alias('week_id'),
              sku['mdl_num_model_r3'].alias('model_id'),
              sku['fam_num_family'].alias('family_id'),
@@ -184,11 +184,11 @@ model_week_tree = sku \
     .orderBy('week_id', 'model_id') \
     .cache()
 
-print("====> counting(cache) [model_week_tree] took ")
+print('====> counting(cache) [model_week_tree] took ')
 start = time.time()
 model_week_tree_count = model_week_tree.count()
 ut.get_timer(starting_time=start)
-print("[model_week_tree] length:", model_week_tree_count)
+print('[model_week_tree] length:', model_week_tree_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -217,18 +217,18 @@ smu = gdw \
 model_week_mrp = smu \
     .join(day, on=day['day_id_day'].between(smu['date_begin'], smu['date_end']), how='inner') \
     .filter(day['wee_id_week'] >= '201939') \
-    .filter(day['wee_id_week'] < current_week) \
+    .filter(day['wee_id_week'] <= current_week) \
     .groupBy(day['wee_id_week'].cast('int').alias('week_id'),
              smu['model_id']) \
     .agg(max(when(smu['mrp'].isin(2, 5), True).otherwise(False)).alias('is_mrp_active')) \
     .orderBy('model_id', 'week_id') \
     .cache()
 
-print("====> counting(cache) [model_week_mrp] took ")
+print('====> counting(cache) [model_week_mrp] took ')
 start = time.time()
 model_week_mrp_count = model_week_mrp.count()
 ut.get_timer(starting_time=start)
-print("[model_week_mrp] length:", model_week_mrp_count)
+print('[model_week_mrp] length:', model_week_mrp_count)
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -253,7 +253,7 @@ print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
 # MRP are available since 201939 only.  
 # We have to fill weeks between 201924 and 201938 using the 201939 values.
-print("====> Filling missing MRP...")
+print('====> Filling missing MRP...')
 
 model_week_mrp_201939 = model_week_mrp.filter(model_week_mrp['week_id'] == 201939)
 
@@ -267,10 +267,10 @@ def unionAll(dfs):
     return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
 
 model_week_mrp = unionAll(l_df) \
-    .coalesce(int(spark.conf.get("spark.sql.shuffle.partitions"))) \
+    .coalesce(int(spark.conf.get('spark.sql.shuffle.partitions'))) \
     .cache()
 
-print("[model_week_mrp] (new) length:", model_week_mrp.count())
+print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -281,7 +281,7 @@ model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'aver
 model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
 model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-print("Done")
+print('Done')
 
 # ---------------------------------------------------------------------------------------------------------------------
 
