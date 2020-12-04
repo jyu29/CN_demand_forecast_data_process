@@ -55,8 +55,8 @@ sku = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku/')
 but = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_business_unit/')
 
 sapb = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'sites_attribut_0plant_branches_h/')
-sdm = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sales_data_material_h/')
 gdw = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_warehouse_h/')
+gdc = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_cutomer/')
 
 day = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_day/')
 week = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_week/')
@@ -89,7 +89,6 @@ model_week_sales_offline = tdt \
           on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
           how='inner') \
     .filter(tdt['the_to_type'] == 'offline') \
-    .filter(tdt['tdt_type_detail'] == 'sale') \
     .filter(day['wee_id_week'] >= first_historical_week) \
     .filter(day['wee_id_week'] < current_week) \
     .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
@@ -111,18 +110,16 @@ model_week_sales_online = dyd \
     .join(day, on=to_date(dyd['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
     .join(week, on=day['wee_id_week'] == week['wee_id_week'], how='inner') \
     .join(sku, on=dyd['sku_idr_sku'] == sku['sku_idr_sku'], how='inner') \
-    .join(but, on=dyd['but_idr_business_unit_economical'] == but['but_idr_business_unit'], how='inner') \
+    .join(but, on=dyd['but_idr_business_unit_sender'] == but['but_idr_business_unit'], how='inner') \
+    .join(gdc, on=but['but_code_international'] == concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']), how='inner') \
     .join(cer, on=dyd['cur_idr_currency'] == cer['cur_idr_currency_base'], how='inner') \
-    .join(sapb,
-          on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
-          how='inner') \
+    .join(sapb, on=gdc['plant_id'] == sapb['plant_id'], how='inner') \
     .filter(dyd['the_to_type'] == 'online') \
     .filter(dyd['tdt_type_detail'] == 'sale') \
     .filter(day['wee_id_week'] >= first_historical_week) \
     .filter(day['wee_id_week'] < current_week) \
     .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
     .filter(sku['mdl_num_model_r3'].isNotNull()) \
-    .filter(but['but_num_typ_but'] == 7) \
     .filter(sapb['sapsrc'] == 'PRT') \
     .filter(sapb['purch_org'].isin(list_puch_org)) \
     .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end'])) \
