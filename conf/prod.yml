@@ -1,3 +1,0 @@
-s3_path_clean: s3://fcst-clean-prod/
-s3_path_refine_global: s3://fcst-refined-demand-forecast-prod/global/
-s3_path_refine_specific: s3://fcst-refined-demand-forecast-prod/specific/
