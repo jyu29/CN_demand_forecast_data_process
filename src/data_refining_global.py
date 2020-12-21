@@ -52,7 +52,7 @@ dyd = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_delivery_
 cex = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_currency_exchange')
 
 sku = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku/')
-sku_h = read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku_h/')
+sku_h = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku_h/')
 but = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_business_unit/')
 
 sapb = ut.read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'sites_attribut_0plant_branches_h/')
