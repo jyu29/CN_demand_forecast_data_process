@@ -1,9 +1,12 @@
 buckets:
-  clean: fcst-clean-dev
-  refined: fcst-refined-demand-forecast-dev
+  clean: fcst-clean-prod
+  refined: fcst-refined-demand-forecast-prod
 paths:
   clean_datalake: datalake/
   refined_global: global/
+Tables:
+  transactions: "fcst_clean_prod.f_transaction_detail"
+  deliveries: "fcst_clean_prod.f_delivery_detail"
 functional_parameters:
   first_historical_week: 201507
   first_backtesting_cutoff: 201924
@@ -61,3 +64,4 @@ technical_parameters:
         spark.yarn.am.cores : 5
         spark.yarn.am.memory : "36g"
         spark.yarn.am.memoryOverhead : "4g"
+        hive.exec.dynamic.partition.mode: nonstrict
