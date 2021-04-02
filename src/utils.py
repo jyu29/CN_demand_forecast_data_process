@@ -1,8 +1,29 @@
 import time
 import datetime
+import pprint
+import yaml
 from datetime import datetime, timedelta
 
+def read_yml(file_path):
+    """
+    Read a local yaml file and return a python dictionary
+    :param file_path: (string) full path to the yaml file
+    :return: (dict) data loaded
+    """
+    with open(file_path) as f:
+        yaml_dict = yaml.safe_load(f)
 
+    return yaml_dict
+
+
+def pretty_print_dict(dict_to_print):
+    """
+    Pretty prints a dictionary
+    :param dict_to_print: python dictionary
+    """
+    pprint.pprint(dict_to_print)
+    
+    
 def to_uri(bucket, key):
     """
     List all files under a S3 bucket
@@ -13,7 +34,7 @@ def to_uri(bucket, key):
     return 's3://{}/{}'.format(bucket, key)
 
 
-def read_parquet_s3(spark, bucket, key):
+def read_parquet_s3(app, bucket, key):
     """
     Read parquet files on s3 and return a spark dataframe
     :app: (SparkSession) spark app
@@ -21,7 +42,7 @@ def read_parquet_s3(spark, bucket, key):
     :param key: (string) S3 key
     :return: (SparkDataframe)
     """
-    df = spark.read.parquet(to_uri(bucket, key))
+    df = app.read.parquet(to_uri(bucket, key))
     return df
 
 
