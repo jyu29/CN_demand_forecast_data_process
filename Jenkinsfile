@@ -3,17 +3,6 @@ pipeline {
     agent any
 
     stages {
-        stage("unit tests") {
-            steps {
-                script {
-                    def testImage = docker.build("py-unit-test-image", "./docker/ --build-arg http_proxy=${https_proxy} --build-arg https_proxy=${https_proxy}")
-                    testImage.inside('-u root') {
-                        sh 'cd ${WORKSPACE}'
-                        sh 'python3 -m unittest spark/test/*py'
-                    }
-                }
-            }
-        }
 
         stage("cluster provisioning") {
 
@@ -33,7 +22,7 @@ pipeline {
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "c4.4xlarge"),
                     string(name: "taskNodeDiskSize", value: "64"),
-                    string(name: "ldapUser", value: "wdesmarescaux"),
+                    string(name: "ldapUser", value: "aschwartz"),
                     string(name: "ldapGroup", value: "GR-DISCOVERY-ADM"),
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
@@ -74,15 +63,13 @@ pipeline {
                 parameters: [
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
-
         failure {
-            mail to: "noreply-forecastunited@decathlon.com",
+            mail to: "forecastunited@decathlon.net",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
         }
         unstable {
-            mail to: "noreply-forecastunited@decathlon.com",
+            mail to: "forecastunited@decathlon.net",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
-
     }
 }
