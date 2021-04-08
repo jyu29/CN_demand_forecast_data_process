@@ -18,13 +18,12 @@ def get_current_exchange(cex):
     return cer
 
 
-def get_days(day_df, first_historical_week, current_week):
+def get_days(day_df, first_historical_week):
     """
-    Filter on days between first historical week and the current date
+    Filter on days more recent than first historical week
     """
     day_df = day_df\
-        .where(col('wee_id_week') >= first_historical_week)\
-        .where(col('wee_id_week') < current_week)
+        .where(col('wee_id_week') >= first_historical_week)
     return day_df
 
 

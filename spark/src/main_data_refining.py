@@ -50,7 +50,7 @@ def main(args):
 
     ######### Create model_week_sales
     cur_exch_df = prep.get_current_exchange(currency_exchange_df)
-    day_df = prep.get_days(day, params.first_historical_week, current_week)
+    day_df = prep.get_days(day, params.first_historical_week).where(col('wee_id_week') < current_week)
     fltr_sku_df = prep.filter_sku(sku)
     fltr_sapb_df = prep.filter_sap(sapb, params.list_puch_org)
 
@@ -81,8 +81,9 @@ def main(args):
     print('[model_week_tree] length:', model_week_tree_count)
 
     ######### Create model_week_mrp
+    mrp_day_df = prep.get_days(day, params.first_historical_week).where(col('wee_id_week') <= current_week)
     smu = mrp.get_sku_mrp_update(gdw, fltr_sapb_df, fltr_sku_df)
-    model_week_mrp = mrp.get_model_week_mrp(smu, day_df)
+    model_week_mrp = mrp.get_model_week_mrp(smu, mrp_day_df)
     model_week_mrp.cache()
 
     print('====> counting(cache) [model_week_mrp] took ')
