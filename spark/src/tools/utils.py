@@ -35,15 +35,15 @@ def write_parquet_s3(df, bucket, key, mode='overwrite'):
     df.write.parquet(to_uri(bucket, key), mode=mode)
 
 
-def get_current_week():
+def write_partitionned_parquet_s3(df, bucket, key, partition_col, mode='overwrite'):
     """
-    Return current week (international standard ISO 8601 - first day of week
-    is Sunday, with format 'YYYYWW'
-    :return current week (international standard ISO 8601) with format 'YYYYWW'
+    Write a SparkDataframe to parquet files on a S3 bucket
+    :df: (SparkDataframe)
+    :param bucket: (string) name of the S3 bucket
+    :param key: (string) S3 key
+    :param partition_col: (string) Partition Column
     """
-    shifted_date = datetime.today() + timedelta(days=1)
-    current_week_id = int(str(shifted_date.isocalendar()[0]) + str(shifted_date.isocalendar()[1]).zfill(2))
-    return current_week_id
+    df.write.partitionBy(partition_col).parquet(to_uri(bucket, key), mode=mode)
 
 
 def get_timer(starting_time):

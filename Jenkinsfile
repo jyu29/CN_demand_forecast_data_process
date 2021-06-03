@@ -1,6 +1,11 @@
 pipeline {
 
     agent any
+    parameters {
+        choice(description: '', name: 'scope', choices: ["sales", "stocks_delta", "stocks_full", "historic_stocks"])
+        choice(description: '', name: 'run_env', choices:'dev\nprod')
+        string(description: 'branch name', name: 'branch_name', defaultValue:'master')
+    }
 
     stages {
         stage("unit tests") {
@@ -27,11 +32,11 @@ pipeline {
                     string(name: "nameOfCluster", value: "${BUILD_TAG}"),
                     string(name: "projectTag", value: "forecastinfra"),
                     string(name: "versionEMR", value: "emr-5.26.0"),
-                    string(name: "instanceTypeMaster", value: "c5.2xlarge"),
+                    string(name: "instanceTypeMaster", value: "c5.4xlarge"),
                     string(name: "masterNodeDiskSize", value: "128"),
-                    string(name: "nbrCoreOnDemand", value: "3"),
+                    string(name: "nbrCoreOnDemand", value: "7"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r5.4xlarge"),
+                    string(name: "instanceTypeCore", value: "r5.8xlarge"),
                     string(name: "coreNodeDiskSize", value: "128"),
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "c4.4xlarge"),
@@ -61,7 +66,7 @@ pipeline {
 
                     scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
 
-                    ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "export PYSPARK_PYTHON='/usr/bin/python3'; sudo chmod 755 /home/hadoop/${JOB_NAME}/main_spark.sh; cd /home/hadoop/${JOB_NAME}; ./main_spark.sh ${run_env}"
+                    ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "export PYSPARK_PYTHON='/usr/bin/python3'; sudo chmod 755 /home/hadoop/${JOB_NAME}/main_spark.sh; cd /home/hadoop/${JOB_NAME}; ./main_spark.sh ${run_env} ${scope}"
                     x=$(ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "cat /home/hadoop/${JOB_NAME}/code_status")
                     exit $x
                     ''')
@@ -77,7 +82,6 @@ pipeline {
                 parameters: [
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
-
         failure {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
@@ -86,6 +90,5 @@ pipeline {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
-
     }
 }

@@ -28,10 +28,14 @@ class Configuration(object):
         self.bucket_refined = self.get_bucket_refined()
         self.transactions_table = self.get_table("transactions")
         self.deliveries_table = self.get_table("deliveries")
+        self.stocks_pict_table = self.get_table("stocks_pict")
         self.path_clean_datalake = self.get_path_clean_data()
         self.path_refined_global = self.get_path_refined_data()
         self.first_historical_week = self.get_first_hostorical_week()
         self.first_backtesting_cutoff = self.get_first_backtesting_cutoff()
+        self.lifestage_data_first_hist_week = self.get_lifestage_first_hist_week()
+        self.max_nb_soldout_weeks = self.get_max_nb_soldout_weeks()
+
         self.list_puch_org = self.get_list_puch_org()
         self.list_conf = self.get_spark_conf()
 
@@ -97,6 +101,20 @@ class Configuration(object):
         :return: the first backtesting cutoff in conf
         """
         return self._yaml_dict['functional_parameters']['first_backtesting_cutoff']
+
+    def get_lifestage_first_hist_week(self):
+        """
+        Get first week of availability of historic range_choice data.
+        :return: the range choice data first week
+        """
+        return self._yaml_dict['functional_parameters']['lifestage_data_first_hist_week']
+
+    def get_max_nb_soldout_weeks(self):
+        """
+        Get max nb week of soldout for historic data. (before 2019)
+        :return: max_nb_soldout_weeks
+        """
+        return self._yaml_dict['functional_parameters']['max_nb_soldout_weeks_for_hist']
 
     def get_list_puch_org(self):
         """
