@@ -222,7 +222,7 @@ def refine_stock(stock_week):
     df_final_stock = refined\
         .groupby(['but_num_business_unit', 'mdl_num_model_r3', 'week_id', 'purch_org', 'sales_org']) \
         .agg(sum(col('stock_null')).cast('int').alias('nb_day_stock_null'), \
-             avg(col('f_quantity')).alias('f_quantity_mean'), \
+             round(avg(col('f_quantity')), 4).alias('f_quantity_mean'), \
              max(col('f_quantity')).cast('int').alias('f_quantity_max'), \
              min(col('f_quantity')).cast('int').alias('f_quantity_min')) \
         .withColumn('f_quantity_mean', round(col('f_quantity_mean'), 2)) \
@@ -266,12 +266,12 @@ def get_stock_avail_by_country(df_stock):
         .groupby(['mdl_num_model_r3', 'week_id', 'purch_org', 'sales_org']) \
         .agg(count(col('but_num_business_unit')).alias('nb_mag'),
              count(when(col('is_sold_out') == 1, col('but_num_business_unit'))).alias('nb_mag_sold_out'),
-             sum(col('f_quantity_mean')).alias('f_quantity_sum'),
-             avg(col('f_quantity_mean')).alias('f_quantity_mean'),
+             round(sum(col('f_quantity_mean')), 4).alias('f_quantity_sum'),
+             round(avg(col('f_quantity_mean')), 4).alias('f_quantity_mean'),
              max(col('f_quantity_max')).alias('f_quantity_max'),
              min(col('f_quantity_min')).alias('f_quantity_min')
              )\
-        .withColumn('percent_sold_out', col('nb_mag_sold_out')/col('nb_mag'))
+        .withColumn('percent_sold_out', round(col('nb_mag_sold_out')/col('nb_mag'), 4))
     return country_stock
 
 
@@ -283,10 +283,10 @@ def get_stock_avail_for_all_countries(df_stock):
         .groupby(['mdl_num_model_r3', 'week_id']) \
         .agg(count(col('but_num_business_unit')).alias('nb_mag'),
              count(when(col('is_sold_out') == 1, col('but_num_business_unit'))).alias('nb_mag_sold_out'),
-             sum(col('f_quantity_mean')).alias('f_quantity_sum'),
-             avg(col('f_quantity_mean')).alias('f_quantity_mean'),
+             round(sum(col('f_quantity_mean')), 4).alias('f_quantity_sum'),
+             round(avg(col('f_quantity_mean')), 4).alias('f_quantity_mean'),
              max(col('f_quantity_max')).alias('f_quantity_max'),
              min(col('f_quantity_min')).alias('f_quantity_min')
              )\
-        .withColumn('percent_sold_out', col('nb_mag_sold_out') / col('nb_mag'))
+        .withColumn('percent_sold_out', round(col('nb_mag_sold_out') / col('nb_mag'), 4))
     return global_stock

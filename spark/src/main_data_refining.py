@@ -113,7 +113,7 @@ def write_partitioned_result(towrite_df, params, path, partition_col):
     """
     start = time.time()
     ut.write_partitionned_parquet_s3(
-        towrite_df.repartition(10),
+        towrite_df,
         params.bucket_refined,
         params.path_refined_global + path,
         partition_col
@@ -148,9 +148,13 @@ def main_stock_retail(spark, params, stocks, sku, but, dtm, rc, day, week_id_min
         refined_stock, week_id_min, params.lifestage_data_first_hist_week, params.max_nb_soldout_weeks)
     refined_stock.persist()
     stock_by_country = stocks_retail.get_stock_avail_by_country(refined_stock)
-    write_partitioned_result(stock_by_country.withColumn('week', stock_by_country.week_id), params, 'stock_by_country', 'week')
+    write_partitioned_result(
+        stock_by_country.withColumn('week', stock_by_country.week_id).repartition(col('week')),
+        params, 'stock_by_country', 'week')
     global_stock = stocks_retail.get_stock_avail_for_all_countries(refined_stock)
-    write_partitioned_result(global_stock.withColumn('week', global_stock.week_id), params, 'global_stock', 'week')
+    write_partitioned_result(
+        global_stock.withColumn('week', global_stock.week_id).repartition(col('week')),
+        params, 'global_stock', 'week')
     refined_stock.unpersist()
 
 
