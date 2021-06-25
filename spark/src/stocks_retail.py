@@ -267,6 +267,7 @@ def get_stock_avail_by_country(df_stock):
         .groupby(['mdl_num_model_r3', 'week_id', 'purch_org', 'sales_org']) \
         .agg(count(col('but_num_business_unit')).alias('nb_mag'),
              count(when(col('is_sold_out') == 1, col('but_num_business_unit'))).alias('nb_mag_sold_out'),
+             sum(col('f_quantity_mean')).alias('quantity'),
              avg(col('f_quantity_mean')).alias('f_quantity_mean'),
              max(col('f_quantity_max')).alias('f_quantity_max'),
              min(col('f_quantity_min')).alias('f_quantity_min')
@@ -283,6 +284,7 @@ def get_stock_avail_for_all_countries(df_stock):
         .groupby(['mdl_num_model_r3', 'week_id']) \
         .agg(count(col('but_num_business_unit')).alias('nb_mag'),
              count(when(col('is_sold_out') == 1, col('but_num_business_unit'))).alias('nb_mag_sold_out'),
+             sum(col('f_quantity_mean')).alias('quantity'),
              avg(col('f_quantity_mean')).alias('f_quantity_mean'),
              max(col('f_quantity_max')).alias('f_quantity_max'),
              min(col('f_quantity_min')).alias('f_quantity_min')
