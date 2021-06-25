@@ -74,11 +74,10 @@ def get_sku(sku):
 
 def get_assortment_grade(dtm):
     """
-    TODO: view filters with Benj
     Get Assortment Grade Data
     """
     select_dtm = dtm \
-        .filter(dtm.lifestage == 1) \
+        .filter(dtm.lifestage.isin([1, 2, 3])) \
         .filter(dtm.distrib_channel == '02') \
         .filter(dtm.assortment_grade.isin([1, 2, 3])) \
         .select(col('material_id').cast('int'),
