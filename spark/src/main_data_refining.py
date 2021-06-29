@@ -12,6 +12,15 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 import tools.parse_config as parse_config
 import stocks_retail
+import mag_choices
+
+
+def main_choices_magasins(params, choices_df, week):
+    clean_data = mag_choices.clean_data(choices_df)
+    weeks = mag_choices.get_weeks(week, params.first_backtesting_cutoff)
+    choices_per_week = mag_choices.refine_mag_choices(clean_data, weeks)
+    refined_df = mag_choices.refine_mag_choices(choices_per_week)
+    write_result(refined_df, params, 'choices_magasins')
 
 
 def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week):
@@ -191,9 +200,13 @@ if __name__ == '__main__':
     week = read_parquet_table(spark, params, 'd_week/')
     dtm = read_parquet_table(spark, params, 'd_sales_data_material_h/')
     rc = read_parquet_table(spark, params, 'f_range_choice/')
-
+    choices_df = read_parquet_table(spark, params, "d_listing_assortment/")
     stocks = spark.table(params.stocks_pict_table)
     is_valid_scope = False
+
+    if "choices" in scope.lower():
+        is_valid_scope = True
+        main_choices_magasins(params, choices_df, week)
 
     if "sales" in scope.lower():
         is_valid_scope = True

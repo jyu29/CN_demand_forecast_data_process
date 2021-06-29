@@ -2,7 +2,7 @@ pipeline {
 
     agent any
     parameters {
-        choice(description: '', name: 'scope', choices: ["sales", "stocks_delta", "stocks_full", "historic_stocks"])
+        choice(description: '', name: 'scope', choices: ["choices", "sales", "stocks_delta", "stocks_full", "historic_stocks"])
         choice(description: '', name: 'run_env', choices:'dev\nprod')
         string(description: 'branch name', name: 'branch_name', defaultValue:'master')
     }
@@ -82,6 +82,7 @@ pipeline {
                 parameters: [
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
+        /*
         failure {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
@@ -90,5 +91,6 @@ pipeline {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
+        */
     }
 }
