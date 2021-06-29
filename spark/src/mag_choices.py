@@ -67,7 +67,7 @@ def get_weeks(week, first_backtesting_cutoff):
     return weeks_df.select(col('wee_id_week').alias('week_id')).distinct()
 
 
-def refine_mag_choices(clean_data, weeks):
+def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
         .withColumn("week_from", get_week_id_udf(col("date_from")))\
         .withColumn("week_to", get_week_id_udf(col("date_to")))
