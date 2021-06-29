@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage("unit tests") {
             when {
-                expression { params.run_env != 'prod' }
+                expression { params.run_env != 'prod' && params.run_env != 'dev' }
             }
             steps {
                 script {

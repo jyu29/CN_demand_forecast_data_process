@@ -17,9 +17,12 @@ import mag_choices
 
 def main_choices_magasins(params, choices_df, week):
     clean_data = mag_choices.clean_data(choices_df)
+    clean_data.show()
+    write_result(clean_data, params, 'clean_choices_data')
     weeks = mag_choices.get_weeks(week, params.first_backtesting_cutoff)
     choices_per_week = mag_choices.get_choices_per_week(clean_data, weeks)
     refined_df = mag_choices.refine_mag_choices(choices_per_week)
+    refined_df.show()
     write_result(refined_df, params, 'choices_magasins')
 
 
