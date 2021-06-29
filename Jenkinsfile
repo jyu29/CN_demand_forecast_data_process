@@ -76,9 +76,9 @@ pipeline {
         }
 
     }
-
-    post {
         /*
+    post {
+
         always{
              build job: 'EMR-DELETE-PERSISTENT-CLUSTER',
                 parameters: [
@@ -92,6 +92,6 @@ pipeline {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
-        */
     }
+            */
 }
