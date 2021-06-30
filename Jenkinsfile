@@ -29,8 +29,7 @@ pipeline {
 
             build job: "EMR-CREATE-PERSISTENT-CLUSTER",
                 parameters: [
-                    //string(name: "nameOfCluster", value: "${BUILD_TAG}"),
-                    string(name: "nameOfCluster", value: "jenkins-NGA-fcst-data-refining-demand-142"),
+                    string(name: "nameOfCluster", value: "${BUILD_TAG}"),
                     string(name: "projectTag", value: "forecastinfra"),
                     string(name: "versionEMR", value: "emr-5.26.0"),
                     string(name: "instanceTypeMaster", value: "c5.4xlarge"),
@@ -57,7 +56,7 @@ pipeline {
 
                     export https_proxy="${https_proxy}"
 
-                    EMRName="forecast-emr-jenkins-NGA-fcst-data-refining-demand-142"
+                    EMRName="forecast-emr-jenkins-${BUILD_TAG}"
 
                     cluster_id=$(aws emr list-clusters --active --output=json | jq '.Clusters[] | select(.Name=="'${EMRName}'") | .Id ' -r)
 
@@ -76,14 +75,14 @@ pipeline {
         }
 
     }
-        /*
-    post {
 
+    post {
         always{
              build job: 'EMR-DELETE-PERSISTENT-CLUSTER',
                 parameters: [
-                string(name: 'nameOfCluster', value: "jenkins-NGA-fcst-data-refining-demand-142")]
+                string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
+        /*
         failure {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
@@ -92,6 +91,7 @@ pipeline {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
+        */
     }
-            */
+
 }
