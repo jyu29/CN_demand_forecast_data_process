@@ -72,7 +72,8 @@ def get_clean_data(choices_df):
 from datetime import datetime, timedelta
 
 
-def get_week_id_1(date):
+def get_week_id_1(date_str):
+    date = datetime.strptime(date_str, "yyyy-MM-dd")
     day_of_week = date.strftime("%w")
     date = date if (day_of_week != '0') else date + timedelta(days=1)
     return int(str(date.isocalendar()[0]) + str(date.isocalendar()[1]).zfill(2))
