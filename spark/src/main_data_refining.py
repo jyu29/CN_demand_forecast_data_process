@@ -78,7 +78,7 @@ def get_week_id_1(date):
     return int(str(date.isocalendar()[0]) + str(date.isocalendar()[1]).zfill(2))
 
 
-get_week_id_udf = udf(lambda date: get_week_id_1(date), StringType())
+get_week_id_udf = udf(lambda date: get_week_id_1(date), DateType())
 
 
 def get_weeks(week, first_backtesting_cutoff):
@@ -93,10 +93,8 @@ def get_weeks(week, first_backtesting_cutoff):
 
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
-        .withColumn("date_from_1", to_date(col("date_from")))\
-        .withColumn("date_to_1", to_date(col("date_to")))\
-        .withColumn("week_from", when(col("date_from_1").isNotNull(), get_week_id_udf(col("date_from_1"))))\
-        .withColumn("week_to", when(col("date_to_1").isNotNull(), get_week_id_udf(col("date_to_1"))))
+        .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
+        .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
     return choices_per_week
 
