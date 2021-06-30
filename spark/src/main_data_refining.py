@@ -100,10 +100,10 @@ def refine_mag_choices(choices_per_week):
 
 def main_choices_magasins(params, choices_df, week):
     clean_data = get_clean_data(choices_df)
-    clean_data.show()
     weeks = get_weeks(week, params.first_backtesting_cutoff)
     choices_per_week = get_choices_per_week(clean_data, weeks)
     refined_df = refine_mag_choices(choices_per_week)
+    refined_df.show()
     write_result(refined_df, params, 'choices_magasins')
 
 
