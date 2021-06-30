@@ -3,6 +3,7 @@ from pyspark.sql import Window
 from pyspark.sql.types import *
 from tools import date_tools as dt
 
+
 def overlap_period(list_periods):
     res = [list_periods[0]]
     for a in list_periods[1:]:

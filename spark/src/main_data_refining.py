@@ -1,28 +1,25 @@
 # -*- coding: utf-8 -*-
-import sys
 import time
 from tools import get_config as conf, utils as ut, date_tools as dt
 import prepare_data as prep
 import sales as sales
 import model_week_mrp as mrp
 import model_week_tree as mwt
+import stocks_retail
+import mag_choices as mc
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 import tools.parse_config as parse_config
-import stocks_retail
-import mag_choices
 
 
 def main_choices_magasins(params, choices_df, week):
-    clean_data = mag_choices.clean_data(choices_df)
+    clean_data = mc.clean_data(choices_df)
     clean_data.show()
-    write_result(clean_data, params, 'clean_choices_data')
-    weeks = mag_choices.get_weeks(week, params.first_backtesting_cutoff)
-    choices_per_week = mag_choices.get_choices_per_week(clean_data, weeks)
-    refined_df = mag_choices.refine_mag_choices(choices_per_week)
-    refined_df.show()
+    weeks = mc.get_weeks(week, params.first_backtesting_cutoff)
+    choices_per_week = mc.get_choices_per_week(clean_data, weeks)
+    refined_df = mc.refine_mag_choices(choices_per_week)
     write_result(refined_df, params, 'choices_magasins')
 
 
