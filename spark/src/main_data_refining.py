@@ -94,8 +94,8 @@ def get_weeks(week, first_backtesting_cutoff):
 
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
-        .withColumn("week_from_1", to_date(col("date_from")))\
-        .withColumn("week_to_1", to_date(col("date_to")))\
+        .withColumn("date_from_1", to_date(col("date_from")))\
+        .withColumn("date_to_1", to_date(col("date_to")))\
         .withColumn("week_from", when(col("date_from_1").isNotNull(), get_week_id_udf(col("date_from_1"))))\
         .withColumn("week_to", when(col("date_to_1").isNotNull(), get_week_id_udf(col("date_to_1"))))
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
