@@ -69,7 +69,16 @@ def get_clean_data(choices_df):
     return res_df
 
 
-get_week_id_udf = udf(lambda date: dt.get_week_id(date), StringType())
+from datetime import datetime, timedelta
+
+
+def get_week_id_1(date):
+    day_of_week = date.strftime("%w")
+    date = date if (day_of_week != '0') else date + timedelta(days=1)
+    return int(str(date.isocalendar()[0]) + str(date.isocalendar()[1]).zfill(2))
+
+
+get_week_id_udf = udf(lambda date: get_week_id_1(date), StringType())
 
 
 def get_weeks(week, first_backtesting_cutoff):
