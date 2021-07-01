@@ -1,7 +1,6 @@
 from pyspark.sql.functions import *
 from pyspark.sql import Window
 from pyspark.sql.types import *
-from tools import date_tools as dt
 
 
 def overlap_period(list_periods):
@@ -9,7 +8,7 @@ def overlap_period(list_periods):
     for a in list_periods[1:]:
         overlap = False
         for b in res:
-            if a[0] < b[1] and b[0] < a[1]:
+            if a[0] <= b[1] and b[0] <= a[1]:
                 overlap = True
                 res[res.index(b)] = (a[0] if a[0] < b[0] else b[0], a[1] if a[1] > b[1] else b[1])
         if not overlap:
@@ -28,7 +27,7 @@ def recurse_overlap(x):
 overlap_period_udf = udf(lambda list_periods: recurse_overlap(list_periods), ArrayType(ArrayType(StringType())))
 
 
-def clean_data(choices_df):
+def get_clean_data(choices_df):
     """
     Clean Data:
       - First, for all rows with same date_valid_from, keep raw with last update date
@@ -55,14 +54,10 @@ def clean_data(choices_df):
     return res_df
 
 
-get_week_id_udf = udf(lambda date: dt.get_week_id(date), StringType())
-
-
-def get_weeks(week, first_backtesting_cutoff):
+def get_weeks(week, first_backtesting_cutoff, limit_date):
     """
     Filter on weeks between first backtesting cutoff and limit_date in the future
     """
-    limit_week = dt.get_next_n_week(dt.get_current_week(), 104) #TODO NGA verify with Antoine
     weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
         .filter(week['wee_id_week'] <= limit_week)
     return weeks_df.select(col('wee_id_week').alias('week_id')).distinct()
@@ -70,8 +65,8 @@ def get_weeks(week, first_backtesting_cutoff):
 
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
-        .withColumn("week_from", get_week_id_udf(col("date_from")))\
-        .withColumn("week_to", get_week_id_udf(col("date_to")))
+        .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
+        .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
     return choices_per_week
 
