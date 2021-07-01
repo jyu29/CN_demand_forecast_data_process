@@ -55,7 +55,7 @@ def get_clean_data(choices_df):
         .withColumn("rn", row_number().over(w)) \
         .where(col("rn") == 1) \
         .withColumn("dates_from_to", array(col("date_valid_from"), col("date_valid_to"))) \
-        .groupBy("plant_id", "material_id", "model_id")\
+        .groupBy("plant_id", "material_id", "model_id", "purch_org", "sales_org")\
         .agg(collect_list(col("dates_from_to")).alias("dates_from_to"))
     df = last_change_df\
         .withColumn("all_periods", overlap_period_udf(col("dates_from_to")))\
