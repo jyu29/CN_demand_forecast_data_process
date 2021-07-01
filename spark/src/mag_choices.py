@@ -17,6 +17,15 @@ def filter_sap(sapb, list_purch_org):
     return sap
 
 
+def get_weeks(week, first_backtesting_cutoff, limit_week):
+    """
+    Filter on weeks between first backtesting cutoff and limit_date in the future
+    """
+    weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
+        .filter(week['wee_id_week'] <= limit_week)
+    return weeks_df.select(col('wee_id_week').alias('week_id')).distinct()
+
+
 def overlap_period(list_periods):
     res = [list_periods[0]]
     for a in list_periods[1:]:
@@ -68,15 +77,6 @@ def get_clean_data(choices_df):
     return res_df
 
 
-def get_weeks(week, first_backtesting_cutoff, limit_week):
-    """
-    Filter on weeks between first backtesting cutoff and limit_date in the future
-    """
-    weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
-        .filter(week['wee_id_week'] <= limit_week)
-    return weeks_df.select(col('wee_id_week').alias('week_id')).distinct()
-
-
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
         .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
@@ -91,6 +91,6 @@ def get_choices_per_week(clean_data, weeks):
 
 def refine_mag_choices(choices_per_week):
     agg_df = choices_per_week\
-        .groupBy("model_id", "week_id")\
+        .groupBy("model_id", "week_id", "purch_org", "sales_org")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))
     return agg_df

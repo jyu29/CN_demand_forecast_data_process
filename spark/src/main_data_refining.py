@@ -62,6 +62,8 @@ def get_clean_data(choices_df):
         .withColumn("period", explode(col("all_periods")))
     res_df = df.select(
         col("plant_id"),
+        col("purch_org"),
+        col("sales_org"),
         col("material_id"),
         col("model_id"),
         df['period'][0].cast("string").alias("date_from"),
@@ -72,7 +74,7 @@ def get_clean_data(choices_df):
 #############################################################################
 
 def main_choices_magasins(params, choices_df, week, sapb):
-    sapb_df = mc.filter_sap(sapb, params.list_purch_org)
+    sapb_df = mc.filter_sap(sapb, params.list_puch_org)
     filtered_choices_df = choices_df.join(broadcast(sapb_df),
                                  on=sapb_df.plant_id.cast('int') == choices_df.plant_id.cast('int'),
                                  how='inner')
