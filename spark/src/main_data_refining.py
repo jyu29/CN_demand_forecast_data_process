@@ -66,8 +66,8 @@ def get_clean_data(choices_df):
         col("sales_org"),
         col("material_id"),
         col("model_id"),
-        df['period'][0].cast("string").alias("date_from"),
-        df['period'][1].cast("string").alias("date_to")
+        df['period'][0].alias("date_from"),
+        df['period'][1].alias("date_to")
     )
     return res_df
 

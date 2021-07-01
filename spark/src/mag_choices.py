@@ -80,10 +80,13 @@ def get_clean_data(choices_df):
 
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
-        .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
-        .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
+        .withColumn("date_from", date_format(col("date_from"), 'yyyy-MM-dd'))\
+        .withColumn("date_to", date_format(col("date_to"), 'yyyy-MM-dd'))\
         .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
         .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
+    # .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
+    # .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
+
     print("---------> before join Choices.show()")
     choices.show()
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
