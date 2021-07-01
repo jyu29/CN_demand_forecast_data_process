@@ -16,9 +16,15 @@ import tools.parse_config as parse_config
 
 def main_choices_magasins(params, choices_df, week):
     clean_data = mc.get_clean_data(choices_df)
+    clean_data.persist()
+    clean_data.show()
+    write_result(clean_data, params, 'a_cleaned_data')
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
+    choices_per_week.persist()
+    choices_per_week.show()
+    write_result(choices_per_week, params, 'b_choices_per_week')
     refined_df = mc.refine_mag_choices(choices_per_week)
     refined_df.show()
     write_result(refined_df, params, 'choices_magasins')
