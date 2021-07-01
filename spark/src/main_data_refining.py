@@ -76,7 +76,7 @@ def get_clean_data(choices_df):
 def main_choices_magasins(params, choices_df, week, sapb):
     sapb_df = mc.filter_sap(sapb, params.list_puch_org)
     filtered_choices_df = choices_df.join(broadcast(sapb_df),
-                                 on=sapb_df.plant_id.cast('int') == choices_df.plant_id.cast('int'),
+                                 on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
                                  how='inner')
     clean_data = get_clean_data(filtered_choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine

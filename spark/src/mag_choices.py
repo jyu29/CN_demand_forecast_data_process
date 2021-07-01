@@ -13,7 +13,8 @@ def filter_sap(sapb, list_purch_org):
         .filter(sapb['sapsrc'] == 'PRT') \
         .filter(sapb['purch_org'].isin(list_purch_org))\
         .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end']))\
-        .select(sapb.plant_id, sapb.purch_org, sapb.sales_org)
+        .select(col("plant_id").alias("ref_plant_id"), col("purch_org"), col("sales_org"))\
+        .distinct()
     return sap
 
 
