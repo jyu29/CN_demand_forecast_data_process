@@ -71,11 +71,11 @@ def get_clean_data(choices_df):
         .withColumn("all_periods", overlap_period_udf(col("dates_from_to")))\
         .withColumn("period", explode(col("all_periods")))
     res_df = df.select(
-        col("plant_id"),
+        col("plant_id").cast(IntegerType()),
         col("purch_org"),
         col("sales_org"),
-        col("material_id"),
-        col("model_id"),
+        col("material_id").cast(IntegerType()),
+        col("model_id").cast(IntegerType()),
         df['period'][0].alias("date_from"),
         df['period'][1].alias("date_to")
     )
@@ -83,6 +83,9 @@ def get_clean_data(choices_df):
 
 
 def get_choices_per_week(clean_data, weeks):
+    """
+    Get choices week by week
+    """
     choices = clean_data\
         .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
         .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
@@ -90,14 +93,20 @@ def get_choices_per_week(clean_data, weeks):
     return choices_per_week
 
 
-def refine_mag_choices_per_country(choices_per_week):
+def get_mag_choices_per_country(choices_per_week):
+    """
+    Get Nb of stores which choose model_id by country by week_id
+    """
     agg_df = choices_per_week\
         .groupBy("model_id", "week_id", "purch_org", "sales_org")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))
     return agg_df
 
 
-def refine_mag_choices_per_purchorg(choices_per_week):
+def get_global_mag_choices(choices_per_week):
+    """
+    Get Nb of stores which choose model_id for all EU country by week_id
+    """
     agg_df = choices_per_week\
         .groupBy("model_id", "week_id", "purch_org")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))

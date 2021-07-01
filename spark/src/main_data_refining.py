@@ -19,16 +19,16 @@ def main_choices_magasins(params, choices_df, week, sapb):
     filtered_choices_df = choices_df.join(broadcast(sapb_df),
                                  on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
                                  how='inner')
-    clean_data = mc.get_clean_data(filtered_choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
+    clean_data = mc.get_clean_data(filtered_choices_df)
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
     choices_per_week.persist()
     write_result(choices_per_week, params, 'b_choices_per_week')
-    percountry_refined_df = mc.refine_mag_choices_per_country(choices_per_week)
-    write_result(percountry_refined_df, params, 'choices_magasins_percountry')
-    global_refined_df = mc.refine_mag_choices_per_purchorg(choices_per_week)
-    write_result(global_refined_df, params, 'global_choices_magasins')
+    choices_per_country_df = mc.get_mag_choices_per_country(choices_per_week)
+    write_result(choices_per_country_df, params, 'stores_choices_percountry')
+    global_choices_df = mc.get_global_mag_choices(choices_per_week)
+    write_result(global_choices_df, params, 'global_stores_choices')
 
 
 def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week):
