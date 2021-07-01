@@ -2,7 +2,6 @@ from pyspark.sql import functions as F
 from spark.test.PySparkTestCase import PySparkTestCase
 from spark.src import mag_choices as mc
 import unittest
-import datetime as dt
 
 
 class StocksRetailTest(PySparkTestCase):
@@ -17,17 +16,17 @@ class StocksRetailTest(PySparkTestCase):
 
     def test_get_clean_data(self):
         choices = self.spark.createDataFrame([
-            (100, '000123', '000100', '2020-01-01', '2020-09-11', '2020-01-01'),
-            (100, '000123', '000100', '2020-01-01', '2020-12-31', '2020-01-02'),
-            (100, '000123', '000100', '2020-06-01', '2022-01-01', '2020-01-01'),
-            (100, '000123', '000100', '2019-01-02', '2019-02-15', '2019-01-01'),
-            (100, '000123', '000100', '2019-01-01', '2019-03-05', '2019-01-01')],
-            ["plant_id", "material_id", "model_id", "date_valid_from", "date_valid_to", "date_last_change"])
+            (100, 'Z1', 'Z0', '000123', '000100', '2020-01-01', '2020-09-11', '2020-01-01'),
+            (100, 'Z1', 'Z0', '000123', '000100', '2020-01-01', '2020-12-31', '2020-01-02'),
+            (100, 'Z1', 'Z0', '000123', '000100', '2020-06-01', '2022-01-01', '2020-01-01'),
+            (100, 'Z1', 'Z0', '000123', '000100', '2019-01-02', '2019-02-15', '2019-01-01'),
+            (100, 'Z1', 'Z0', '000123', '000100', '2019-01-01', '2019-03-05', '2019-01-01')],
+            ["plant_id", "purch_org", "sales_org", "material_id", "model_id", "date_valid_from", "date_valid_to", "date_last_change"])
 
         results = mc.get_clean_data(choices).orderBy(F.col('date_from')).collect()
         expected_results = [
-            (100, '000123', '000100', '2019-01-01', '2019-03-05'),
-            (100, '000123', '000100', '2020-01-01', '2022-01-01'),
+            (100, 'Z1', 'Z0', 123, 100, '2019-01-01', '2019-03-05'),
+            (100, 'Z1', 'Z0', 123, 100, '2020-01-01', '2022-01-01'),
         ]
         self.assertEqual(set(results), set(expected_results))
 

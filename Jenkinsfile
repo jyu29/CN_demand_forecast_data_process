@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage("unit tests") {
             when {
-                expression { params.run_env != 'prod' && params.run_env != 'dev' }
+                expression { params.run_env != 'prod' }
             }
             steps {
                 script {
@@ -46,7 +46,6 @@ pipeline {
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
             }
-
         }
 
         stage("spark app deployment and execution") {
@@ -82,7 +81,6 @@ pipeline {
                 parameters: [
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
-        /*
         failure {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
@@ -91,7 +89,6 @@ pipeline {
             mail to: "noreply-forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
-        */
     }
 
 }
