@@ -3,6 +3,20 @@ from pyspark.sql import Window
 from pyspark.sql.types import *
 
 
+def filter_sap(sapb, list_purch_org):
+    """
+      get SiteAttributePlant0Branch after filtering on:
+      - sapsrc=PRT: all countries except brazil
+      - list_push_org: EU countries
+    """
+    sap = sapb\
+        .filter(sapb['sapsrc'] == 'PRT') \
+        .filter(sapb['purch_org'].isin(list_purch_org))\
+        .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end']))\
+        .select(sapb.plant_id, sapb.purch_org, sapb.sales_org)
+    return sap
+
+
 def overlap_period(list_periods):
     res = [list_periods[0]]
     for a in list_periods[1:]:

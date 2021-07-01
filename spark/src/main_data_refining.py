@@ -64,15 +64,19 @@ def get_clean_data(choices_df):
         col("plant_id"),
         col("material_id"),
         col("model_id"),
-        to_date(df['period'][0]).alias("date_from"),
-        to_date(df['period'][1]).alias("date_to")
+        df['period'][0].cast("string").alias("date_from"),
+        df['period'][1].cast("string").alias("date_to")
     )
     return res_df
 
 #############################################################################
 
-def main_choices_magasins(params, choices_df, week):
-    clean_data = get_clean_data(choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
+def main_choices_magasins(params, choices_df, week, sapb):
+    sapb_df = mc.filter_sap(sapb, params.list_purch_org)
+    filtered_choices_df = choices_df.join(broadcast(sapb_df),
+                                 on=sapb_df.plant_id.cast('int') == choices_df.plant_id.cast('int'),
+                                 how='inner')
+    clean_data = get_clean_data(filtered_choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
@@ -267,7 +271,7 @@ if __name__ == '__main__':
 
     if "choices" in scope.lower():
         is_valid_scope = True
-        main_choices_magasins(params, choices_df, week)
+        main_choices_magasins(params, choices_df, week, sapb)
 
     if "sales" in scope.lower():
         is_valid_scope = True
