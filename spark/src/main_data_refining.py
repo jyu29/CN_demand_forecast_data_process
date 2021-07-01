@@ -24,11 +24,11 @@ def main_choices_magasins(params, choices_df, week, sapb):
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
     choices_per_week.persist()
-    choices_per_week.show()
     write_result(choices_per_week, params, 'b_choices_per_week')
-    refined_df = mc.refine_mag_choices(choices_per_week)
-    refined_df.show()
-    write_result(refined_df, params, 'choices_magasins')
+    percountry_refined_df = mc.refine_mag_choices_per_country(choices_per_week)
+    write_result(percountry_refined_df, params, 'choices_magasins_percountry')
+    global_refined_df = mc.refine_mag_choices_per_purchorg(choices_per_week)
+    write_result(global_refined_df, params, 'global_choices_magasins')
 
 
 def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week):

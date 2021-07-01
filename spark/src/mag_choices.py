@@ -86,17 +86,19 @@ def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
         .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
         .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
-    # .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
-    # .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
-
-    print("---------> before join Choices.show()")
-    choices.show(truncate=False)
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
     return choices_per_week
 
 
-def refine_mag_choices(choices_per_week):
+def refine_mag_choices_per_country(choices_per_week):
     agg_df = choices_per_week\
         .groupBy("model_id", "week_id", "purch_org", "sales_org")\
+        .agg(countDistinct(col("plant_id")).alias("nb_mags"))
+    return agg_df
+
+
+def refine_mag_choices_per_purchorg(choices_per_week):
+    agg_df = choices_per_week\
+        .groupBy("model_id", "week_id", "purch_org")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))
     return agg_df
