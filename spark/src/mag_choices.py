@@ -55,7 +55,7 @@ def get_clean_data(choices_df):
     """
     Clean Data:
       - First, for all rows with same date_valid_from, keep raw with last update date
-      - Then get the overlap period of all listed periods
+      - Then get the overlap period of all listed periods for each pair (plant_id, model_id)
     plant_id, material_id, model_id, date_valid_from, date_valid_to, date_last_change
     """
     w = Window().partitionBy("plant_id", "material_id", "date_valid_from").orderBy(col("date_last_change").desc())
@@ -108,6 +108,6 @@ def get_global_mag_choices(choices_per_week):
     Get Nb of stores which choose model_id for all EU country by week_id
     """
     agg_df = choices_per_week\
-        .groupBy("model_id", "week_id", "purch_org")\
+        .groupBy("model_id", "week_id")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))
     return agg_df
