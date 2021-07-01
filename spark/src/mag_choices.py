@@ -54,7 +54,7 @@ def get_clean_data(choices_df):
     return res_df
 
 
-def get_weeks(week, first_backtesting_cutoff, limit_date):
+def get_weeks(week, first_backtesting_cutoff, limit_week):
     """
     Filter on weeks between first backtesting cutoff and limit_date in the future
     """
@@ -65,6 +65,8 @@ def get_weeks(week, first_backtesting_cutoff, limit_date):
 
 def get_choices_per_week(clean_data, weeks):
     choices = clean_data\
+        .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
+        .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
         .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
         .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
