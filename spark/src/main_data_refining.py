@@ -13,74 +13,13 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 import tools.parse_config as parse_config
 
-#############################################################################
-from pyspark.sql.functions import *
-from pyspark.sql import Window
-from pyspark.sql.types import *
-
-
-def overlap_period(list_periods):
-    res = [list_periods[0]]
-    for a in list_periods[1:]:
-        overlap = False
-        for b in res:
-            if a[0] <= b[1] and b[0] <= a[1]:
-                overlap = True
-                res[res.index(b)] = (a[0] if a[0] < b[0] else b[0], a[1] if a[1] > b[1] else b[1])
-        if not overlap:
-            res.append(a)
-    return res
-
-
-def recurse_overlap(x):
-    y = overlap_period(x)
-    if x == y:
-        return x
-    else:
-        return recurse_overlap(y)
-
-
-overlap_period_udf = udf(lambda list_periods: recurse_overlap(list_periods), ArrayType(ArrayType(StringType())))
-
-
-def get_clean_data(choices_df):
-    """
-    Clean Data:
-      - First, for all rows with same date_valid_from, keep raw with last update date
-      - Then get the overlap period of all listed periods
-    plant_id, material_id, model_id, date_valid_from, date_valid_to, date_last_change
-    """
-    w = Window().partitionBy("plant_id", "material_id", "date_valid_from").orderBy(col("date_last_change").desc())
-    last_change_df = choices_df \
-        .withColumn("rn", row_number().over(w)) \
-        .where(col("rn") == 1) \
-        .withColumn("date_valid_from", date_format(col("date_valid_from"), "yyyy-MM-dd"))\
-        .withColumn("date_valid_to", date_format(col("date_valid_to"), "yyyy-MM-dd"))\
-        .withColumn("dates_from_to", array(col("date_valid_from"), col("date_valid_to"))) \
-        .groupBy("plant_id", "material_id", "model_id", "purch_org", "sales_org")\
-        .agg(collect_list(col("dates_from_to")).alias("dates_from_to"))
-    df = last_change_df\
-        .withColumn("all_periods", overlap_period_udf(col("dates_from_to")))\
-        .withColumn("period", explode(col("all_periods")))
-    res_df = df.select(
-        col("plant_id"),
-        col("purch_org"),
-        col("sales_org"),
-        col("material_id"),
-        col("model_id"),
-        df['period'][0].alias("date_from"),
-        df['period'][1].alias("date_to")
-    )
-    return res_df
-
-#############################################################################
 
 def main_choices_magasins(params, choices_df, week, sapb):
     sapb_df = mc.filter_sap(sapb, params.list_puch_org)
     filtered_choices_df = choices_df.join(broadcast(sapb_df),
                                  on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
                                  how='inner')
-    clean_data = get_clean_data(filtered_choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
+    clean_data = mc.get_clean_data(filtered_choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
