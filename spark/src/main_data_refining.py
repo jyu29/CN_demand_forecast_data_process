@@ -64,18 +64,17 @@ def get_clean_data(choices_df):
         col("plant_id"),
         col("material_id"),
         col("model_id"),
-        df['period'][0].alias("date_from"),
-        df['period'][1].alias("date_to")
+        to_date(df['period'][0]).alias("date_from"),
+        to_date(df['period'][1]).alias("date_to")
     )
     return res_df
 
 #############################################################################
 
 def main_choices_magasins(params, choices_df, week):
-    clean_data = get_clean_data(choices_df)
+    clean_data = get_clean_data(choices_df.where(col("model_id") == '000000000008054403')) #todo remove filters
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
     weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
-    weeks.show()
     choices_per_week = mc.get_choices_per_week(clean_data, weeks)
     choices_per_week.persist()
     choices_per_week.show()
