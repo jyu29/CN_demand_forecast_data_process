@@ -69,42 +69,14 @@ def get_clean_data(choices_df):
     )
     return res_df
 
-
-def get_weeks(week, first_backtesting_cutoff, limit_week):
-    """
-    Filter on weeks between first backtesting cutoff and limit_date in the future
-    """
-    weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
-        .filter(week['wee_id_week'] <= limit_week)
-    return weeks_df.select(col('wee_id_week').alias('week_id')).distinct()
-
-
-def get_choices_per_week(clean_data, weeks):
-    choices = clean_data\
-        .withColumn("date_from", when(dayofweek(col("date_from")) == 1, date_add(col("date_from"), 1)).otherwise(col("date_from")))\
-        .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
-        .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
-        .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
-    choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
-    return choices_per_week
-
-
-def refine_mag_choices(choices_per_week):
-    agg_df = choices_per_week\
-        .groupBy("model_id", "week_id")\
-        .agg(countDistinct(col("plant_id")).alias("nb_mags"))
-    return agg_df
-
 #############################################################################
 
 def main_choices_magasins(params, choices_df, week):
     clean_data = get_clean_data(choices_df)
-    clean_data.persist()
-    clean_data.show()
-    write_result(clean_data, params, 'a_cleaned_data')
     limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
-    weeks = get_weeks(week, params.first_backtesting_cutoff, limit_week)
-    choices_per_week = get_choices_per_week(clean_data, weeks)
+    weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
+    weeks.show()
+    choices_per_week = mc.get_choices_per_week(clean_data, weeks)
     choices_per_week.persist()
     choices_per_week.show()
     write_result(choices_per_week, params, 'b_choices_per_week')

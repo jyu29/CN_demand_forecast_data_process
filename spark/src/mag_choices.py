@@ -69,6 +69,8 @@ def get_choices_per_week(clean_data, weeks):
         .withColumn("date_to", when(dayofweek(col("date_to")) == 1, date_add(col("date_to"), 1)).otherwise(col("date_to")))\
         .withColumn("week_from", year(col("date_from")) * 100 + weekofyear(col("date_from")))\
         .withColumn("week_to", year(col("date_to")) * 100 + weekofyear(col("date_to")))
+    print("---------> before join Choices.show()")
+    choices.show()
     choices_per_week = weeks.join(choices, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
     return choices_per_week
 
