@@ -188,8 +188,8 @@ class StocksRetailTest(PySparkTestCase):
         results = stocks_retail.get_stock_avail_by_country(stocks)\
             .orderBy(F.col("mdl_num_model_r3")).collect()
         expected_results = [
-            (23, 202107, 'Z001', 'Z002', 2, 1, 14.0, 21, 10, 0.5),
-            (35, 202107, 'Z001', 'Z003', 1, 0, 10.0, 10, 10, 0.0)
+            (23, 202107, 'Z001', 'Z002', 2, 1, 28.0, 14.0, 21, 10, 0.5),
+            (35, 202107, 'Z001', 'Z003', 1, 0, 10.0, 10.0, 10, 10, 0.0)
         ]
         self.assertEqual(set(results), set(expected_results))
 
@@ -204,8 +204,8 @@ class StocksRetailTest(PySparkTestCase):
         results = stocks_retail.get_stock_avail_for_all_countries(stocks)\
             .orderBy(F.col("mdl_num_model_r3")).collect()
         expected_results = [
-            (35, 202107, 1, 0, 10.0, 10, 10, 0.0),
-            (23, 202107, 2, 1, 14.0, 21, 10, 0.5)
+            (35, 202107, 1, 0, 10.0, 10.0, 10, 10, 0.0),
+            (23, 202107, 2, 1, 28.0, 14.0, 21, 10, 0.5)
         ]
         self.assertEqual(set(results), set(expected_results))
 
