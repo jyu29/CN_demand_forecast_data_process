@@ -48,13 +48,14 @@ def check_d_sku(df):
         groupby('sku_idr_sku'). \
         agg((count(col("sku_num_sku_r3"))).alias("count_nb"))
     sku_duplicate = sku_last.filter(sku_last.count_nb > 1)
-    print(sku_duplicate.count())
+    print(f'Sku duplicate : {sku_duplicate.count()}')
 
     sku_wrong_date = df.where(col("sku_date_begin") > col("sku_date_end"))
-    print(sku_wrong_date.count())
+    print(f'Sku date_begin > date_end : {sku_wrong_date.count()}')
 
     sku_max_tech_date = df.agg(max("rs_technical_date")).collect()[0][0]
-    print(sku_max_tech_date)
+    print(f'Sku max technical_date : {sku_max_tech_date}')
+
 
 def check_d_business_unit(df):
     """
@@ -66,10 +67,10 @@ def check_d_business_unit(df):
         groupby('but_idr_business_unit'). \
         agg((count(col("but_idr_business_unit"))).alias("count_nb"))
     but_duplicate = but_count.filter(but_count.count_nb > 1)
-    print(but_duplicate.count())
+    print(f'Business Unit duplicate : {but_duplicate.count()}')
 
     but_max_tech_date = df.agg(max("rs_technical_date")).collect()[0][0]
-    print(but_max_tech_date)
+    print(f'Business Unit max technical_date : {but_max_tech_date}')
 
 
 def check_sales(df, current_week):
@@ -82,11 +83,11 @@ def check_sales(df, current_week):
     sales_agg_w = \
     sales_agg.filter(sales_agg['week_id'] == 202125).select(sales_agg['sum_sales'].alias('sum_sales_cur')).collect()[0][
         0]
-    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -1))\
+    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -1))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -2))\
+    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -2))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -3))\
+    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -3))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
     mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
     sales_pct = ((sales_agg_w - mean) / mean) * 100
