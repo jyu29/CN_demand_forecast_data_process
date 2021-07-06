@@ -92,6 +92,11 @@ def check_sales(df, current_week):
     mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
     sales_pct = ((sales_agg_w - mean) / mean) * 100
 
+    print(f'Sales quantity week-1 : {sales_agg_w}')
+    print(f'Sales quantity week-2 : {sales_agg_w_1}')
+    print(f'Sales quantity week-3 : {sales_agg_w_2}')
+    print(f'Sales quantity week-4 : {sales_agg_w_3}')
+
     print(f'Sales percentage growth : {sales_pct}')
     assert sales_agg_w > 0, f'No sales for this week : {dt.get_shift_n_week(current_week, -1)}'
     assert sales_pct > -30
