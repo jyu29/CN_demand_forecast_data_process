@@ -89,7 +89,7 @@ def check_sales(df, current_week):
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
     sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -4))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
+    mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
     sales_pct = ((sales_agg_w - mean) / mean) * 100
 
     print(f'Sales quantity week-1 : {sales_agg_w}')
