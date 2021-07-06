@@ -6,6 +6,7 @@ import prepare_data as prep
 import sales as sales
 import model_week_mrp as mrp
 import model_week_tree as mwt
+import check_functions as check
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
@@ -86,6 +87,13 @@ def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku
     assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert fltr_model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
     assert final_model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
+
+    check.check_d_week(week, current_week)
+    check.check_d_day(day, current_week)
+    check.check_d_sku(sku)
+    check.check_d_business_unit(but)
+    check.check_sales(model_week_sales_qty, current_week)
+
 
     write_result(model_week_sales_qty, params, 'model_week_sales')
     write_result(model_week_price, params, 'model_week_price')
