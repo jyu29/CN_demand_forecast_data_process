@@ -8,7 +8,7 @@ import datetime as dt
 
 class CheckFunctionsTest(PySparkTestCase):
     def test_check_d_week(self):
-        schema = StructType([StructField("wee_id_week", IntegerType(), True)])
+        #schema = StructType([StructField("wee_id_week", IntegerType(), True)])
 
         week_df = self.spark.createDataFrame(
             [
@@ -27,15 +27,14 @@ class CheckFunctionsTest(PySparkTestCase):
              (202250), (202251), (202252), (202301), (202302), (202303), (202304), (202305), (202306), (202307),
              (202308), (202309), (202310), (202311), (202312), (202313), (202314),
              (202315), (202316), (202317), (202318), (202319), (202320), (202321), (202322), (202323), (202324),
-             (202325), (202326)
-            ], schema
+             (202325), (202326),
+            ], "wee_id_week"
         )
         check_functions.check_d_week(week_df, 202103)
 
 
     def test_check_d_day(self):
-        schema = StructType([StructField("day_id_day", StringType(), True),
-                             StructField("wee_id_week", IntegerType(), True)])
+        #schema = StructType([StructField("day_id_day", StringType(), True),StructField("wee_id_week", IntegerType(), True)])
         day_df = self.spark.createDataFrame(
         [('2021-01-01', 202053), ('2021-01-02', 202053), ('2021-01-03', 202101), ('2021-01-04', 202101),
          ('2021-01-05', 202101), ('2021-01-06', 202101), ('2021-01-07', 202101), ('2021-01-08', 202101),
@@ -260,9 +259,11 @@ class CheckFunctionsTest(PySparkTestCase):
          ('2023-05-31', 202322), ('2023-06-01', 202322), ('2023-06-02', 202322), ('2023-06-03', 202322),
          ('2023-06-04', 202323), ('2023-06-05', 202323), ('2023-06-06', 202323), ('2023-06-07', 202323),
          ('2023-06-08', 202323), ('2023-06-09', 202323), ('2023-06-10', 202323), ('2023-06-11', 202324),
-         ('2023-06-12', 202324), ('2023-06-13', 202324), ('2023-06-14', 202324), ('2023-06-15', 202324)],
-        schema)
+         ('2023-06-12', 202324), ('2023-06-13', 202324), ('2023-06-14', 202324), ('2023-06-15', 202324),],
+         ["day_id_day","wee_id_week"]
+        )
 
+        #schema = StructType([StructField(, StringType(), True),StructField(, IntegerType(), True)])
         check_functions.check_d_day(day_df, 202103)
 
 
