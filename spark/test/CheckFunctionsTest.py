@@ -264,5 +264,12 @@ class CheckFunctionsTest(PySparkTestCase):
         check_functions.check_d_day(day_df, 202103)
 
 
+    def test_check_sales(self):
+        sales_df = self.spark.createDataFrame(
+          [(202115,95), (202116,90), (202117,97), (202118,100),], "week_id int, sales_quantity int"
+        )
+        check_functions.check_sales(sales_df, 202119)
+
+
 if __name__ == "__main__":
     unittest.main()
