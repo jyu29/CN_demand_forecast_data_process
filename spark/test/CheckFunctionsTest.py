@@ -1,5 +1,6 @@
 from pyspark.sql import functions as F
 from spark.test.PySparkTestCase import PySparkTestCase
+from pyspark.sql.types import *
 from spark.src import check_functions
 import unittest
 import datetime as dt
@@ -7,8 +8,11 @@ import datetime as dt
 
 class CheckFunctionsTest(PySparkTestCase):
     def test_check_d_week(self):
+        schema = StructType([StructField("wee_id_week", IntegerType(), True)])
+
         week_df = self.spark.createDataFrame(
-            [(202101), (202102), (202103), (202104), (202105), (202106), (202107), (202108), (202109), (202110),
+            [
+             (202101), (202102), (202103), (202104), (202105), (202106), (202107), (202108), (202109), (202110),
              (202111), (202112), (202113), (202114), (202115), (202116),
              (202117), (202118), (202119), (202120), (202121), (202122), (202123), (202124), (202125), (202126),
              (202127), (202128), (202129), (202130), (202131), (202132), (202133),
@@ -23,13 +27,15 @@ class CheckFunctionsTest(PySparkTestCase):
              (202250), (202251), (202252), (202301), (202302), (202303), (202304), (202305), (202306), (202307),
              (202308), (202309), (202310), (202311), (202312), (202313), (202314),
              (202315), (202316), (202317), (202318), (202319), (202320), (202321), (202322), (202323), (202324),
-             (202325), (202326)],
-            ["wee_id_week"]
+             (202325), (202326)
+            ], schema
         )
         check_functions.check_d_week(week_df, 202103)
 
 
     def test_check_d_day(self):
+        schema = StructType([StructField("day_id_day", StringType(), True),
+                             StructField("wee_id_week", IntegerType(), True)])
         day_df = self.spark.createDataFrame(
         [('2021-01-01', 202053), ('2021-01-02', 202053), ('2021-01-03', 202101), ('2021-01-04', 202101),
          ('2021-01-05', 202101), ('2021-01-06', 202101), ('2021-01-07', 202101), ('2021-01-08', 202101),
@@ -255,7 +261,7 @@ class CheckFunctionsTest(PySparkTestCase):
          ('2023-06-04', 202323), ('2023-06-05', 202323), ('2023-06-06', 202323), ('2023-06-07', 202323),
          ('2023-06-08', 202323), ('2023-06-09', 202323), ('2023-06-10', 202323), ('2023-06-11', 202324),
          ('2023-06-12', 202324), ('2023-06-13', 202324), ('2023-06-14', 202324), ('2023-06-15', 202324)],
-        ["day_id_day","wee_id_week"])
+        schema)
 
         check_functions.check_d_day(day_df, 202103)
 
