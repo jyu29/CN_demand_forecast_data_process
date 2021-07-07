@@ -1,5 +1,5 @@
 from pyspark.sql.functions import *
-from tools import date_tools as dt
+#from tools import date_tools as dt
 """
 f_transaction_detail
     tous les YYYYMM
@@ -13,6 +13,15 @@ d_general_data_warehouse_h
 d_general_data_customer
     présence Z002/2002
     unicité"""
+
+def get_shift_n_week(week_id, nb_weeks):
+    """
+    Return shifted week (previous or next)
+    """
+    shifted_date = datetime.strptime(str(week_id) + '1', '%G%V%u') + timedelta(nb_weeks * 7)
+    ret_week_id = get_week_id(shifted_date)
+    return ret_week_id
+
 
 def check_d_week(df, current_week):
     """
@@ -81,13 +90,13 @@ def check_sales(df, current_week):
     """
     sales_agg = df.groupby('week_id').agg(sum('sales_quantity').alias('sum_sales'))
     sales_agg_w = \
-    sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -1))\
+    sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -1))\
             .select(sales_agg['sum_sales'].alias('sum_sales_cur')).collect()[0][0]
-    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -2))\
+    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -2))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -3))\
+    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -3))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -4))\
+    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -4))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
     mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
     sales_pct = ((sales_agg_w - mean) / mean) * 100
