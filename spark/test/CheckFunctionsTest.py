@@ -31,6 +31,15 @@ class CheckFunctionsTest(PySparkTestCase):
         )
         check_functions.check_d_week(week_df, 202103)
 
+    def test_check_d_week_not_104_weeks(self):
+        week_df = self.spark.createDataFrame(
+            [
+             (202101,), (202102,), (202103,), (202104,), (202105,), (202106,), (202107,), (202108,), (202109,), (202110,),
+             (202111,), (202112,), (202113,), (202114,), (202115,), (202116,),
+             (202117,), (202118,), (202119,),
+            ], "wee_id_week int"
+        )
+        self.assertRaises(Exception,check_functions.check_d_week(week_df, 202103))
 
     def test_check_d_day(self):
         day_df = self.spark.createDataFrame(
@@ -260,9 +269,27 @@ class CheckFunctionsTest(PySparkTestCase):
          ('2023-06-12', 202324), ('2023-06-13', 202324), ('2023-06-14', 202324), ('2023-06-15', 202324),],
          "day_id_day string, wee_id_week int"
         )
-
         check_functions.check_d_day(day_df, 202103)
 
+    def test_check_d_day_not_104_weeks(self):
+        day_df = self.spark.createDataFrame(
+        [('2021-01-01', 202053), ('2021-01-02', 202053), ('2021-01-03', 202101), ('2021-01-04', 202101),
+         ('2021-01-05', 202101), ('2021-01-06', 202101), ('2021-01-07', 202101), ('2021-01-08', 202101),
+         ('2021-01-09', 202101), ('2021-01-10', 202102), ('2021-01-11', 202102), ('2021-01-12', 202102),
+         ('2021-01-13', 202102), ('2021-01-14', 202102), ('2021-01-15', 202102), ('2021-01-16', 202102),
+         ('2021-01-17', 202103), ('2021-01-18', 202103), ('2021-01-19', 202103), ('2021-01-20', 202103),
+         ('2021-01-21', 202103), ('2021-01-22', 202103), ('2021-01-23', 202103), ('2021-01-24', 202104),
+         ('2021-01-25', 202104), ('2021-01-26', 202104), ('2021-01-27', 202104), ('2021-01-28', 202104),
+         ('2021-01-29', 202104), ('2021-01-30', 202104), ('2021-01-31', 202105), ('2021-02-01', 202105),
+         ('2021-02-02', 202105), ('2021-02-03', 202105), ('2021-02-04', 202105), ('2021-02-05', 202105),
+         ('2021-02-06', 202105), ('2021-02-07', 202106), ('2021-02-08', 202106), ('2021-02-09', 202106),
+         ('2021-02-10', 202106), ('2021-02-11', 202106), ('2021-02-12', 202106), ('2021-02-13', 202106),
+         ('2021-02-14', 202107), ('2021-02-15', 202107), ('2021-02-16', 202107), ('2021-02-17', 202107),
+         ('2021-02-18', 202107), ('2021-02-19', 202107), ('2021-02-20', 202107),],
+         "day_id_day string, wee_id_week int"
+        )
+
+        self.assertRaises(Exception,check_functions.check_d_day(day_df, 202103))
 
     def test_check_sales(self):
         sales_df = self.spark.createDataFrame(
@@ -270,6 +297,11 @@ class CheckFunctionsTest(PySparkTestCase):
         )
         check_functions.check_sales(sales_df, 202119)
 
+    def test_check_sales_percent_minus_30(self):
+        sales_df = self.spark.createDataFrame(
+          [(202115,95), (202116,90), (202117,97), (202118,20),], "week_id int, sales_quantity int"
+        )
+        self.assertRaises(Exception,check_functions.check_sales(sales_df, 202119))
 
 if __name__ == "__main__":
     unittest.main()
