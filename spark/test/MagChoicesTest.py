@@ -4,7 +4,7 @@ from spark.src import mag_choices as mc
 import unittest
 
 
-class StocksRetailTest(PySparkTestCase):
+class MagChoicesTest(PySparkTestCase):
     def test_recurse_overlap(self):
         self.assertEqual(mc.recurse_overlap([['2020-01-01', '2020-01-31']]), [['2020-01-01', '2020-01-31']])
         self.assertEqual(
