@@ -2,7 +2,7 @@ pipeline {
 
     agent any
     parameters {
-        choice(description: '', name: 'scope', choices: ["sales", "stocks_delta", "stocks_full", "historic_stocks"])
+        choice(description: '', name: 'scope', choices: ["choices", "sales", "stocks_delta", "stocks_full", "historic_stocks"])
         choice(description: '', name: 'run_env', choices:'dev\nprod')
         string(description: 'branch name', name: 'branch_name', defaultValue:'master')
     }
@@ -46,7 +46,6 @@ pipeline {
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
             }
-
         }
 
         stage("spark app deployment and execution") {
@@ -91,4 +90,5 @@ pipeline {
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
     }
+
 }
