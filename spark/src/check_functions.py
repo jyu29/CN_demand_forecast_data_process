@@ -1,5 +1,6 @@
 from pyspark.sql.functions import *
-from tools import date_tools as dt
+#from tools import date_tools as dt
+from datetime import datetime, timedelta
 """
 f_transaction_detail
     tous les YYYYMM
@@ -21,6 +22,20 @@ def get_shift_n_week(week_id, nb_weeks):
     shifted_date = datetime.strptime(str(week_id) + '1', '%G%V%u') + timedelta(nb_weeks * 7)
     ret_week_id = get_week_id(shifted_date)
     return ret_week_id
+
+
+def get_week_id(date):
+    """
+      return the week number of a date (ex: 202051)
+       - year: str(date.isocalendar()[0])
+       - week number: date.strftime("%V") (return the week number where week is starting from monday)
+      If the day is sunday, I add one day to get the good day value in order to respect Decathlon regle:
+        the fist day of week is sunday
+    """
+    day_of_week = date.strftime("%w")
+    date = date if (day_of_week != '0') else date + timedelta(days=1)
+    return int(str(date.isocalendar()[0]) + str(date.isocalendar()[1]).zfill(2))
+
 
 
 def check_d_week(df, current_week):
@@ -90,13 +105,13 @@ def check_sales(df, current_week):
     """
     sales_agg = df.groupby('week_id').agg(sum('sales_quantity').alias('sum_sales'))
     sales_agg_w = \
-    sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -1))\
+    sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -1))\
             .select(sales_agg['sum_sales'].alias('sum_sales_cur')).collect()[0][0]
-    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -2))\
+    sales_agg_w_1 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -2))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -3))\
+    sales_agg_w_2 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -3))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
-    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == dt.get_shift_n_week(current_week, -4))\
+    sales_agg_w_3 = sales_agg.filter(sales_agg['week_id'] == get_shift_n_week(current_week, -4))\
                             .select(sales_agg['sum_sales'].alias('sum_sales_last')).collect()[0][0]
     mean = (sales_agg_w + sales_agg_w_1 + sales_agg_w_2 + sales_agg_w_3) / 4
     sales_pct = ((sales_agg_w - mean) / mean) * 100
@@ -107,5 +122,5 @@ def check_sales(df, current_week):
     print(f'Sales quantity week-4 : {sales_agg_w_3}')
 
     print(f'Sales percentage growth : {sales_pct}')
-    assert sales_agg_w > 0, f'No sales for this week : {dt.get_shift_n_week(current_week, -1)}'
+    assert sales_agg_w > 0, f'No sales for this week : {get_shift_n_week(current_week, -1)}'
     assert sales_pct > -30
