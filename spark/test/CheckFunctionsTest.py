@@ -3,7 +3,6 @@ from spark.test.PySparkTestCase import PySparkTestCase
 from pyspark.sql.types import *
 from spark.src import check_functions
 import unittest
-import datetime as dt
 
 
 class CheckFunctionsTest(PySparkTestCase):
