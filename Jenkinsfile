@@ -14,10 +14,10 @@ pipeline {
             }
             steps {
                 script {
-                    def testImage = docker.build("py-unit-test-image", "./docker/ --build-arg http_proxy=${https_proxy} --build-arg https_proxy=${https_proxy}")
+                    def testImage = docker.build("py-unit-test-image", "./docker/ --build-arg http_proxy=${https_proxy} --build-arg https_proxy=${https_proxy} --env PYTHONPATH=spark/src/")
                     testImage.inside('-u root -e PYTHONDONTWRITEBYTECODE=1') {
                         sh 'cd ${WORKSPACE}'
-                        sh 'python3 -m unittest spark/test/*py --env PYTHONPATH=spark/src/'
+                        sh 'python3 -m unittest spark/test/*py'
                     }
                 }
             }
