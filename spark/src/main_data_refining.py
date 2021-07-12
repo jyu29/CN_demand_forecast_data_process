@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
 import time
 from tools import get_config as conf, utils as ut, date_tools as dt
 import prepare_data as prep
@@ -7,12 +6,30 @@ import sales as sales
 import model_week_mrp as mrp
 import model_week_tree as mwt
 import check_functions as check
+import stocks_retail
+import mag_choices as mc
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 import tools.parse_config as parse_config
-import stocks_retail
+
+
+def main_choices_magasins(params, choices_df, week, sapb):
+    sapb_df = mc.filter_sap(sapb, params.list_puch_org)
+    filtered_choices_df = choices_df.join(broadcast(sapb_df),
+                                 on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
+                                 how='inner')
+    clean_data = mc.get_clean_data(filtered_choices_df)
+    limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
+    weeks = mc.get_weeks(week, params.first_backtesting_cutoff, limit_week)
+    choices_per_week = mc.get_choices_per_week(clean_data, weeks)
+    choices_per_week.persist()
+    write_result(choices_per_week, params, 'b_choices_per_week')
+    choices_per_country_df = mc.get_mag_choices_per_country(choices_per_week)
+    write_result(choices_per_country_df, params, 'stores_choices_percountry')
+    global_choices_df = mc.get_global_mag_choices(choices_per_week)
+    write_result(global_choices_df, params, 'global_stores_choices')
 
 
 def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week):
@@ -121,7 +138,7 @@ def write_partitioned_result(towrite_df, params, path, partition_col):
     """
     start = time.time()
     ut.write_partitionned_parquet_s3(
-        towrite_df.repartition(10),
+        towrite_df,
         params.bucket_refined,
         params.path_refined_global + path,
         partition_col
@@ -156,9 +173,13 @@ def main_stock_retail(spark, params, stocks, sku, but, dtm, rc, day, week_id_min
         refined_stock, week_id_min, params.lifestage_data_first_hist_week, params.max_nb_soldout_weeks)
     refined_stock.persist()
     stock_by_country = stocks_retail.get_stock_avail_by_country(refined_stock)
-    write_partitioned_result(stock_by_country.withColumn('week', stock_by_country.week_id), params, 'stock_by_country', 'week')
+    write_partitioned_result(
+        stock_by_country.withColumn('week', stock_by_country.week_id).repartition(col('week')),
+        params, 'stock_by_country', 'week')
     global_stock = stocks_retail.get_stock_avail_for_all_countries(refined_stock)
-    write_partitioned_result(global_stock.withColumn('week', global_stock.week_id), params, 'global_stock', 'week')
+    write_partitioned_result(
+        global_stock.withColumn('week', global_stock.week_id).repartition(col('week')),
+        params, 'global_stock', 'week')
     refined_stock.unpersist()
 
 
@@ -199,9 +220,13 @@ if __name__ == '__main__':
     week = read_parquet_table(spark, params, 'd_week/')
     dtm = read_parquet_table(spark, params, 'd_sales_data_material_h/')
     rc = read_parquet_table(spark, params, 'f_range_choice/')
-
+    choices_df = read_parquet_table(spark, params, "d_listing_assortment/")
     stocks = spark.table(params.stocks_pict_table)
     is_valid_scope = False
+
+    if "choices" in scope.lower():
+        is_valid_scope = True
+        main_choices_magasins(params, choices_df, week, sapb)
 
     if "sales" in scope.lower():
         is_valid_scope = True
