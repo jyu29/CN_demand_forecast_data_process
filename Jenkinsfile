@@ -6,6 +6,9 @@ pipeline {
         choice(description: '', name: 'run_env', choices:'dev\nprod')
         string(description: 'branch name', name: 'branch_name', defaultValue:'master')
     }
+    environment {
+        cluster_size = "${params.scope == 'choices' ? 10 : 7}"
+    }
 
     stages {
         stage("unit tests") {
@@ -34,7 +37,7 @@ pipeline {
                     string(name: "versionEMR", value: "emr-5.26.0"),
                     string(name: "instanceTypeMaster", value: "c5.4xlarge"),
                     string(name: "masterNodeDiskSize", value: "128"),
-                    string(name: "nbrCoreOnDemand", value: "7"),
+                    string(name: "nbrCoreOnDemand", value: "${cluster_size}"),
                     string(name: "nbrCoreSpot", value: "0"),
                     string(name: "instanceTypeCore", value: "r5.8xlarge"),
                     string(name: "coreNodeDiskSize", value: "128"),
