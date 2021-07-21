@@ -11,13 +11,6 @@ pipeline {
     }
 
     stages {
-        stage("test") {
-            steps {
-                sh('''
-                echo "----> cluster_size: $cluster_size"
-                ''')
-            }
-        }
         stage("unit tests") {
             when {
                 expression { params.run_env != 'prod' }
