@@ -32,7 +32,31 @@ def main_choices_magasins(params, choices_df, week, sapb):
     write_result(global_choices_df, params, 'global_stores_choices')
 
 
-def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week):
+def new_mrp_process(params, asms, ecc_zaa_extplan, week, sku):
+    """
+    apo_sku_mrp_status_h: contains MRP status for models
+    ecc_zaa_extplan: contains all models migrated to the new process of MRP
+    """
+    #TODO Add all active status
+    list_active_mrp = [20, 80]
+    mrp_status = mrp.get_mrp_status(asms)
+    models = mrp.get_mrp_models(ecc_zaa_extplan)
+    sku_filter = mrp.filter_sku(sku)
+
+    clean_data = models\
+        .join(mrp_status, on=["sku_num_sku_r3"], how="inner")\
+        .join(sku_filter, on=['sku_num_sku_r3'], how='inner')
+    weeks = mrp.get_weeks(week, params.first_backtesting_cutoff, dt.get_current_week())
+    mrp_per_week = mrp.get_mrp_status_per_week(clean_data, weeks)
+    final_mrp_status = mrp_per_week\
+        .select("purch_org", "model_id", "week_id", "mrp_status")\
+        .withColumn("is_mrp_active", col("mrp_status").isin(list_active_mrp))\
+        .groupBy("model_id", "week_id")\
+        .agg(max(col("is_mrp_active")).alias("is_mrp_active"))
+    return final_mrp_status
+
+
+def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku, sku_h, but, sapb, gdw, gdc, day, week, asms, ecc_zaa_extplan):
     ######### Create model_week_sales
     cur_exch_df = prep.get_current_exchange(currency_exchange_df)
     day_df = prep.get_days(day, params.first_historical_week).where(col('wee_id_week') < current_week)
@@ -88,7 +112,13 @@ def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku
 
     ######### Fill missing MRP
     print('====> Filling missing MRP...')
-    final_model_week_mrp = mrp.fill_missing_mrp(fltr_model_week_mrp)
+    filled_mrp_status = mrp.fill_missing_mrp(fltr_model_week_mrp)
+    # get new process of mrp
+    models_with_new_mrp = new_mrp_process(params, asms, ecc_zaa_extplan, week, sku)
+    models_with_old_mrp = filled_mrp_status.join(models_with_new_mrp, on=["model_id", "week_id"], how="leftanti")
+    final_model_week_mrp = models_with_new_mrp\
+        .union(models_with_old_mrp)\
+        .orderBy('model_id', 'week_id')
     final_model_week_mrp.persist()
 
     print('[model_week_mrp] (final after fill missing MRP) length:', final_model_week_mrp.count())
@@ -98,7 +128,6 @@ def main_sales(params, transactions_df, deliveries_df, currency_exchange_df, sku
     model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
     model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-    # Todo check with Antoine if this assert is needed ??
     assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
@@ -221,6 +250,9 @@ if __name__ == '__main__':
     dtm = read_parquet_table(spark, params, 'd_sales_data_material_h/')
     rc = read_parquet_table(spark, params, 'f_range_choice/')
     choices_df = read_parquet_table(spark, params, "d_listing_assortment/")
+    sku_mrp = read_parquet_table(spark, params, "apo_sku_mrp_status_h/")
+    cz_purchorg_df = read_parquet_table(spark, params, "d_link_purchorg_system/")
+    mrp_migration_df = read_parquet_table(spark, params, "ecc_zaa_extplan/")
     stocks = spark.table(params.stocks_pict_table)
     is_valid_scope = False
 
@@ -230,7 +262,7 @@ if __name__ == '__main__':
 
     if "sales" in scope.lower():
         is_valid_scope = True
-        main_sales(params, transactions_df, deliveries_df, cex, sku, sku_h, but, sapb, gdw, gdc, day, week)
+        main_sales(params, transactions_df, deliveries_df, cex, sku, sku_h, but, sapb, gdw, gdc, day, week, sku_mrp, mrp_migration_df)
 
     if "stocks_delta" in scope.lower():
         is_valid_scope = True

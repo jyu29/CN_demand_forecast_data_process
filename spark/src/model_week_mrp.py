@@ -1,4 +1,5 @@
 from pyspark.sql.functions import *
+from pyspark.sql.types import *
 from functools import reduce
 
 
@@ -54,3 +55,75 @@ def fill_missing_mrp(model_week_mrp):
     model_week_mrp_filled = unionAll(l_df)
     return model_week_mrp_filled
 
+# ********** New MRP Process **************
+
+
+def get_mrp_status(asms):
+    """
+      get mrp status data
+      - filter on cz = 2002
+    """
+    filtered_mrp = asms \
+        .filter(asms['custom_zone'] == '2002') \
+        .select(
+          col("sku").cast(IntegerType()).alias("sku_num_sku_r3"),
+          col("status").cast(IntegerType()).alias("mrp_status"),
+          col("date_begin"),
+          col("date_end"))\
+        .distinct()
+    return filtered_mrp
+
+
+def get_link_purchorg_system(lps):
+    """
+    get matching purch_org <-> custom_zone
+    """
+    return lps.select('stp_purch_org_legacy_id', 'stp_purch_org_highway_id').distinct()
+
+
+def get_mrp_models(ecc_zaa_extplan):
+    """
+    Get list of models in new mrp method
+    """
+    mrp_passage = ecc_zaa_extplan\
+        .filter(upper(ecc_zaa_extplan['mrp_pr']) == 'X')\
+        .select(
+          col("ekorg").alias("purch_org"),
+          col("matnr").cast(IntegerType()).alias("sku_num_sku_r3")
+        ).distinct()
+    return mrp_passage
+
+
+def get_weeks(week, first_backtesting_cutoff, limit_week):
+    """
+    Filter on weeks between first backtesting cutoff and limit_date in the future
+    """
+    weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
+        .filter(week['wee_id_week'] <= limit_week)
+    return weeks_df.select(col('wee_id_week').cast(IntegerType()).alias('week_id')).distinct()
+
+
+def filter_sku(sku):
+    """
+      Get list of models after filtering on:
+        - Models with univers=0 are used for test
+        - Models with univers=14, 89 or 90 are not to sell directly to clients (ateliers, equipments ..)
+    """
+    sku = sku \
+        .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
+        .filter(sku['mdl_num_model_r3'].isNotNull())\
+        .select(
+            col("sku_num_sku_r3").cast(IntegerType()),
+            col("mdl_num_model_r3").cast(IntegerType()).alias("model_id"))
+    return sku.distinct()
+
+
+def get_mrp_status_per_week(clean_data, weeks):
+    """
+    Get mrp data week by week
+    """
+    mrp = clean_data\
+        .withColumn("week_from", year(col("date_begin")) * 100 + weekofyear(col("date_begin")))\
+        .withColumn("week_to", year(col("date_end")) * 100 + weekofyear(col("date_end")))
+    mrp_per_week = weeks.join(mrp, on=weeks.week_id.between(col("week_from"), col("week_to")), how="inner")
+    return mrp_per_week
