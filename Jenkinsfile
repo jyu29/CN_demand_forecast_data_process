@@ -2,9 +2,12 @@ pipeline {
 
     agent any
     parameters {
-        choice(description: '', name: 'scope', choices: ["sales", "stocks_delta", "stocks_full", "historic_stocks"])
+        choice(description: '', name: 'scope', choices: ["choices", "sales", "stocks_delta", "stocks_full", "historic_stocks"])
         choice(description: '', name: 'run_env', choices:'dev\nprod')
         string(description: 'branch name', name: 'branch_name', defaultValue:'master')
+    }
+    environment {
+        cluster_size = "${params.scope == 'choices' ? 10 : 7}"
     }
 
     stages {
@@ -15,7 +18,7 @@ pipeline {
             steps {
                 script {
                     def testImage = docker.build("py-unit-test-image", "./docker/ --build-arg http_proxy=${https_proxy} --build-arg https_proxy=${https_proxy}")
-                    testImage.inside('-u root -e PYTHONDONTWRITEBYTECODE=1') {
+                    testImage.inside('-u root -e PYTHONDONTWRITEBYTECODE=1  -e PYTHONPATH=spark/src/') {
                         sh 'cd ${WORKSPACE}'
                         sh 'python3 -m unittest spark/test/*py'
                     }
@@ -34,7 +37,7 @@ pipeline {
                     string(name: "versionEMR", value: "emr-5.26.0"),
                     string(name: "instanceTypeMaster", value: "c5.4xlarge"),
                     string(name: "masterNodeDiskSize", value: "128"),
-                    string(name: "nbrCoreOnDemand", value: "7"),
+                    string(name: "nbrCoreOnDemand", value: "${cluster_size}"),
                     string(name: "nbrCoreSpot", value: "0"),
                     string(name: "instanceTypeCore", value: "r5.8xlarge"),
                     string(name: "coreNodeDiskSize", value: "128"),
@@ -46,7 +49,6 @@ pipeline {
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
             }
-
         }
 
         stage("spark app deployment and execution") {
@@ -91,4 +93,5 @@ pipeline {
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
     }
+
 }
