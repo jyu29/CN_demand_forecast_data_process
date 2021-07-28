@@ -2,18 +2,17 @@ from pyspark.sql.functions import *
 from tools import date_tools as dt
 from datetime import datetime, timedelta
 """
-f_transaction_detail
-    tous les YYYYMM
-f_delivery_detail
-    tous les YYYYMM
+f_transaction_detail: every YYYYMM
+f_delivery_detail: every YYYYMM
 sites_attribut_0plant_branches_h
-    présence Z002/2002
-    unicité
+    presence Z002/2002
+    unicity
 d_general_data_warehouse_h
-    jointure sur les modèles uniques de f_transaction_detail & f_delivery_detail et vérifier que chaque modèle a un MRP status
+    join unique models of f_transaction_detail & f_delivery_detail, and ensure that any model has a MRP status
 d_general_data_customer
-    présence Z002/2002
-    unicité"""
+    presence Z002/2002
+    unicity
+"""
 
 
 def check_d_week(df, current_week):
