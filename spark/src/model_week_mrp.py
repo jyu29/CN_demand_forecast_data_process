@@ -122,12 +122,13 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
               on=week.wee_id_week.between(col('week_from'), col('week_to')),
-              how='inner')
+              how='inner') \
         .select('purch_org',
-            'model_id',
-            col('week_id').alias('week_id'),
-            'mrp_status') \
-            return sku_week_mrp_pf
+                'model_id',
+                col('week_id').alias('week_id'),
+                'mrp_status')
+
+    return sku_week_mrp_pf
 
 
 def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
