@@ -14,7 +14,7 @@ def filter_current_exchange(cex):
         .filter(current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
         .select(col('cur_idr_currency_base').alias('cur_idr_currency'),
                 col('hde_share_price')) \
-        .groupby('cur_idr_currency_base') \
+        .groupby('cur_idr_currency') \
         .agg(mean(cex['hde_share_price']).alias('exchange_rate'))
     return cex
 
