@@ -23,8 +23,8 @@ functional_parameters:
 technical_parameters:
     spark_conf:
         spark.yarn.isPython : "true"
-        spark.serializer : "org.apache.spark.serializer.KryoSerializer",
-        spark.sql.legacy.parquet.int96RebaseModeInRead" : "CORRECTED",
-        "spark.sql.legacy.parquet.datetimeRebaseModeInWrite" : "CORRECTED",
-        "spark.sql.legacy.parquet.datetimeRebaseModeInRead" : "CORRECTED",
-        "spark.sql.legacy.timeParserPolicy" : "LEGACY"
+        spark.serializer : "org.apache.spark.serializer.KryoSerializer"
+        spark.sql.legacy.parquet.int96RebaseModeInRead : "CORRECTED"
+        spark.sql.legacy.parquet.datetimeRebaseModeInWrite : "CORRECTED"
+        spark.sql.legacy.parquet.datetimeRebaseModeInRead : "CORRECTED"
+        spark.sql.legacy.timeParserPolicy" : "LEGACY"
