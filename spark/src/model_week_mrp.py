@@ -141,7 +141,7 @@ def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
     return sku_mrp_pf
 
 
-def get_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
+def get_active_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
     model_week_mrp_pf = sku_week_mrp_pf \
         .withColumn('is_mrp_active', col('mrp_status').isin(list_active_mrp)) \
         .groupBy('model_id', 'week_id') \
@@ -163,7 +163,7 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
 
     sku_mrp_pf = get_sku_mrp_pf(mrp_status_pf, sku_migrated_pf, sku)
     sku_week_mrp_pf = get_sku_week_mrp_pf(sku_mrp_pf, week)
-    model_week_mrp_pf = get_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp)
+    model_week_mrp_pf = get_active_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp)
 
     return model_week_mrp_pf
 
@@ -184,11 +184,11 @@ def main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     model_week_mrp_apo_clean = fill_mrp_apo_before_201939(model_week_mrp_apo)
 
     ######### Model MRP for Purchase Forecast
-    models_week_mrp_pf = get_model_week_mrp_pf(sms, zep, week, sku)
+    model_week_mrp_pf = get_model_week_mrp_pf(sms, zep, week, sku)
 
     ######### Join between MRP APO and Purchase Forecast
-    models_not_migrate_pf = model_week_mrp_apo_clean.join(models_week_mrp_pf, on=['model_id', 'week_id'], how='leftanti')
-    model_week_mrp = models_week_mrp_pf\
+    model_not_migrate_pf = model_week_mrp_apo_clean.join(model_week_mrp_pf, on=['model_id', 'week_id'], how='leftanti')
+    model_week_mrp = model_week_mrp_pf\
         .union(models_not_migrate_pf)\
         .orderBy('model_id', 'week_id')
     #final_model_week_mrp.persist()
