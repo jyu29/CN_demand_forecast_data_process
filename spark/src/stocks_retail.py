@@ -290,3 +290,40 @@ def get_stock_avail_for_all_countries(df_stock):
              )\
         .withColumn('percent_sold_out', round(col('nb_mag_sold_out') / col('nb_mag'), 4))
     return global_stock
+
+
+def main_stock_retail(spark, params, stocks, sku, but, dtm, rc, day, week_id_min, active_week):
+    first_day_month = dt.get_first_day_month(week_id_min)
+    last_day_week = dt.get_last_day_week(active_week)
+    print("Refining stocks data for weeks from " + str(week_id_min) + " to " + str(active_week))
+    print("--> Processing stock data between " + str(first_day_month) + " to " + str(last_day_week))
+
+    filtered_stocks = stocks\
+        .where(col("month") >= first_day_month.strftime("%Y%m"))\
+        .where(col("month") <= last_day_week.strftime("%Y%m"))
+
+    sku_df = stocks_retail.get_sku(sku)
+    but_df = stocks_retail.get_but_open_store(but)
+    sapb_df = stocks_retail.filter_sap(sapb, params.list_puch_org)
+    dtm_df = stocks_retail.get_assortment_grade(dtm)
+    day_df = stocks_retail.get_days(day, params.first_historical_week)
+    rc_df = stocks_retail.get_range_choice(rc, params.first_historical_week)
+    df_stock = stocks_retail.get_retail_stock(filtered_stocks, but_df, sku_df, sapb_df)
+    df_stock = stocks_retail.add_lifestage_data(df_stock, dtm_df, active_week, params.lifestage_data_first_hist_week)
+    all_days_df = stocks_retail.get_all_days_bu_df(spark, df_stock, first_day_month, last_day_week)
+    stock_filled = stocks_retail.fill_empty_days(df_stock, all_days_df)
+    stock_week = stocks_retail.enrich_with_data(stock_filled, day_df, rc_df, week_id_min, active_week,
+                                                params.lifestage_data_first_hist_week)
+    refined_stock = stocks_retail.refine_stock(stock_week)
+    refined_stock = stocks_retail.keep_only_assigned_stock_for_old_stocks(
+        refined_stock, week_id_min, params.lifestage_data_first_hist_week, params.max_nb_soldout_weeks)
+    refined_stock.persist()
+    stock_by_country = stocks_retail.get_stock_avail_by_country(refined_stock)
+    write_partitioned_result(
+        stock_by_country.withColumn('week', stock_by_country.week_id).repartition(col('week')),
+        params, 'stock_by_country', 'week')
+    global_stock = stocks_retail.get_stock_avail_for_all_countries(refined_stock)
+    write_partitioned_result(
+        global_stock.withColumn('week', global_stock.week_id).repartition(col('week')),
+        params, 'global_stock', 'week')
+    refined_stock.unpersist()

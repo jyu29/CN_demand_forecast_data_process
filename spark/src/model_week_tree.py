@@ -1,15 +1,11 @@
 from pyspark.sql.functions import *
 
 
-def get_model_week_tree(sku_h, week_df):
+def get_model_week_tree(sku_h, week):
     model_week_tree = sku_h \
-        .where(sku_h['sku_num_sku_r3'].isNotNull() & sku_h['mdl_num_model_r3'].isNotNull() &
-               sku_h['fam_num_family'].isNotNull() & sku_h['sdp_num_sub_department'].isNotNull() &
-               sku_h['dpt_num_department'].isNotNull() & sku_h['unv_num_univers'].isNotNull() &
-               sku_h['pnt_num_product_nature'].isNotNull()) \
-        .filter(~sku_h['unv_num_univers'].isin([0, 14, 89, 90])) \
-        .join(broadcast(week_df), on=week_df['day_first_day_week'].between(sku_h['sku_date_begin'], sku_h['sku_date_end']), how='inner') \
-        .groupBy(week_df['wee_id_week'].cast('int').alias('week_id'),
+        .join(broadcast(week), on=week['day_first_day_week'].between(sku_h['sku_date_begin'], sku_h['sku_date_end']),
+              how='inner') \
+        .groupBy(week['wee_id_week'].cast('int').alias('week_id'),
                  sku_h['mdl_num_model_r3'].alias('model_id')) \
         .agg(max(sku_h['fam_num_family']).alias('family_id'),
              max(sku_h['sdp_num_sub_department']).alias('sub_department_id'),

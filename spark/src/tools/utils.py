@@ -1,7 +1,7 @@
 import time
 import datetime
 from datetime import datetime, timedelta
-
+from functools import reduce
 
 def to_uri(bucket, key):
     """
@@ -54,3 +54,34 @@ def get_timer(starting_time):
     end_time = time.time()
     minutes, seconds = divmod(int(end_time - starting_time), 60)
     print("{} minute(s) {} second(s)".format(int(minutes), seconds))
+
+
+def read_parquet_table(spark, params, path):
+    return read_parquet_s3(spark, params.bucket_clean, params.path_clean_datalake + path)
+
+
+def write_result(towrite_df, params, path):
+    """
+      Save refined global tables
+    """
+    start = time.time()
+    write_parquet_s3(towrite_df.repartition(10), params.bucket_refined, params.path_refined_global + path)
+    get_timer(starting_time=start)
+
+
+def write_partitioned_result(towrite_df, params, path, partition_col):
+    """
+      Save refined global tables
+    """
+    start = time.time()
+    write_partitionned_parquet_s3(
+        towrite_df,
+        params.bucket_refined,
+        params.path_refined_global + path,
+        partition_col
+    )
+    get_timer(starting_time=start)
+
+
+def unionAll(dfs):
+    return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)

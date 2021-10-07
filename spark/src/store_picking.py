@@ -2,6 +2,7 @@ from pyspark.sql.functions import *
 from pyspark.sql import Window
 from pyspark.sql.types import *
 
+from tools import utils as ut, date_tools as dt
 
 def filter_sap(sapb, list_purch_org):
     """
@@ -111,3 +112,22 @@ def get_global_mag_choices(choices_per_week):
         .groupBy("model_id", "week_id")\
         .agg(countDistinct(col("plant_id")).alias("nb_mags"))
     return agg_df
+
+
+
+def main_store_picking(params, choices_df, week, sapb):
+    sapb_df = filter_sap(sapb, params.list_puch_org)
+    filtered_choices_df = choices_df.join(broadcast(sapb_df),
+                                 on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
+                                 how='inner')
+    clean_data = get_clean_data(filtered_choices_df)
+    limit_week = dt.get_next_n_week(dt.get_current_week(), 104)  # TODO NGA verify with Antoine
+    weeks = get_weeks(week, params.first_backtesting_cutoff, limit_week)
+    choices_per_week = get_choices_per_week(clean_data, weeks)
+    choices_per_week.persist()
+    ut.write_result(choices_per_week, params, 'b_choices_per_week')
+    choices_per_country_df = get_mag_choices_per_country(choices_per_week)
+    ut.write_result(choices_per_country_df, params, 'stores_choices_percountry')
+    global_choices_df = get_global_mag_choices(choices_per_week)
+    ut.write_result(global_choices_df, params, 'global_stores_choices')
+

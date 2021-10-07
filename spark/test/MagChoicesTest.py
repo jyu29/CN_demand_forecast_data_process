@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
 from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import mag_choices as mc
+from spark.src import store_picking as mc
 import unittest
 
 
