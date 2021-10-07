@@ -71,16 +71,16 @@ if __name__ == '__main__':
     gdw = prep.filter_gdw(gdw)
 
 
-    ######### model_week_sales
-    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
-    model_week_sales.persist()
-
-    print('====> counting(cache) [model_week_sales] took ')
-    start = time.time()
-    model_week_sales_count = model_week_sales.count()
-    ut.get_timer(starting_time=start)
-    print('[model_week_sales] length:', model_week_sales_count)
-
+#    ######### model_week_sales
+#    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
+#    model_week_sales.persist()
+#
+#    print('====> counting(cache) [model_week_sales] took ')
+#    start = time.time()
+#    model_week_sales_count = model_week_sales.count()
+#    ut.get_timer(starting_time=start)
+#    print('[model_week_sales] length:', model_week_sales_count)
+#
 
     ######### Create model_week_tree
     model_week_tree = mwt.get_model_week_tree(sku_h, week)
@@ -104,38 +104,38 @@ if __name__ == '__main__':
     ut.get_timer(starting_time=start)
     print('[model_week_mrp] length:', model_week_mrp_count)
 
-    ######### Reduce tables according to the models found in model_week_sales
-    print('====> Reducing tables according to the models found in model_week_sales...')
-    list_models_df = model_week_sales.select('model_id').drop_duplicates()
-    reduce_model_week_tree = model_week_tree.join(list_models_df, on='model_id', how='inner')
-    reduce_model_week_mrp = model_week_mrp.join(list_models_df, on='model_id', how='inner')
+#    ######### Reduce tables according to the models found in model_week_sales
+#    print('====> Reducing tables according to the models found in model_week_sales...')
+#    list_models_df = model_week_sales.select('model_id').drop_duplicates()
+#    reduce_model_week_tree = model_week_tree.join(list_models_df, on='model_id', how='inner')
+#    reduce_model_week_mrp = model_week_mrp.join(list_models_df, on='model_id', how='inner')
 
-    print('[model_week_tree] (new) length:', reduce_model_week_tree.count())
-    print('[model_week_mrp] (new) length:', reduce_model_week_mrp.count())
+#    print('[model_week_tree] (new) length:', reduce_model_week_tree.count())
+#    print('[model_week_mrp] (new) length:', reduce_model_week_mrp.count())
 
-    print('====> Spliting sales, price & turnover into 3 tables...')
-    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
-    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
-    model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
+#    print('====> Spliting sales, price & turnover into 3 tables...')
+#    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
+#    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
+#    model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-    assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-    assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-    assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-    assert reduce_model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
-    assert reduce_model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
+#    assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+#    assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+#    assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+#    assert reduce_model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
+#    assert reduce_model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
 
-    check.check_d_week(week, current_week)
-    check.check_d_day(day, current_week)
-    check.check_d_sku(sku)
-    check.check_d_business_unit(but)
-    check.check_sales(model_week_sales_qty, current_week)
+#    check.check_d_week(week, current_week)
+#    check.check_d_day(day, current_week)
+#    check.check_d_sku(sku)
+#    check.check_d_business_unit(but)
+#    check.check_sales(model_week_sales_qty, current_week)
 
 
-    ut.write_result(model_week_sales_qty, params, 'model_week_sales')
-    ut.write_result(model_week_price, params, 'model_week_price')
-    ut.write_result(model_week_turnover, params, 'model_week_turnover')
-    ut.write_result(reduce_model_week_tree, params, 'model_week_tree')
-    ut.write_result(reduce_model_week_mrp, params, 'model_week_mrp')
+#    ut.write_result(model_week_sales_qty, params, 'model_week_sales')
+#    ut.write_result(model_week_price, params, 'model_week_price')
+#    ut.write_result(model_week_turnover, params, 'model_week_turnover')
+#    ut.write_result(reduce_model_week_tree, params, 'model_week_tree')
+#    ut.write_result(reduce_model_week_mrp, params, 'model_week_mrp')
 
     ################################################
     ################################################
