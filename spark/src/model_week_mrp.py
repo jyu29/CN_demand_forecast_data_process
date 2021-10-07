@@ -62,10 +62,10 @@ def get_mrp_status_pf(asms):
     mrp_pf = asms \
         .filter(asms['custom_zone'] == '2002') \
         .select(
-          col("sku").cast(IntegerType()).alias("sku_num_sku_r3"),
-          col("status").cast(IntegerType()).alias("mrp_status"),
-          col("date_begin"),
-          col("date_end"))\
+          col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
+          col('status').cast(IntegerType()).alias('mrp_status'),
+          col('date_begin'),
+          col('date_end'))\
         .distinct()
     return mrp_pf
 
@@ -84,8 +84,8 @@ def get_migrated_sku_pf(zex):
     migrated_sku_pf = zex\
         .filter(upper(zex['mrp_pr']) == 'X')\
         .select(
-          col("ekorg").alias("purch_org"),
-          col("matnr").cast(IntegerType()).alias("sku_num_sku_r3")
+          col('ekorg').alias('purch_org'),
+          col('matnr').cast(IntegerType()).alias('sku_num_sku_r3')
         ).distinct()
     return migrated_sku_pf
 
@@ -109,8 +109,8 @@ def filter_sku(sku):
         .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
         .filter(sku['mdl_num_model_r3'].isNotNull())\
         .select(
-            col("sku_num_sku_r3").cast(IntegerType()),
-            col("mdl_num_model_r3").cast(IntegerType()).alias("model_id"))
+            col('sku_num_sku_r3').cast(IntegerType()),
+            col('mdl_num_model_r3').cast(IntegerType()).alias('model_id'))
     return sku.distinct()
 
 
@@ -121,30 +121,30 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
 
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
-              on=weeks.week_id.between(col("week_from"), col("week_to")),
-              how="inner")
+              on=week.week_id.between(col('week_from'), col('week_to')),
+              how='inner')
     return sku_week_mrp_pf
 
 
 def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
     sku_mrp_pf = sku_migrated_pf \
-        .join(mrp_status_pf, on=["sku_num_sku_r3"], how="inner") \
+        .join(mrp_status_pf, on=['sku_num_sku_r3'], how='inner') \
         .join(sku, on=['sku_num_sku_r3'], how='inner') \
-        .withColumn("week_from", year(col("date_begin")) * 100 + weekofyear(col("date_begin"))) \
-        .withColumn("week_to", year(col("date_end")) * 100 + weekofyear(col("date_end")))
+        .withColumn('week_from', year(col('date_begin')) * 100 + weekofyear(col('date_begin'))) \
+        .withColumn('week_to', year(col('date_end')) * 100 + weekofyear(col('date_end')))
 
     return sku_mrp_pf
 
 
 def get_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
     model_week_mrp_pf = sku_week_mrp_pf \
-        .select("purch_org",
-                "model_id",
-                "week_id",
-                "mrp_status") \
-        .withColumn("is_mrp_active", col("mrp_status").isin(list_active_mrp)) \
-        .groupBy("model_id", "week_id") \
-        .agg(max(col("is_mrp_active")).alias("is_mrp_active"))
+        .select('purch_org',
+                'model_id',
+                'week_id',
+                'mrp_status') \
+        .withColumn('is_mrp_active', col('mrp_status').isin(list_active_mrp)) \
+        .groupBy('model_id', 'week_id') \
+        .agg(max(col('is_mrp_active')).alias('is_mrp_active'))
 
     return model_week_mrp_pf
 
@@ -160,9 +160,9 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
     sku_migrated_pf = get_migrated_sku_pf(zep)
     sku = filter_sku(sku)
 
-    sku_mrp_pf = get_sku_mrp_pf(mrp_status_pf,sku_migrated_pf, sku)
+    sku_mrp_pf = get_sku_mrp_pf(mrp_status_pf, sku_migrated_pf, sku)
     sku_week_mrp_pf = get_sku_week_mrp_pf(sku_mrp_pf, week)
-    model_week_mrp_pf = get_model_week_mrp_pf(sku_week_mrp_pf,list_active_mrp)
+    model_week_mrp_pf = get_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp)
 
     return model_week_mrp_pf
 
@@ -186,7 +186,7 @@ def main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     models_week_mrp_pf = get_model_week_mrp_pf(sms, zep, week, sku)
 
     ######### Join between MRP APO and Purchase Forecast
-    models_not_migrate_pf = model_week_mrp_apo_clean.join(models_week_mrp_pf, on=["model_id", "week_id"], how="leftanti")
+    models_not_migrate_pf = model_week_mrp_apo_clean.join(models_week_mrp_pf, on=['model_id', 'week_id'], how='leftanti')
     model_week_mrp = models_week_mrp_pf\
         .union(models_not_migrate_pf)\
         .orderBy('model_id', 'week_id')

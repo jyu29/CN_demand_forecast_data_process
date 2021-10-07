@@ -17,9 +17,6 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 
 
-
-
-
 if __name__ == '__main__':
     args = parse_config.basic_parse_args()
     # Getting the scope of the data we need to process.
@@ -42,9 +39,9 @@ if __name__ == '__main__':
 
     ######### Load all needed clean data
     tdt = spark.table(params.transactions_table)\
-        .where(col("month") >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
+        .where(col('month') >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
     dyd = spark.table(params.deliveries_table)\
-        .where(col("month") >= str(params.first_historical_week)[:4])
+        .where(col('month') >= str(params.first_historical_week)[:4])
 
     cex = ut.read_parquet_table(spark, params, 'f_currency_exchange/')
     sku = ut.read_parquet_table(spark, params, 'd_sku/')
@@ -57,13 +54,14 @@ if __name__ == '__main__':
     week = ut.read_parquet_table(spark, params, 'd_week/')
     dtm = ut.read_parquet_table(spark, params, 'd_sales_data_material_h/')
     rgc = ut.read_parquet_table(spark, params, 'f_range_choice/')
-    lga = ut.read_parquet_table(spark, params, "d_listing_assortment/")
-    sms = ut.read_parquet_table(spark, params, "apo_sku_mrp_status_h/")
-    lps = ut.read_parquet_table(spark, params, "d_link_purchorg_system/")
-    zep = ut.read_parquet_table(spark, params, "ecc_zaa_extplan/")
+    lga = ut.read_parquet_table(spark, params, 'd_listing_assortment/')
+    sms = ut.read_parquet_table(spark, params, 'apo_sku_mrp_status_h/')
+    lps = ut.read_parquet_table(spark, params, 'd_link_purchorg_system/')
+    zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
     stocks = spark.table(params.stocks_pict_table)
 
-    # Global filter
+
+    ######### Global filter
     cex = prep.filter_current_exchange(cex)
     sku = prep.filter_sku(sku)
     sku_h = prep.filter_sku(sku_h)
@@ -71,6 +69,7 @@ if __name__ == '__main__':
     week = prep.filter_weeks(week, params.first_historical_week, current_week)
     sapb = prep.filter_sapb(sapb, params.list_puch_org)
     gdw = prep.filter_gdw(gdw)
+
 
     ######### model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
@@ -81,7 +80,6 @@ if __name__ == '__main__':
     model_week_sales_count = model_week_sales.count()
     ut.get_timer(starting_time=start)
     print('[model_week_sales] length:', model_week_sales_count)
-
 
 
     ######### Create model_week_tree
