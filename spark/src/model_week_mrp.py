@@ -121,9 +121,13 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
 
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
-              on=week.week_id.between(col('week_from'), col('week_to')),
+              on=week.wee_id_week.between(col('week_from'), col('week_to')),
               how='inner')
-    return sku_week_mrp_pf
+        .select('purch_org',
+            'model_id',
+            col('week_id').alias('week_id'),
+            'mrp_status') \
+            return sku_week_mrp_pf
 
 
 def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
@@ -138,10 +142,6 @@ def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
 
 def get_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
     model_week_mrp_pf = sku_week_mrp_pf \
-        .select('purch_org',
-                'model_id',
-                'week_id',
-                'mrp_status') \
         .withColumn('is_mrp_active', col('mrp_status').isin(list_active_mrp)) \
         .groupBy('model_id', 'week_id') \
         .agg(max(col('is_mrp_active')).alias('is_mrp_active'))
