@@ -15,7 +15,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
         .join(sku, on='sku_idr_sku', how='inner') \
         .join(broadcast(but.where(but['but_num_typ_but'] == 7)),
               on='but_idr_business_unit', how='inner') \
-        .join(broadcast(cex), on=tdt['cur_idr_currency'] == cex['cur_idr_currency_base'], how='inner') \
+        .join(broadcast(cex), on=tdt['cur_idr_currency'] == cex['cur_idr_currency'], how='inner') \
         .join(broadcast(sapb),
               on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
               how='inner') \
