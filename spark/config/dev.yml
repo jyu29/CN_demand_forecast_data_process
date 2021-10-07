@@ -11,6 +11,7 @@ Tables:
 functional_parameters:
   first_historical_week: 201601
   first_backtesting_cutoff: 201925
+  lifestage_data_first_hist_week: 201918
   max_nb_soldout_weeks_for_hist: 4
   list_puch_org:
   - Z001
