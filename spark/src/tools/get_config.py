@@ -74,7 +74,7 @@ class Configuration(object):
         """
         return self._yaml_dict['paths']['refined_global']
 
-    def get_schema_table(self, key):
+    def get_schema_table(self):
         """
         Get table from conf
         :return: table of the key
