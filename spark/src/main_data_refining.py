@@ -41,8 +41,8 @@ if __name__ == '__main__':
 
     tdt = spark.table(params.schema_table+'.f_transaction_detail')
     cex = spark.table(params.schema_table+'.f_currency_exchange')
-    sku = spark.table(params.schema_table+'.sku')
-    sku_h = spark.table(params.schema_table+'.sku_h')
+    sku = spark.table(params.schema_table+'.d_sku')
+    sku_h = spark.table(params.schema_table+'.d_sku_h')
 
 #    tdt = spark.table(params.transactions_table)\
 #        .where(col('month') >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
