@@ -26,9 +26,10 @@ class Configuration(object):
 
         self.bucket_clean = self.get_bucket_clean()
         self.bucket_refined = self.get_bucket_refined()
-        self.transactions_table = self.get_table("transactions")
-        self.deliveries_table = self.get_table("deliveries")
-        self.stocks_pict_table = self.get_table("stocks_pict")
+        self.schema_table = self.get_schema_table()
+#        self.transactions_table = self.get_table("transactions")
+#        self.deliveries_table = self.get_table("deliveries")
+#        self.stocks_pict_table = self.get_table("stocks_pict")
         self.path_clean_datalake = self.get_path_clean_data()
         self.path_refined_global = self.get_path_refined_data()
         self.first_historical_week = self.get_first_hostorical_week()
@@ -73,12 +74,12 @@ class Configuration(object):
         """
         return self._yaml_dict['paths']['refined_global']
 
-    def get_table(self, key):
+    def get_schema_table(self, key):
         """
         Get table from conf
         :return: table of the key
         """
-        return self._yaml_dict['Tables'][key]
+        return self._yaml_dict['Tables']['schema']
 
     def get_spark_conf(self):
         """

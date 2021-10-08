@@ -5,9 +5,7 @@ paths:
   clean_datalake: datalake/
   refined_global: global/
 Tables:
-  transactions: "fcst_clean_dev.f_transaction_detail"
-  deliveries: "fcst_clean_dev.f_delivery_detail"
-  stocks_pict: "fcst_clean_dev.f_stock_picture"
+  schema: "fcst_clean_dev"
 functional_parameters:
   first_historical_week: 201601
   first_backtesting_cutoff: 201925
