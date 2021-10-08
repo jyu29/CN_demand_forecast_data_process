@@ -38,37 +38,44 @@ if __name__ == '__main__':
     spark.sparkContext.setLogLevel('ERROR')
 
     ######### Load all needed clean data
-    tdt = spark.table(params.transactions_table)\
-        .where(col('month') >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
-    dyd = spark.table(params.deliveries_table)\
-        .where(col('month') >= str(params.first_historical_week)[:4])
 
-    cex = ut.read_parquet_table(spark, params, 'f_currency_exchange/')
-    sku = ut.read_parquet_table(spark, params, 'd_sku/')
-    sku_h = ut.read_parquet_table(spark, params, 'd_sku_h/')
-    but = ut.read_parquet_table(spark, params, 'd_business_unit/')
-    sapb = ut.read_parquet_table(spark, params, 'sites_attribut_0plant_branches_h/')
-    gdw = ut.read_parquet_table(spark, params, 'd_general_data_warehouse_h/')
-    gdc = ut.read_parquet_table(spark, params, 'd_general_data_customer/')
-    day = ut.read_parquet_table(spark, params, 'd_day/')
-    week = ut.read_parquet_table(spark, params, 'd_week/')
-    dtm = ut.read_parquet_table(spark, params, 'd_sales_data_material_h/')
-    rgc = ut.read_parquet_table(spark, params, 'f_range_choice/')
-    lga = ut.read_parquet_table(spark, params, 'd_listing_assortment/')
-    sms = ut.read_parquet_table(spark, params, 'apo_sku_mrp_status_h/')
-    lps = ut.read_parquet_table(spark, params, 'd_link_purchorg_system/')
-    zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
-    stocks = spark.table(params.stocks_pict_table)
+    tdt = spark.table(params.bucket_clean+'.f_transaction_detail')
+    cex = spark.table(params.bucket_clean+'.f_currency_exchange')
+    sku = spark.table(params.bucket_clean+'.sku')
+    sku_h = spark.table(params.bucket_clean+'.sku_h')
+
+#    tdt = spark.table(params.transactions_table)\
+#        .where(col('month') >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
+#    dyd = spark.table(params.deliveries_table)\
+#        .where(col('month') >= str(params.first_historical_week)[:4])
+
+#    params.bucket_clean
+#   cex = ut.read_parquet_table(spark, params, 'f_currency_exchange/')
+#   sku = ut.read_parquet_table(spark, params, 'd_sku/')
+#   sku_h = ut.read_parquet_table(spark, params, 'd_sku_h/')
+#   but = ut.read_parquet_table(spark, params, 'd_business_unit/')
+#   sapb = ut.read_parquet_table(spark, params, 'sites_attribut_0plant_branches_h/')
+#   gdw = ut.read_parquet_table(spark, params, 'd_general_data_warehouse_h/')
+#   gdc = ut.read_parquet_table(spark, params, 'd_general_data_customer/')
+#   day = ut.read_parquet_table(spark, params, 'd_day/')
+#   week = ut.read_parquet_table(spark, params, 'd_week/')
+#   dtm = ut.read_parquet_table(spark, params, 'd_sales_data_material_h/')
+#   rgc = ut.read_parquet_table(spark, params, 'f_range_choice/')
+#   lga = ut.read_parquet_table(spark, params, 'd_listing_assortment/')
+#   sms = ut.read_parquet_table(spark, params, 'apo_sku_mrp_status_h/')
+#   lps = ut.read_parquet_table(spark, params, 'd_link_purchorg_system/')
+#   zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
+#   stocks = spark.table(params.stocks_pict_table)
 
 
-    ######### Global filter
-    cex = prep.filter_current_exchange(cex)
-    sku = prep.filter_sku(sku)
-    sku_h = prep.filter_sku(sku_h)
-    day = prep.filter_days(day, params.first_historical_week, current_week)
-    week = prep.filter_weeks(week, params.first_historical_week, current_week)
-    sapb = prep.filter_sapb(sapb, params.list_puch_org)
-    gdw = prep.filter_gdw(gdw)
+#   ######### Global filter
+#   cex = prep.filter_current_exchange(cex)
+#   sku = prep.filter_sku(sku)
+#   sku_h = prep.filter_sku(sku_h)
+#   day = prep.filter_days(day, params.first_historical_week, current_week)
+#   week = prep.filter_weeks(week, params.first_historical_week, current_week)
+#   sapb = prep.filter_sapb(sapb, params.list_puch_org)
+#   gdw = prep.filter_gdw(gdw)
 
 
 #    ######### model_week_sales
@@ -82,48 +89,50 @@ if __name__ == '__main__':
 #    print('[model_week_sales] length:', model_week_sales_count)
 #
 
-    ######### Create model_week_tree
-    model_week_tree = mwt.get_model_week_tree(sku_h, week)
-    model_week_tree.cache()
-
-    print('====> counting(cache) [model_week_tree] took ')
-    start = time.time()
-    model_week_tree_count = model_week_tree.count()
-    ut.get_timer(starting_time=start)
-    print('[model_week_tree] length:', model_week_tree_count)
-
-
-    ######### Create model_week_mrp
-
-    model_week_mrp = mrp.main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week)
-    model_week_mrp.persist()
-
-    print('====> counting(cache) [model_week_mrp] took ')
-    start = time.time()
-    model_week_mrp_count = model_week_mrp.count()
-    ut.get_timer(starting_time=start)
-    print('[model_week_mrp] length:', model_week_mrp_count)
-
+#    ######### Create model_week_tree
+#    model_week_tree = mwt.get_model_week_tree(sku_h, week)
+#    model_week_tree.cache()
+#
+#    print('====> counting(cache) [model_week_tree] took ')
+#    start = time.time()
+#    model_week_tree_count = model_week_tree.count()
+#    ut.get_timer(starting_time=start)
+#    print('[model_week_tree] length:', model_week_tree_count)
+#
+#
+#    ######### Create model_week_mrp
+#
+#    model_week_mrp = mrp.main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week)
+#    model_week_mrp.persist()
+#
+#    print('====> counting(cache) [model_week_mrp] took ')
+#    start = time.time()
+#    model_week_mrp_count = model_week_mrp.count()
+#    ut.get_timer(starting_time=start)
+#    print('[model_week_mrp] length:', model_week_mrp_count)
+#
+#
+#
 #    ######### Reduce tables according to the models found in model_week_sales
 #    print('====> Reducing tables according to the models found in model_week_sales...')
-#    list_models_df = model_week_sales.select('model_id').drop_duplicates()
-#    reduce_model_week_tree = model_week_tree.join(list_models_df, on='model_id', how='inner')
-#    reduce_model_week_mrp = model_week_mrp.join(list_models_df, on='model_id', how='inner')
-
+#    l_model_id = model_week_sales.select('model_id').drop_duplicates()
+#    model_week_tree = model_week_tree.join(l_model_id, on='model_id', how='inner')
+#    model_week_mrp = model_week_mrp.join(l_model_id, on='model_id', how='inner')
+#
 #    print('[model_week_tree] (new) length:', reduce_model_week_tree.count())
 #    print('[model_week_mrp] (new) length:', reduce_model_week_mrp.count())
-
+#
 #    print('====> Spliting sales, price & turnover into 3 tables...')
 #    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
 #    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
 #    model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
-
+#
 #    assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
 #    assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
 #    assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
 #    assert reduce_model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
 #    assert reduce_model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
-
+#
 #    check.check_d_week(week, current_week)
 #    check.check_d_day(day, current_week)
 #    check.check_d_sku(sku)
