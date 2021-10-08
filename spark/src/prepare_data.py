@@ -1,6 +1,36 @@
 from pyspark.sql.functions import *
 
 
+
+
+
+def filter_transaction(tdt, first_historical_week):
+    """
+    Filter on days more recent than first historical week
+    """
+    tdt = tdt \
+        .filter(col('month') >= str(first_historical_week)[:4]+'01')
+    return tdt
+
+
+def filter_delivery(dyd, first_historical_week):
+    """
+    Filter on days more recent than first historical week
+    """
+    dyd = dyd \
+        .filter(col('month') >= str(first_historical_week)[:4]+'01')
+    return dyd
+
+
+def filter_stock(spr, first_historical_week):
+    """
+    Filter on days more recent than first historical week
+    """
+    spr = spr \
+        .filter(col('month') >= str(first_historical_week)[:4]+'01')
+    return spr
+
+
 def filter_current_exchange(cex):
     """
       Get the current CRE exchange rate

@@ -38,44 +38,37 @@ if __name__ == '__main__':
     spark.sparkContext.setLogLevel('ERROR')
 
     ######### Load all needed clean data
-
     tdt = spark.table(params.schema_table+'.f_transaction_detail')
+    dyd = spark.table(params.schema_table+'.f_delivery_detail')
     cex = spark.table(params.schema_table+'.f_currency_exchange')
     sku = spark.table(params.schema_table+'.d_sku')
     sku_h = spark.table(params.schema_table+'.d_sku_h')
-
-#    tdt = spark.table(params.transactions_table)\
-#        .where(col('month') >= str(params.first_historical_week)[:4]) # get all years data from first_historical_week
-#    dyd = spark.table(params.deliveries_table)\
-#        .where(col('month') >= str(params.first_historical_week)[:4])
-
-#    params.bucket_clean
-#   cex = ut.read_parquet_table(spark, params, 'f_currency_exchange/')
-#   sku = ut.read_parquet_table(spark, params, 'd_sku/')
-#   sku_h = ut.read_parquet_table(spark, params, 'd_sku_h/')
-#   but = ut.read_parquet_table(spark, params, 'd_business_unit/')
-#   sapb = ut.read_parquet_table(spark, params, 'sites_attribut_0plant_branches_h/')
-#   gdw = ut.read_parquet_table(spark, params, 'd_general_data_warehouse_h/')
-#   gdc = ut.read_parquet_table(spark, params, 'd_general_data_customer/')
-#   day = ut.read_parquet_table(spark, params, 'd_day/')
-#   week = ut.read_parquet_table(spark, params, 'd_week/')
-#   dtm = ut.read_parquet_table(spark, params, 'd_sales_data_material_h/')
-#   rgc = ut.read_parquet_table(spark, params, 'f_range_choice/')
-#   lga = ut.read_parquet_table(spark, params, 'd_listing_assortment/')
-#   sms = ut.read_parquet_table(spark, params, 'apo_sku_mrp_status_h/')
-#   lps = ut.read_parquet_table(spark, params, 'd_link_purchorg_system/')
-#   zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
-#   stocks = spark.table(params.stocks_pict_table)
+    but = spark.table(params.schema_table+'.d_business_unit')
+    sapb = spark.table(params.schema_table+'.sites_attribut_0plant_branches_h')
+    gdw = spark.table(params.schema_table+'.d_general_data_warehouse_h')
+    gdc = spark.table(params.schema_table+'.d_general_data_customer')
+    day = spark.table(params.schema_table+'.d_day')
+    week = spark.table(params.schema_table+'.d_week')
+    dtm = spark.table(params.schema_table+'.d_sales_data_material_h')
+    rgc = spark.table(params.schema_table+'.f_range_choice')
+    lga = spark.table(params.schema_table+'.d_listing_assortment')
+    sms = spark.table(params.schema_table+'.apo_sku_mrp_status_h')
+    lps = spark.table(params.schema_table+'.d_link_purchorg_system')
+    zep = spark.table(params.schema_table+'.ecc_zaa_extplan')
+    spr = spark.table(params.schema_table+'.f_stock_picture')
 
 
-#   ######### Global filter
-#   cex = prep.filter_current_exchange(cex)
-#   sku = prep.filter_sku(sku)
-#   sku_h = prep.filter_sku(sku_h)
-#   day = prep.filter_days(day, params.first_historical_week, current_week)
-#   week = prep.filter_weeks(week, params.first_historical_week, current_week)
-#   sapb = prep.filter_sapb(sapb, params.list_puch_org)
-#   gdw = prep.filter_gdw(gdw)
+    ######### Global filter
+    tdt = prep.filter_transaction(tdt, params.first_historical_week)
+    dyd = prep.filter_delivery(dyd, params.first_historical_week)
+    spr = prep.filter_stock(spr, params.first_historical_week)
+    cex = prep.filter_current_exchange(cex)
+    sku = prep.filter_sku(sku)
+    sku_h = prep.filter_sku(sku_h)
+    day = prep.filter_days(day, params.first_historical_week, current_week)
+    week = prep.filter_weeks(week, params.first_historical_week, current_week)
+    sapb = prep.filter_sapb(sapb, params.list_puch_org)
+    gdw = prep.filter_gdw(gdw)
 
 
 #    ######### model_week_sales
