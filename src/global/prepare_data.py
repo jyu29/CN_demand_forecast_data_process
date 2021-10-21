@@ -2,39 +2,10 @@ from pyspark.sql.functions import *
 
 
 
-
-
-def filter_transaction(tdt, first_historical_week):
-    """
-    Filter on days more recent than first historical week
-    """
-    tdt = tdt \
-        .filter(col('month') >= str(first_historical_week)[:4]+'01')
-    return tdt
-
-
-def filter_delivery(dyd, first_historical_week):
-    """
-    Filter on days more recent than first historical week
-    """
-    dyd = dyd \
-        .filter(col('month') >= str(first_historical_week)[:4]+'01')
-    return dyd
-
-
-def filter_stock(spr, first_historical_week):
-    """
-    Filter on days more recent than first historical week
-    """
-    spr = spr \
-        .filter(col('month') >= str(first_historical_week)[:4]+'01')
-    return spr
-
-
 def filter_current_exchange(cex):
     """
       Get the current CRE exchange rate
-        cex['cpt_idr_cur_price'] = 6 #taux change prix de vente
+        cex['cpt_idr_cur_price'] = 6 #exchange rate for sales price
         cex['cur_idr_currency_restit'] == 32 # 32 is the index of euro
       TODO: get a dynamic exchange rate when the right data source is identified
     """
@@ -69,15 +40,15 @@ def filter_weeks(weeks, week_begin, week_end):
     return weeks
 
 
-def filter_sapb(sapb, list_puch_org):
+def filter_sapb(sapb, list_purch_org):
     """
       get SiteAttributePlant0Branch after filtering on:
       - sapsrc=PRT: all countries except brazil
-      - list_push_org: EU countries
+      - list_push_org: List Purchase Organization
     """
     sap = sapb \
         .filter(sapb['sapsrc'] == 'PRT') \
-        .filter(sapb['purch_org'].isin(list_puch_org))\
+        .filter(sapb['purch_org'].isin(list_purch_org))\
         .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end']))
     return sap
 
@@ -86,7 +57,7 @@ def filter_sku(sku):
     """
       Get list of models after filtering on:
         - Models with univers=0 are used for test
-        - Models with univers=14, 89 or 90 are not to sell directly to clients (ateliers, equipments ..)
+        - Models with univers=14, 89 or 90 are not to sell directly to clients (workshop, services, store equipment...)
     """
     sku = sku \
         .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
@@ -103,7 +74,7 @@ def filter_sku(sku):
 
 def filter_gdw(gdw):
     """
-    Filter on weeks between first backtesting cutoff and current week
+    Filter on PRT and wrong data quality
     """
     gdw = gdw \
         .filter(gdw['sdw_sap_source'] == 'PRT') \

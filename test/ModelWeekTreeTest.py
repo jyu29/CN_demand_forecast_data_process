@@ -1,5 +1,5 @@
-from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import model_week_tree as mwt
+from test.PySparkTestCase import PySparkTestCase
+from src import model_week_tree as mwt
 import unittest
 from pyspark.sql import functions as F
 

@@ -2,6 +2,7 @@ import time
 import tools.utils as ut
 from pyspark.sql.functions import *
 from pyspark.sql.types import *
+from pyspark import StorageLevel
 
 
 def get_sku_mrp_apo(gdw, sapb, sku):
@@ -23,9 +24,8 @@ def get_sku_mrp_apo(gdw, sapb, sku):
 
 def get_model_week_mrp_apo(gdw, sapb, sku, day):
     """
-      calculate model week mrp
+      calculate model week MRP from APO
     """
-
     smu = get_sku_mrp_apo(gdw, sapb, sku)
 
     model_week_mrp_apo = smu \
@@ -70,13 +70,6 @@ def get_mrp_status_pf(asms):
     return mrp_pf
 
 
-def get_link_purchorg_system(lps):
-    """
-    get matching purch_org <-> custom_zone
-    """
-    return lps.select('stp_purch_org_legacy_id', 'stp_purch_org_highway_id').distinct()
-
-
 def get_migrated_sku_pf(zex):
     """
     Get list of models in new mrp method
@@ -88,30 +81,6 @@ def get_migrated_sku_pf(zex):
           col('matnr').cast(IntegerType()).alias('sku_num_sku_r3')
         ).distinct()
     return migrated_sku_pf
-
-
-#def get_weeks(week, first_backtesting_cutoff, limit_week):
-#    """
-#    Filter on weeks between first backtesting cutoff and limit_date in the future
-#    """
-#    weeks_df = week.filter(week['wee_id_week'] >= first_backtesting_cutoff) \
-#        .filter(week['wee_id_week'] <= limit_week)
-#    return weeks_df.select(col('wee_id_week').cast(IntegerType()).alias('week_id')).distinct()
-
-
-def filter_sku(sku):
-    """
-      Get list of models after filtering on:
-        - Models with univers=0 are used for test
-        - Models with univers=14, 89 or 90 are not to sell directly to clients (ateliers, equipments ..)
-    """
-    sku = sku \
-        .filter(~sku['unv_num_univers'].isin([0, 14, 89, 90])) \
-        .filter(sku['mdl_num_model_r3'].isNotNull())\
-        .select(
-            col('sku_num_sku_r3').cast(IntegerType()),
-            col('mdl_num_model_r3').cast(IntegerType()).alias('model_id'))
-    return sku.distinct()
 
 
 def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
@@ -155,11 +124,9 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
     apo_sku_mrp_status_h: contains MRP status for models
     ecc_zaa_extplan: contains all models migrated to the new process of MRP
     """
-    #TODO Add all active status
     list_active_mrp = [20, 80]
     mrp_status_pf = get_mrp_status_pf(sms)
     sku_migrated_pf = get_migrated_sku_pf(zep)
-    sku = filter_sku(sku)
 
     sku_mrp_pf = get_sku_mrp_pf(mrp_status_pf, sku_migrated_pf, sku)
     sku_week_mrp_pf = get_sku_week_mrp_pf(sku_mrp_pf, week)
@@ -168,11 +135,11 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
     return model_week_mrp_pf
 
 
-def main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
+def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     print('====> Model MRP for APO...')
     ######### Model MRP for APO
     model_week_mrp_apo = get_model_week_mrp_apo(gdw, sapb, sku, day)
-    model_week_mrp_apo.cache()
+    model_week_mrp_apo.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_mrp_apo] took ')
     start = time.time()
@@ -194,6 +161,5 @@ def main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     model_week_mrp = model_week_mrp_pf\
         .union(model_not_migrate_pf)\
         .orderBy('model_id', 'week_id')
-    #final_model_week_mrp.persist()
 
     return model_week_mrp

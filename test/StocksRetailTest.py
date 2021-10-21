@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
-from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import stocks_retail
+from test.PySparkTestCase import PySparkTestCase
+from src import stocks_retail
 import unittest
 import datetime as dt
 

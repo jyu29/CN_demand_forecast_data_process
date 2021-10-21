@@ -1,7 +1,5 @@
-from pyspark.sql import functions as F
-from spark.test.PySparkTestCase import PySparkTestCase
-from pyspark.sql.types import *
-from spark.src import check_functions
+from test.PySparkTestCase import PySparkTestCase
+from src import check_functions
 import unittest
 
 

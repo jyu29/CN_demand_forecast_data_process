@@ -7,15 +7,25 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
     """
     Get Offline sales from transactions data
     Filters:
-      but['but_num_typ_but'] == 7 magasin physique
+      but['but_num_typ_but'] == 7 physical store
+      tdt['the_to_type']) == 'offline'
     """
     model_week_sales_offline = tdt \
-        .join(broadcast(day), on=to_date(tdt['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'], how='inner') \
-        .join(broadcast(week), on='wee_id_week', how='inner') \
-        .join(sku, on='sku_idr_sku', how='inner') \
-        .join(broadcast(but.where(but['but_num_typ_but'] == 7)),
-              on='but_idr_business_unit', how='inner') \
-        .join(broadcast(cex), on=tdt['cur_idr_currency'] == cex['cur_idr_currency'], how='inner') \
+        .join(broadcast(day),
+              on=to_date(tdt['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'],
+              how='inner') \
+        .join(broadcast(week),
+              on='wee_id_week',
+              how='inner') \
+        .join(sku,
+              on='sku_idr_sku',
+              how='inner') \
+        .join(broadcast(but.filter(but['but_num_typ_but'] == 7)),
+              on='but_idr_business_unit',
+              how='inner') \
+        .join(broadcast(cex),
+              on=tdt['cur_idr_currency'] == cex['cur_idr_currency'],
+              how='inner') \
         .join(broadcast(sapb),
               on=but['but_num_business_unit'].cast('string') == regexp_replace(sapb['plant_id'], '^0*|\s', ''),
               how='inner') \
@@ -33,16 +43,19 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
 def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
     """
     Get online sales from delivery data
+    Filters:
+      dyd['tdt_type_detail'] == 'sale'
+      dyd['the_to_type'] == 'online'
     """
     model_week_sales_online = dyd \
         .join(broadcast(day),
               on=to_date(dyd['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'],
               how='inner') \
         .join(broadcast(week),
-              on= 'wee_id_week',
+              on='wee_id_week',
               how='inner') \
         .join(sku,
-              on= 'sku_idr_sku',
+              on='sku_idr_sku',
               how='inner') \
         .join(broadcast(but),
               on=dyd['but_idr_business_unit_sender'] == but['but_idr_business_unit'],
@@ -51,7 +64,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               on=but['but_code_international'] == concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']),
               how='inner') \
         .join(broadcast(cex),
-              on='cur_idr_currency' ,
+              on='cur_idr_currency',
               how='inner') \
         .join(broadcast(sapb),
               on=gdc['plant_id'] == sapb['plant_id'],

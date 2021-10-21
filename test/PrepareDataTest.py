@@ -1,7 +1,7 @@
 from datetime import datetime
 from pyspark.sql import functions as F
-from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import prepare_data as prep
+from test.PySparkTestCase import PySparkTestCase
+from src import prepare_data as prep
 import unittest
 
 

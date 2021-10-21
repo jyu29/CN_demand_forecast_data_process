@@ -1,7 +1,7 @@
 from datetime import datetime
 from pyspark.sql import functions as F
-from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import model_week_mrp as mrp
+from test.PySparkTestCase import PySparkTestCase
+from src import model_week_mrp as mrp
 import unittest
 
 

@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
-from spark.test.PySparkTestCase import PySparkTestCase
-from spark.src import sales
+from test.PySparkTestCase import PySparkTestCase
+from src import sales
 import unittest
 
 

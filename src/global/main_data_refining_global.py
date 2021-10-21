@@ -12,10 +12,8 @@ import check_functions as check
 #import stocks_retail
 #import store_picking as sp
 
-from pyspark import SparkConf
+from pyspark import SparkConf, StorageLevel
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
-
 
 if __name__ == '__main__':
     args = parse_config.basic_parse_args()
@@ -59,9 +57,6 @@ if __name__ == '__main__':
 
 
     ######### Global filter
-    #tdt = prep.filter_transaction(tdt, params.first_historical_week)
-    #dyd = prep.filter_delivery(dyd, params.first_historical_week)
-    #spr = prep.filter_stock(spr, params.first_historical_week)
     cex = prep.filter_current_exchange(cex)
     sku = prep.filter_sku(sku)
     sku_h = prep.filter_sku(sku_h)
@@ -73,7 +68,7 @@ if __name__ == '__main__':
 
     ######### model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
-    model_week_sales.persist()
+    model_week_sales.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_sales] took ')
     start = time.time()
@@ -84,7 +79,7 @@ if __name__ == '__main__':
 
     ######### Create model_week_tree
     model_week_tree = mwt.get_model_week_tree(sku_h, week)
-    model_week_tree.cache()
+    model_week_tree.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_tree] took ')
     start = time.time()
@@ -95,8 +90,8 @@ if __name__ == '__main__':
 
     ######### Create model_week_mrp
 
-    model_week_mrp = mrp.main_model_week_mrp(gdw, sapb, sku, day, sms, zep, week)
-    model_week_mrp.persist()
+    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week)
+    model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_mrp] took ')
     start = time.time()
@@ -131,55 +126,11 @@ if __name__ == '__main__':
     check.check_d_business_unit(but)
     check.check_sales(model_week_sales_qty, current_week)
 
-
     ut.write_result(model_week_sales_qty, params, 'model_week_sales')
     ut.write_result(model_week_price, params, 'model_week_price')
     ut.write_result(model_week_turnover, params, 'model_week_turnover')
     ut.write_result(model_week_tree, params, 'model_week_tree')
     ut.write_result(model_week_mrp, params, 'model_week_mrp')
-
-   ################################################
-   ################################################
-   ################################################
-   ################################################
-   ################################################
-   ################################################
-   ################################################
-
-#
-#   if (shortage_history_update = False )
-#
-#   else
-#       delta
-#
-#   puis le reste
-#   Avec jointure des stocks
-#   print('====> Spliting sales, price & turnover into 3 tables...')
-#   model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
-#   model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
-#   model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
-#
-#   assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-#   assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-#   assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
-#   assert fltr_model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
-#   assert final_model_week_mrp.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
-#
-#   check.check_d_week(week, current_week)
-#   check.check_d_day(day, current_week)
-#   check.check_d_sku(sku)
-#   check.check_d_business_unit(but)
-#   check.check_sales(model_week_sales_qty, current_week)
-#
-#   sales.main_sales(params, transactions_df, deliveries_df, cex, sku, sku_h, but, sapb, gdw, gdc, day, week, sms, zex, current_week)
-#
-#   active_week = dt.get_previous_week_id(current_week)
-#   week_id_min = dt.get_previous_n_week(active_week, 12)
-#   stocks_retail.main_stock_retail(spark, params, stocks, sku, but, dtm, rgc, day, week_id_min, active_week)
-#
-#
-#   if not is_valid_scope:
-#       print('[error] ' + scope + ' is not a valid scope')
 
     spark.stop()
 
