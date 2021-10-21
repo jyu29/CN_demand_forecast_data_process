@@ -5,13 +5,11 @@ import src.tools.get_config as conf
 import src.tools.utils as ut
 import src.tools.parse_config as parse_config
 
-import prepare_data as prep
-import sales as sales
+import generic_filter as gf
+import model_week_sales as sales
 import model_week_mrp as mrp
-import model_week_tree as mwt
+import model_week_tree as tree
 import check_functions as check
-# import stocks_retail
-# import store_picking as sp
 
 from pyspark import SparkConf, StorageLevel
 from pyspark.sql import SparkSession
@@ -56,13 +54,13 @@ if __name__ == '__main__':
     spr = ut.read_parquet_table(spark, params, 'f_stock_picture/')
 
     ######### Global filter
-    cex = prep.filter_current_exchange(cex)
-    sku = prep.filter_sku(sku)
-    sku_h = prep.filter_sku(sku_h)
-    day = prep.filter_days(day, params.first_historical_week, current_week)
-    week = prep.filter_weeks(week, params.first_historical_week, current_week)
-    sapb = prep.filter_sapb(sapb, params.list_purch_org)
-    gdw = prep.filter_gdw(gdw)
+    cex = gf.filter_current_exchange(cex)
+    sku = gf.filter_sku(sku)
+    sku_h = gf.filter_sku(sku_h)
+    day = gf.filter_days(day, params.first_historical_week, current_week)
+    week = gf.filter_weeks(week, params.first_historical_week, current_week)
+    sapb = gf.filter_sapb(sapb, params.list_purch_org)
+    gdw = gf.filter_gdw(gdw)
 
     ######### model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
@@ -75,7 +73,7 @@ if __name__ == '__main__':
     print('[model_week_sales] length:', model_week_sales_count)
 
     ######### Create model_week_tree
-    model_week_tree = mwt.get_model_week_tree(sku_h, week)
+    model_week_tree = tree.get_model_week_tree(sku_h, week)
     model_week_tree.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_tree] took ')
@@ -107,9 +105,9 @@ if __name__ == '__main__':
     print('====> Splitting sales, price & turnover into 3 tables...')
     model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
     model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
-    model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
+    model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-    assert model_week_sales_qty.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
+    assert model_week_sales.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert model_week_price.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert model_week_turnover.groupBy(['model_id', 'week_id', 'date']).count().select(max('count')).collect()[0][0] == 1
     assert model_week_tree.groupBy(['model_id', 'week_id']).count().select(max('count')).collect()[0][0] == 1
@@ -119,9 +117,9 @@ if __name__ == '__main__':
     check.check_d_day(day, current_week)
     check.check_d_sku(sku)
     check.check_d_business_unit(but)
-    check.check_sales(model_week_sales_qty, current_week)
+    check.check_sales(model_week_sales, current_week)
 
-    ut.write_result(model_week_sales_qty, params, 'model_week_sales')
+    ut.write_result(model_week_sales, params, 'model_week_sales')
     ut.write_result(model_week_price, params, 'model_week_price')
     ut.write_result(model_week_turnover, params, 'model_week_turnover')
     ut.write_result(model_week_tree, params, 'model_week_tree')
