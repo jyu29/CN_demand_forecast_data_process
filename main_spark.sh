@@ -8,7 +8,7 @@ technical_conf_file="./config/$technical_env.yml"
 echo "Technical configuration file: $technical_conf_file"
 
 sudo pip3 install -r requirements.txt
-zip -r tools.zip ./src/tools
+zip -r tools.zip ./src/tools/
 
 echo "Wait 60s until the initialization of metastore is done"
 # Wait 60s until the initialization of metastore is done
