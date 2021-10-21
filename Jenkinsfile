@@ -6,9 +6,6 @@ pipeline {
         choice(description: '', name: 'run_env', choices:'dev\nprod')
         string(description: 'branch name', name: 'branch_name', defaultValue:'master')
     }
-    environment {
-        cluster_size = "${params.scope == 'choices' ? 10 : 7}"
-    }
 
     stages {
 
@@ -16,22 +13,20 @@ pipeline {
 
             steps {
 
-            build job: "EMR-CREATE-PERSISTENT-CLUSTER",
+            build job: "EMR-CREATE-PERSISTENT-CLUSTER-V2",
                 parameters: [
                     string(name: "nameOfCluster", value: "${BUILD_TAG}"),
-                    string(name: "projectTag", value: "forecastinfra"),
-                    string(name: "versionEMR", value: "emr-5.26.0"),
-                    string(name: "instanceTypeMaster", value: "c5.4xlarge"),
-                    string(name: "masterNodeDiskSize", value: "128"),
-                    string(name: "nbrCoreOnDemand", value: "${cluster_size}"),
+                    string(name: "versionEMR", value: "emr-6.4.0"),
+                    string(name: "ClusterType", value: "batch_cluster"),
+                    string(name: "instanceTypeMaster", value: "c6g.2xlarge"),
+                    string(name: "masterNodeDiskSize", value: "256"),
+                    string(name: "nbrCoreOnDemand", value: "6"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r5.8xlarge"),
-                    string(name: "coreNodeDiskSize", value: "128"),
+                    string(name: "instanceTypeCore", value: "r6g.16xlarge"),
+                    string(name: "coreNodeDiskSize", value: "256"),
                     string(name: "nbrTaskNode", value: "0"),
-                    string(name: "instanceTypeTask", value: "c4.4xlarge"),
+                    string(name: "instanceTypeTask", value: "r5.2xlarge"),
                     string(name: "taskNodeDiskSize", value: "64"),
-                    string(name: "ldapUser", value: "wdesmarescaux"),
-                    string(name: "ldapGroup", value: "GR-DISCOVERY-ADM"),
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
             }
@@ -54,7 +49,7 @@ pipeline {
 
                     scp -r -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} ${WORKSPACE} hadoop@${master_ip}:/home/hadoop
 
-                    ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "export PYSPARK_PYTHON='/usr/bin/python3'; sudo chmod 755 /home/hadoop/${JOB_NAME}/main_spark.sh; cd /home/hadoop/${JOB_NAME}; ./main_spark.sh ${run_env} ${scope}"
+                    ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "export PYSPARK_PYTHON='/usr/bin/python3'; sudo chmod 755 /home/hadoop/${JOB_NAME}/main_spark.sh; cd /home/hadoop/${JOB_NAME}; ./main_spark.sh ${run_env}"
                     x=$(ssh hadoop@${master_ip} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /var/lib/jenkins/.ssh/${key_pem} "cat /home/hadoop/${JOB_NAME}/code_status")
                     exit $x
                     ''')

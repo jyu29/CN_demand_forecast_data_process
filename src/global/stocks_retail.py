@@ -304,7 +304,7 @@ def main_stock_retail(spark, params, stocks, sku, but, dtm, rc, day, week_id_min
 
     sku_df = stocks_retail.get_sku(sku)
     but_df = stocks_retail.get_but_open_store(but)
-    sapb_df = stocks_retail.filter_sap(sapb, params.list_puch_org)
+    sapb_df = stocks_retail.filter_sap(sapb, params.list_purch_org)
     dtm_df = stocks_retail.get_assortment_grade(dtm)
     day_df = stocks_retail.get_days(day, params.first_historical_week)
     rc_df = stocks_retail.get_range_choice(rc, params.first_historical_week)

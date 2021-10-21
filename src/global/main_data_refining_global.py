@@ -11,17 +11,16 @@ import sales as sales
 import model_week_mrp as mrp
 import model_week_tree as mwt
 import check_functions as check
-#import stocks_retail
-#import store_picking as sp
+# import stocks_retail
+# import store_picking as sp
 
 from pyspark import SparkConf, StorageLevel
 from pyspark.sql import SparkSession
 
 if __name__ == '__main__':
     args = parse_config.basic_parse_args()
-    # Getting the scope of the data we need to process.
+    # Getting the config.
     config_file = vars(args)['configfile']
-    scope = vars(args)['scope']
 
     print('Getting parameters...')
     params = conf.Configuration(config_file)
@@ -57,16 +56,14 @@ if __name__ == '__main__':
     zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
     spr = ut.read_parquet_table(spark, params, 'f_stock_picture/')
 
-
     ######### Global filter
     cex = prep.filter_current_exchange(cex)
     sku = prep.filter_sku(sku)
     sku_h = prep.filter_sku(sku_h)
     day = prep.filter_days(day, params.first_historical_week, current_week)
     week = prep.filter_weeks(week, params.first_historical_week, current_week)
-    sapb = prep.filter_sapb(sapb, params.list_puch_org)
+    sapb = prep.filter_sapb(sapb, params.list_purch_org)
     gdw = prep.filter_gdw(gdw)
-
 
     ######### model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc)
@@ -78,7 +75,6 @@ if __name__ == '__main__':
     ut.get_timer(starting_time=start)
     print('[model_week_sales] length:', model_week_sales_count)
 
-
     ######### Create model_week_tree
     model_week_tree = mwt.get_model_week_tree(sku_h, week)
     model_week_tree.persist(StorageLevel.MEMORY_ONLY)
@@ -88,7 +84,6 @@ if __name__ == '__main__':
     model_week_tree_count = model_week_tree.count()
     ut.get_timer(starting_time=start)
     print('[model_week_tree] length:', model_week_tree_count)
-
 
     ######### Create model_week_mrp
 
@@ -101,7 +96,6 @@ if __name__ == '__main__':
     ut.get_timer(starting_time=start)
     print('[model_week_mrp] length:', model_week_mrp_count)
 
-
     ######### Reduce tables according to the models found in model_week_sales
     print('====> Reducing tables according to the models found in model_week_sales...')
     l_model_id = model_week_sales.select('model_id').drop_duplicates()
@@ -111,7 +105,7 @@ if __name__ == '__main__':
     print('[model_week_tree] (new) length:', model_week_tree.count())
     print('[model_week_mrp] (new) length:', model_week_mrp.count())
 
-    print('====> Spliting sales, price & turnover into 3 tables...')
+    print('====> Splitting sales, price & turnover into 3 tables...')
     model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
     model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
     model_week_sales_qty = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
@@ -135,4 +129,3 @@ if __name__ == '__main__':
     ut.write_result(model_week_mrp, params, 'model_week_mrp')
 
     spark.stop()
-

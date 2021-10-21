@@ -136,8 +136,8 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
 
 
 def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
-    print('====> Model MRP for APO...')
     ######### Model MRP for APO
+    print('====> Model MRP for APO...')
     model_week_mrp_apo = get_model_week_mrp_apo(gdw, sapb, sku, day)
     model_week_mrp_apo.persist(StorageLevel.MEMORY_ONLY)
 

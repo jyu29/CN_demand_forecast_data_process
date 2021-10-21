@@ -116,7 +116,7 @@ def get_global_mag_choices(choices_per_week):
 
 
 def main_store_picking(params, choices_df, week, sapb):
-    sapb_df = filter_sap(sapb, params.list_puch_org)
+    sapb_df = filter_sap(sapb, params.list_purch_org)
     filtered_choices_df = choices_df.join(broadcast(sapb_df),
                                  on=sapb_df.ref_plant_id.cast('int') == choices_df.plant_id.cast('int'),
                                  how='inner')

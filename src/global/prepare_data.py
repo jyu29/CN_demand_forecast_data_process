@@ -1,7 +1,6 @@
 from pyspark.sql.functions import *
 
 
-
 def filter_current_exchange(cex):
     """
       Get the current CRE exchange rate

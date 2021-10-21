@@ -27,17 +27,14 @@ class Configuration(object):
         self.bucket_clean = self.get_bucket_clean()
         self.bucket_refined = self.get_bucket_refined()
         self.schema_table = self.get_schema_table()
-#        self.transactions_table = self.get_table("transactions")
-#        self.deliveries_table = self.get_table("deliveries")
-#        self.stocks_pict_table = self.get_table("stocks_pict")
         self.path_clean_datalake = self.get_path_clean_data()
         self.path_refined_global = self.get_path_refined_data()
-        self.first_historical_week = self.get_first_hostorical_week()
+        self.first_historical_week = self.get_first_historical_week()
         self.first_backtesting_cutoff = self.get_first_backtesting_cutoff()
         self.lifestage_data_first_hist_week = self.get_lifestage_first_hist_week()
         self.max_nb_soldout_weeks = self.get_max_nb_soldout_weeks()
 
-        self.list_puch_org = self.get_list_puch_org()
+        self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
 
     def pretty_print_dict(self):
@@ -89,7 +86,7 @@ class Configuration(object):
         """
         return list(self._yaml_dict['technical_parameters']['spark_conf'].items())
 
-    def get_first_hostorical_week(self):
+    def get_first_historical_week(self):
         """
         Get first Historical week param (Functional Param).
         :return: the first Historical week in conf
@@ -117,9 +114,9 @@ class Configuration(object):
         """
         return self._yaml_dict['functional_parameters']['max_nb_soldout_weeks_for_hist']
 
-    def get_list_puch_org(self):
+    def get_list_purch_org(self):
         """
-        Get list of countries where modele is applied (EU)
+        Get list of countries where model is applied (EU)
         :return: a list of countries in conf
         """
-        return self._yaml_dict['functional_parameters']['list_puch_org']
+        return self._yaml_dict['functional_parameters']['list_purch_org']

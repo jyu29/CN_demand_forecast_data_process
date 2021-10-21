@@ -1,9 +1,7 @@
 #!/bin/bash
-echo "Begining of Main Spark"
+echo "Beginning of Main Spark"
 
 technical_env=${1:-dev}
-scope=${2:-refining}
-echo "Scope: $scope"
 echo "Technical environment: $technical_env"
 
 technical_conf_file="./config/$technical_env.yml"
@@ -18,7 +16,7 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
 	  --py-files src/tools/utils.py \
-	  ./src/global/main_data_refining_global.py -s $scope -c $technical_conf_file
+	  ./src/global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
 my_exit_code=$(cat code_status)

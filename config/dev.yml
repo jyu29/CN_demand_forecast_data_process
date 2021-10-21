@@ -11,7 +11,7 @@ functional_parameters:
   first_backtesting_cutoff: 201925
   lifestage_data_first_hist_week: 201918
   max_nb_soldout_weeks_for_hist: 4
-  list_puch_org:
+  list_purch_org:
   - Z001
   - Z008
   - Z042
