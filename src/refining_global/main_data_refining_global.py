@@ -99,13 +99,6 @@ if __name__ == '__main__':
     model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
     model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
 
-    ## Write results
-    ut.write_result(model_week_sales, params, 'model_week_sales')
-    ut.write_result(model_week_price, params, 'model_week_price')
-    ut.write_result(model_week_turnover, params, 'model_week_turnover')
-    ut.write_result(model_week_tree, params, 'model_week_tree')
-    ut.write_result(model_week_mrp, params, 'model_week_mrp')
-
     ## Data checks & assertions
     check.check_d_sku(sku)
     check.check_d_business_unit(but)
@@ -115,6 +108,13 @@ if __name__ == '__main__':
     check.check_unicity_by_keys(model_week_turnover, ['model_id', 'week_id', 'date'])
     check.check_unicity_by_keys(model_week_tree, ['model_id', 'week_id'])
     check.check_unicity_by_keys(model_week_mrp, ['model_id', 'week_id'])
+
+    ## Write results
+    ut.write_result(model_week_sales, params, 'model_week_sales')
+    ut.write_result(model_week_price, params, 'model_week_price')
+    ut.write_result(model_week_turnover, params, 'model_week_turnover')
+    ut.write_result(model_week_tree, params, 'model_week_tree')
+    ut.write_result(model_week_mrp, params, 'model_week_mrp')
 
 
     spark.stop()
