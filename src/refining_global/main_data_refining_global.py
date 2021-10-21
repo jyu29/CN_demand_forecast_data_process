@@ -3,7 +3,6 @@ import time
 
 import src.tools.get_config as conf
 import src.tools.utils as ut
-import src.tools.date_tools as dt
 import src.tools.parse_config as parse_config
 
 import prepare_data as prep
@@ -26,7 +25,7 @@ if __name__ == '__main__':
     params = conf.Configuration(config_file)
     params.pretty_print_dict()
 
-    current_week = dt.get_current_week()
+    current_week = ut.get_current_week()
     print('Current week: {}'.format(current_week))
     print('==> Refined data will be uploaded up to this week (excluded).')
 

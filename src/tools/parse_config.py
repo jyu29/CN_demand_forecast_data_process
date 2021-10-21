@@ -25,6 +25,4 @@ def basic_parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--configfile', required=True,
                         help="Technical configuration file (YAML format)")
-    parser.add_argument('-s', '--scope', required=False,
-                        help="Choosing scope of the program: refining, stocks")
     return parser.parse_args()
