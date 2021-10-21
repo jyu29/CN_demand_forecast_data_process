@@ -61,11 +61,11 @@ pipeline {
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
         failure {
-            mail to: "noreply-forecastunited@decathlon.com",
+            mail to: "forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} failed", body: "${BUILD_URL}"
         }
         unstable {
-            mail to: "noreply-forecastunited@decathlon.com",
+            mail to: "forecastunited@decathlon.com",
             subject: "Pipeline ${JOB_NAME} unstable", body: "${BUILD_URL}"
         }
     }

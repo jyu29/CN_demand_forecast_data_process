@@ -5,8 +5,8 @@ paths:
   clean_datalake: datalake/
   refined_global: global/
 functional_parameters:
-  first_historical_week: 201507
-  first_backtesting_cutoff: 201924
+  first_historical_week: 201601
+  first_backtesting_cutoff: 201925
   list_purch_org:
   - Z001
   - Z008

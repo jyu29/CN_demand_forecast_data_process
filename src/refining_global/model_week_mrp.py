@@ -97,13 +97,12 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
     """
     Get mrp data week by week
     """
-
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
               on=week.wee_id_week.between(col('week_from'), col('week_to')),
               how='inner') \
         .select('purch_org',
-                'model_id',
+                sku_mrp_pf['mdl_num_model_r3'].alias('model_id'),
                 col('wee_id_week').alias('week_id'),
                 'mrp_status')
 

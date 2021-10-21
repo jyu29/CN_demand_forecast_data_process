@@ -26,14 +26,10 @@ class Configuration(object):
 
         self.bucket_clean = self.get_bucket_clean()
         self.bucket_refined = self.get_bucket_refined()
-        self.schema_table = self.get_schema_table()
         self.path_clean_datalake = self.get_path_clean_data()
         self.path_refined_global = self.get_path_refined_data()
         self.first_historical_week = self.get_first_historical_week()
         self.first_backtesting_cutoff = self.get_first_backtesting_cutoff()
-        self.lifestage_data_first_hist_week = self.get_lifestage_first_hist_week()
-        self.max_nb_soldout_weeks = self.get_max_nb_soldout_weeks()
-
         self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
 
@@ -71,13 +67,6 @@ class Configuration(object):
         """
         return self._yaml_dict['paths']['refined_global']
 
-    def get_schema_table(self):
-        """
-        Get table from conf
-        :return: table of the key
-        """
-        return self._yaml_dict['Tables']['schema']
-
     def get_spark_conf(self):
         """
         Retrieves Spark configurations list.
@@ -99,20 +88,6 @@ class Configuration(object):
         :return: the first backtesting cutoff in conf
         """
         return self._yaml_dict['functional_parameters']['first_backtesting_cutoff']
-
-    def get_lifestage_first_hist_week(self):
-        """
-        Get first week of availability of historic range_choice data.
-        :return: the range choice data first week
-        """
-        return self._yaml_dict['functional_parameters']['lifestage_data_first_hist_week']
-
-    def get_max_nb_soldout_weeks(self):
-        """
-        Get max nb week of soldout for historic data. (before 2019)
-        :return: max_nb_soldout_weeks
-        """
-        return self._yaml_dict['functional_parameters']['max_nb_soldout_weeks_for_hist']
 
     def get_list_purch_org(self):
         """
