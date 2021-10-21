@@ -7,7 +7,7 @@ echo "Technical environment: $technical_env"
 technical_conf_file="./config/$technical_env.yml"
 echo "Technical configuration file: $technical_conf_file"
 
-sudo pip-3.6 install -r requirements.txt
+sudo pip3 install -r requirements.txt
 
 # Wait 60s until the initialization of metastore is done
 sleep 60s
