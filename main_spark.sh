@@ -15,7 +15,7 @@ sleep 60s
 spark-submit \
     --deploy-mode client \
     --master yarn \
-	  --py-files src/tools/utils.py \
+	  --py-files src/tools/*.py \
 	  ./src/global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
