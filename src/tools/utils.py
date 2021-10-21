@@ -60,7 +60,7 @@ def read_parquet_table(spark, params, path):
 
 def write_result(towrite_df, params, path):
     """
-      Save refined global tables
+      Save refined  tables
     """
     start = time.time()
     write_parquet_s3(towrite_df.repartition(10), params.bucket_refined, params.path_refined_global + path)
