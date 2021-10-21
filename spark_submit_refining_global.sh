@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Beginning of Main Spark"
+echo "Start of Data Refining Global"
 
 technical_env=${1:-dev}
 echo "Technical environment: $technical_env"
@@ -11,16 +11,14 @@ sudo pip3 install -r requirements.txt
 zip -x ./src/refining_specific* -x ./src/refining_global* -r tools.zip ./src/
 
 echo "Wait 60s until the initialization of metastore is done"
-# Wait 60s until the initialization of metastore is done
 sleep 60s
 
-echo "Spark submit :"
-
+echo "Spark submit:"
 spark-submit \
     --deploy-mode client \
     --master yarn \
-	  --py-files tools.zip \
-	  ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
+	--py-files tools.zip \
+    ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
 my_exit_code=$(cat code_status)
@@ -30,4 +28,4 @@ then
     exit $my_exit_code
 fi
 
-echo "End of Main Spark"
+echo "End of Data Refining Global"
