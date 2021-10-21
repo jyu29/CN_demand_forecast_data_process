@@ -18,7 +18,7 @@ echo "Spark submit :"
 spark-submit \
     --deploy-mode client \
     --master yarn \
-	  --py-files src/tools/*.py \
+	  --py-files src/tools/utils.py,src/tools/date_tools.py,src/tools/get_config.py,src/tools/parse_config.py \
 	  ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
