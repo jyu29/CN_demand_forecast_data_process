@@ -1,6 +1,6 @@
 from pyspark.sql import functions as F
-from test.PySparkTestCase import PySparkTestCase
-from src import store_picking as mc
+from tests.PySparkTestCase import PySparkTestCase
+from src.global import store_picking as mc
 import unittest
 
 

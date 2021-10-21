@@ -1,4 +1,4 @@
-from test.PySparkTestCase import PySparkTestCase
+from tests.PySparkTestCase import PySparkTestCase
 from src.tools import date_tools
 import unittest
 import datetime as dt

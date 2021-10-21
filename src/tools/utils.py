@@ -1,6 +1,4 @@
 import time
-import datetime
-from datetime import datetime, timedelta
 from functools import reduce
 
 def to_uri(bucket, key):

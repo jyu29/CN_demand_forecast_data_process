@@ -1,6 +1,6 @@
 from pyspark.sql.functions import *
-from tools import date_tools as dt
-from datetime import datetime, timedelta
+from src.tools import date_tools as dt
+
 """
 f_transaction_detail: every YYYYMM
 f_delivery_detail: every YYYYMM
@@ -27,7 +27,6 @@ def check_d_week(df, current_week):
     if df_count_week < 104:
         print(f'---> ALERT: df_count_week={df_count_week} is less than 104')
     # assert df_count_week >= 104
-
 
 
 def check_d_day(df, current_week):

@@ -61,7 +61,7 @@ def filter_sap(sapb, list_purch_org):
 def get_sku(sku):
     """
     Get list of models after filtering on:
-        - Models with univers=0 are used for test
+        - Models with univers=0 are used for tests
         - Models with univers=14, 89 or 90 are not to sell directly to clients (ateliers, equipments ..)
     """
     select_sku = sku \

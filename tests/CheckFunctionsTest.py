@@ -1,5 +1,5 @@
-from test.PySparkTestCase import PySparkTestCase
-from src import check_functions
+from tests.PySparkTestCase import PySparkTestCase
+from src.globals import check_functions
 import unittest
 
 
@@ -36,7 +36,7 @@ class CheckFunctionsTest(PySparkTestCase):
              (202117,), (202118,), (202119,),
             ], "wee_id_week int"
         )
-        # TODO uncomment this test
+        # TODO uncomment this tests
         """
         with self.assertRaises(Exception):
             check_functions.check_d_week(week_df, 202103)
@@ -289,7 +289,7 @@ class CheckFunctionsTest(PySparkTestCase):
          ('2021-02-18', 202107), ('2021-02-19', 202107), ('2021-02-20', 202107),],
          "day_id_day string, wee_id_week int"
         )
-        # TODO uncomment this test
+        # TODO uncomment this tests
         """
         with self.assertRaises(Exception):
             check_functions.check_d_day(day_df, 202103)
@@ -305,7 +305,7 @@ class CheckFunctionsTest(PySparkTestCase):
         sales_df = self.spark.createDataFrame(
           [(202115,95), (202116,90), (202117,97), (202118,20),], "week_id int, sales_quantity int"
         )
-        # TODO uncomment this test
+        # TODO uncomment this tests
         """
         with self.assertRaises(Exception):
             check_functions.check_sales(sales_df, 202119)

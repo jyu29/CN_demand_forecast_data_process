@@ -1,6 +1,4 @@
 from pyspark.sql.functions import *
-import check_functions as check
-import prepare_data as prep
 
 
 def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
