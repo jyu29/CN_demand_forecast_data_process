@@ -86,7 +86,7 @@ def union_sales(offline_sales, online_sales):
      - average_price: mean of regular sales unit
      - turnover: sum taxes with exchange
     """
-    sales = offline_sales.union(online_sales) \
+    model_week_sales = offline_sales.union(online_sales) \
         .groupby(['model_id', 'week_id', 'date']) \
         .agg(sum('f_qty_item').alias('sales_quantity'),
              mean(col('f_pri_regular_sales_unit') * col('exchange_rate')).alias('average_price'),
@@ -95,17 +95,18 @@ def union_sales(offline_sales, online_sales):
         .filter(col('average_price') > 0) \
         .filter(col('sum_turnover') > 0) \
         .orderBy('model_id', 'week_id')
-    return sales
+    return model_week_sales
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc):
 
     # Get offline sales
-    offline_sales_df = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
+    model_week_sales_offline = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
+
     # Get online sales
-    online_sales_df = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
+    model_week_sales_online = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
 
     # Create model week sales
-    model_week_sales = union_sales(offline_sales_df, online_sales_df)
+    model_week_sales = union_sales(model_week_sales_offline, model_week_sales_online)
 
     return model_week_sales

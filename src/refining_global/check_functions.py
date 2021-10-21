@@ -1,47 +1,6 @@
 from pyspark.sql.functions import *
 from src.tools import utils as ut
 
-"""
-f_transaction_detail: every YYYYMM
-f_delivery_detail: every YYYYMM
-sites_attribut_0plant_branches_h
-    presence Z002/2002
-    unicity
-d_general_data_warehouse_h
-    join unique models of f_transaction_detail & f_delivery_detail, and ensure that any model has a MRP status
-d_general_data_customer
-    presence Z002/2002
-    unicity
-"""
-
-
-def check_d_week(df, current_week):
-    """
-    Check if there is 104 weeks in the future
-
-    """
-    # Check des semaines
-    df_control_week = df.filter(col('wee_id_week') > current_week)
-    df_count_week = df_control_week.agg((count(col('wee_id_week'))).alias('count')).collect()[0][0]
-    # TODO delete condition & Uncomment assert line
-    if df_count_week < 104:
-        print(f'---> ALERT: df_count_week={df_count_week} is less than 104')
-    # assert df_count_week >= 104
-
-
-def check_d_day(df, current_week):
-    """
-    Check if there is 104 weeks in the future, 728 days
-
-    """
-    # Check des jours
-    df_control_day = df.filter(col('wee_id_week') > current_week)
-    df_count_day = df_control_day.agg((count(col('wee_id_week'))).alias('count')).collect()[0][0]
-    # TODO delete condition & Uncomment assert line
-    if df_count_day < 728:
-        print(f'---> ALERT: df_count_day={df_count_day} is less than 728')
-    # assert df_count_day >= 728
-
 
 def check_d_sku(df):
     """
@@ -81,10 +40,10 @@ def check_d_business_unit(df):
     print(f'Business Unit max technical_date : {but_max_tech_date}')
 
 
-def check_sales(df, current_week):
+def check_sales_stability(df, current_week):
     """
     Check stability of sales for the current week.
-    If sales <30 %
+    If average of percentage sales growth is more or less than 30% it crashes.
 
     """
     sales_agg = df \
@@ -109,13 +68,14 @@ def check_sales(df, current_week):
     print(f'Sales quantity week-2 : {sales_agg_w_1}')
     print(f'Sales quantity week-3 : {sales_agg_w_2}')
     print(f'Sales quantity week-4 : {sales_agg_w_3}')
-
     print(f'Sales percentage growth : {sales_pct}')
-    # TODO delete condition & Uncomment assert line
-    if sales_agg_w <= 0:
-        print(f'---> ALERT: sales_agg_w={sales_agg_w} is less than 0')
-    # assert sales_agg_w > 0, f'No sales for this week : {ut.get_shift_n_week(current_week, -1)}'
-    # TODO delete condition & Uncomment assert line
-    if sales_pct < -30:
-        print(f'---> ALERT: sales_pct={sales_pct} is less than -30')
-    # assert sales_pct > -30
+    
+    assert abs(sales_pct) < 30, f'---> ALERT: Sales percentage growth={sales_pct}'
+    
+    
+def check_unicity_by_keys(df, keys):
+    """
+    Check data unicity by keys.
+    
+    """
+    assert df.groupBy(keys).count().select(max('count')).collect()[0][0] == 1
