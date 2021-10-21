@@ -9,14 +9,17 @@ echo "Technical configuration file: $technical_conf_file"
 
 sudo pip3 install -r requirements.txt
 
+echo "Wait 60s until the initialization of metastore is done"
 # Wait 60s until the initialization of metastore is done
 sleep 60s
+
+echo "Spark submit :"
 
 spark-submit \
     --deploy-mode client \
     --master yarn \
 	  --py-files src/tools/*.py \
-	  ./src/global/main_data_refining_global.py -c $technical_conf_file
+	  ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
 my_exit_code=$(cat code_status)
