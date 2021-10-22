@@ -3,7 +3,7 @@ from pyspark.sql.functions import *
 
 def filter_current_exchange(cex):
     """
-      Get the current CRE exchange rate
+    Get the current CRE exchange rate
         cex['cpt_idr_cur_price'] = 6 #exchange rate for sales price
         cex['cur_idr_currency_restit'] == 32 # 32 is the index of euro
       TODO: get a dynamic exchange rate when the right data source is identified
@@ -41,9 +41,9 @@ def filter_weeks(weeks, week_begin, week_end):
 
 def filter_sapb(sapb, list_purch_org):
     """
-      get SiteAttributePlant0Branch after filtering on:
-      - sapsrc=PRT: all countries except brazil
-      - list_push_org: List Purchase Organization
+    Get SiteAttributePlant0Branch after filtering on:
+        - sapsrc=PRT: all countries except brazil
+        - list_push_org: List Purchase Organization
     """
     sap = sapb \
         .filter(sapb['sapsrc'] == 'PRT') \

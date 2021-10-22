@@ -7,6 +7,9 @@ def check_d_sku(df):
     Check unicity of each sku_idr_sku
     Check if always date_begin < date_end
 
+    Args:
+        df:
+
     """
     sku_last = df \
         .filter(col('sku_date_end') == '2999-12-31 23:59:59') \
@@ -26,6 +29,9 @@ def check_d_business_unit(df):
     """
     Check unicity of each but_idr_business_unit
 
+    Args:
+        df:
+
     """
     but_count = df \
         .filter(col('but_num_typ_but').isin({'7', '48', '50'})) \
@@ -42,6 +48,10 @@ def check_sales_stability(df, current_week):
     """
     Check stability of sales for the current week.
     If average of percentage sales growth is more or less than 30% it crashes.
+
+    Args:
+        df:
+        current_week:
 
     """
     sales_agg = df \
@@ -68,12 +78,19 @@ def check_sales_stability(df, current_week):
     print(f'Sales quantity week-4 : {sales_agg_w_3}')
     print(f'Sales percentage growth : {sales_pct}')
 
-    assert abs(sales_pct) <= 30, '---> ALERT: Sales percentage growth=' + sales_pct
+    assert abs(sales_pct) < 30, '---> ALERT: Absolute sales percentage growth >= 30%'
 
 
 def check_unicity_by_keys(df, keys):
     """
     Check data unicity by keys.
-    
+
+    Args:
+        df:
+        keys:
+
+    Returns:
+        object:
+
     """
     assert df.groupBy(keys).count().select(max('count')).collect()[0][0] == 1

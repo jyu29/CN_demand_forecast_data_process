@@ -8,6 +8,11 @@ from pyspark import StorageLevel
 def get_sku_mrp_apo(gdw, sapb, sku):
     """
       get sku mrp update
+
+    Args:
+        gdw:
+        sapb:
+        sku:
     """
     smu = gdw \
         .join(sku, on=sku['sku_num_sku_r3'] == regexp_replace(gdw['sdw_material_id'], '^0*|\s', ''), how='inner') \
@@ -24,7 +29,13 @@ def get_sku_mrp_apo(gdw, sapb, sku):
 
 def get_model_week_mrp_apo(gdw, sapb, sku, day):
     """
-      calculate model week MRP from APO
+    Calculate model week MRP from APO
+
+    Args:
+        gdw:
+        sapb:
+        sku:
+        day:
     """
     smu = get_sku_mrp_apo(gdw, sapb, sku)
 
@@ -41,6 +52,9 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
     """
     MRP from APO are available since 201939 only
     We have to fill weeks between 201924 and 201938 using the 201939 values.
+
+    Args:
+        model_week_mrp_apo:
     """
     model_week_mrp_apo_201939 = model_week_mrp_apo.filter(model_week_mrp_apo['week_id'] == 201939)
 
@@ -56,8 +70,11 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
 
 def get_mrp_status_pf(asms):
     """
-      get mrp status data
-      - filter on cz = 2002
+    Get mrp status data
+        - filter on cz = 2002
+
+    Args:
+        asms:
     """
     mrp_pf = asms \
         .filter(asms['custom_zone'] == '2002') \
@@ -72,6 +89,12 @@ def get_mrp_status_pf(asms):
 def get_migrated_sku_pf(zex):
     """
     Get list of models in new mrp method
+
+    Args:
+        zex:
+
+    Returns:
+
     """
     migrated_sku_pf = zex \
         .filter(upper(zex['mrp_pr']) == 'X') \
@@ -82,6 +105,16 @@ def get_migrated_sku_pf(zex):
 
 
 def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
+    """
+
+    Args:
+        sku_migrated_pf:
+        mrp_status_pf:
+        sku:
+
+    Returns:
+
+    """
     sku_mrp_pf = sku_migrated_pf \
         .join(mrp_status_pf, on=['sku_num_sku_r3'], how='inner') \
         .join(sku, on=['sku_num_sku_r3'], how='inner') \
@@ -94,6 +127,10 @@ def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
 def get_sku_week_mrp_pf(sku_mrp_pf, week):
     """
     Get mrp data week by week
+
+    Args:
+        sku_mrp_pf:
+        week:
     """
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
@@ -108,6 +145,15 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
 
 
 def get_active_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
+    """
+
+    Args:
+        sku_week_mrp_pf:
+        list_active_mrp:
+
+    Returns:
+
+    """
     model_week_mrp_pf = sku_week_mrp_pf \
         .withColumn('is_mrp_active', col('mrp_status').isin(list_active_mrp)) \
         .groupBy('model_id', 'week_id') \
@@ -118,8 +164,15 @@ def get_active_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
 
 def get_model_week_mrp_pf(sms, zep, week, sku):
     """
-    apo_sku_mrp_status_h: contains MRP status for models
-    ecc_zaa_extplan: contains all models migrated to the new process of MRP
+
+    Args:
+        sms:
+        zep:
+        week:
+        sku:
+
+    Returns:
+
     """
     list_active_mrp = [20, 80]
     mrp_status_pf = get_mrp_status_pf(sms)
@@ -133,6 +186,20 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
 
 
 def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
+    """
+
+    Args:
+        gdw:
+        sapb:
+        sku:
+        day:
+        sms:
+        zep:
+        week:
+
+    Returns:
+
+    """
     # Model MRP for APO
     print('====> Model MRP for APO...')
     model_week_mrp_apo = get_model_week_mrp_apo(gdw, sapb, sku, day)
