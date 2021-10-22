@@ -2,7 +2,7 @@ import time
 
 import src.tools.utils as ut
 
-from pyspark.sql.functions import *
+import pyspark.sql.functions as F
 from pyspark.sql.types import *
 from pyspark import StorageLevel
 
@@ -17,9 +17,13 @@ def get_sku_mrp_apo(gdw, sapb, sku):
         sku:
     """
     smu = gdw \
-        .join(sku, on=sku['sku_num_sku_r3'] == regexp_replace(gdw['sdw_material_id'], '^0*|\s', ''), how='inner') \
-        .join(broadcast(sapb), on=gdw['sdw_plant_id'] == sapb['plant_id'], how='inner') \
-        .filter(current_timestamp().between(sku['sku_date_begin'], sku['sku_date_end'])) \
+        .join(sku,
+              on=sku['sku_num_sku_r3'] == F.regexp_replace(gdw['sdw_material_id'], '^0*|\s', ''),
+              how='inner') \
+        .join(F.broadcast(sapb),
+              on=gdw['sdw_plant_id'] == sapb['plant_id'],
+              how='inner') \
+        .filter(F.current_timestamp().between(sku['sku_date_begin'], sku['sku_date_end'])) \
         .select(gdw['date_begin'],
                 gdw['date_end'],
                 sku['sku_num_sku_r3'].alias('sku_id'),
@@ -42,10 +46,12 @@ def get_model_week_mrp_apo(gdw, sapb, sku, day):
     smu = get_sku_mrp_apo(gdw, sapb, sku)
 
     model_week_mrp_apo = smu \
-        .join(broadcast(day), on=day['day_id_day'].between(smu['date_begin'], smu['date_end']), how='inner') \
+        .join(F.broadcast(day),
+              on=day['day_id_day'].between(smu['date_begin'], smu['date_end']),
+              how='inner') \
         .filter(day['wee_id_week'] >= '201939') \
         .groupBy(day['wee_id_week'].cast('int').alias('week_id'), smu['model_id']) \
-        .agg(max(when(smu['mrp'].isin(2, 5), True).otherwise(False)).alias('is_mrp_active')) \
+        .agg(F.max(F.when(smu['mrp'].isin(2, 5), True).otherwise(False)).alias('is_mrp_active')) \
         .orderBy('model_id', 'week_id')
     return model_week_mrp_apo
 
@@ -62,7 +68,7 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
 
     l_df = []
     for w in range(201924, 201939):
-        df = model_week_mrp_apo_201939.withColumn('week_id', lit(w))
+        df = model_week_mrp_apo_201939.withColumn('week_id', F.lit(w))
         l_df.append(df)
     l_df.append(model_week_mrp_apo)
 
@@ -80,10 +86,10 @@ def get_mrp_status_pf(asms):
     """
     mrp_pf = asms \
         .filter(asms['custom_zone'] == '2002') \
-        .select(col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
-                col('status').cast(IntegerType()).alias('mrp_status'),
-                col('date_begin'),
-                col('date_end')) \
+        .select(asms['sku'].cast(IntegerType()).alias('sku_num_sku_r3'),
+                asms['status'].cast(IntegerType()).alias('mrp_status'),
+                asms['date_begin'],
+                asms['date_end']) \
         .drop_duplicates()
     return mrp_pf
 
@@ -99,7 +105,7 @@ def get_migrated_sku_pf(zex):
 
     """
     migrated_sku_pf = zex \
-        .filter(upper(zex['mrp_pr']) == 'X') \
+        .filter(F.upper(zex['mrp_pr']) == 'X') \
         .select(zex['ekorg'].alias('purch_org'),
                 zex['matnr'].cast(IntegerType()).alias('sku_num_sku_r3')) \
         .drop_duplicates()
@@ -120,8 +126,8 @@ def get_sku_mrp_pf(sku_migrated_pf, mrp_status_pf, sku):
     sku_mrp_pf = sku_migrated_pf \
         .join(mrp_status_pf, on=['sku_num_sku_r3'], how='inner') \
         .join(sku, on=['sku_num_sku_r3'], how='inner') \
-        .withColumn('week_from', year(col('date_begin')) * 100 + weekofyear(col('date_begin'))) \
-        .withColumn('week_to', year(col('date_end')) * 100 + weekofyear(col('date_end')))
+        .withColumn('week_from', F.year(F.col('date_begin')) * 100 + F.weekofyear(F.col('date_begin'))) \
+        .withColumn('week_to', F.year(F.col('date_end')) * 100 + F.weekofyear(F.col('date_end')))
 
     return sku_mrp_pf
 
@@ -136,12 +142,12 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
     """
     sku_week_mrp_pf = week \
         .join(sku_mrp_pf,
-              on=week.wee_id_week.between(col('week_from'), col('week_to')),
+              on=week['wee_id_week'].between(F.col('week_from'), F.col('week_to')),
               how='inner') \
-        .select('purch_org',
+        .select(sku_mrp_pf['purch_org'],
                 sku_mrp_pf['mdl_num_model_r3'].alias('model_id'),
                 week['wee_id_week'].alias('week_id'),
-                'mrp_status')
+                sku_mrp_pf['mrp_status'])
 
     return sku_week_mrp_pf
 
@@ -157,9 +163,9 @@ def get_active_model_week_mrp_pf(sku_week_mrp_pf, list_active_mrp):
 
     """
     model_week_mrp_pf = sku_week_mrp_pf \
-        .withColumn('is_mrp_active', col('mrp_status').isin(list_active_mrp)) \
+        .withColumn('is_mrp_active', sku_week_mrp_pf['mrp_status'].isin(list_active_mrp)) \
         .groupBy('model_id', 'week_id') \
-        .agg(max(col('is_mrp_active')).alias('is_mrp_active'))
+        .agg(F.max(F.col('is_mrp_active')).alias('is_mrp_active'))
 
     return model_week_mrp_pf
 
