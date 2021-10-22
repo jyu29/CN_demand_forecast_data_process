@@ -17,7 +17,7 @@ echo "Spark submit:"
 spark-submit \
     --deploy-mode client \
     --master yarn \
-	--py-files tools.zip \
+    --py-files tools.zip \
     ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status

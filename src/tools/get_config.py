@@ -13,9 +13,13 @@ class Configuration(object):
 
     def __init__(self, file_path):
         """
-            Read a local yaml file and return a python dictionary
-            :param file_path: (string) full path to the yaml file
-            :return: (dict) data loaded
+        Read a local yaml file and return a python dictionary
+
+        Args:
+            file_path: (string) full path to the yaml file
+
+        Returns:
+            object: (dict) data loaded
         """
         if os.path.exists(file_path):
             with open(file_path) as f:
@@ -41,57 +45,72 @@ class Configuration(object):
 
     def get_bucket_clean(self):
         """
-        Retrieves the name of the bucket where clean data is located.
-        :return: the name of the bucket where clean data is located (str).
+        Get the name of the bucket where clean data is located.
+
+        Returns:
+            object: (string) the name of the bucket where clean data is located
         """
         return self._yaml_dict['buckets']['clean']
 
     def get_bucket_refined(self):
         """
-        Retrieves the name of the bucket where to put refined data.
-        :return: the name of the bucket where to put refined data(str).
+        Get the name of the bucket where to put refined data.
+
+        Returns:
+            object: (string) the name of the bucket where to put refined data
         """
         return self._yaml_dict['buckets']['refined']
 
     def get_path_clean_data(self):
         """
         Get global path of clean data (s3 prefix)
-        :return: the global path of clean data
+
+        Returns:
+            object: (string) the global path of clean data
         """
         return self._yaml_dict['paths']['clean_datalake']
 
     def get_path_refined_data(self):
         """
         Get global path of refined data (s3 prefix)
-        :return: the global path of refined data
+
+        Returns:
+            object: (string) the global path of refined data
         """
         return self._yaml_dict['paths']['refined_global']
 
     def get_spark_conf(self):
         """
-        Retrieves Spark configurations list.
-        :return: a list of tuples <spark_configuration_name, value>
-        for spark configuration (list).
+        Get Spark configurations list
+
+        Returns:
+            object: (list) a list of tuples <spark_configuration_name, value> for spark configuration
         """
         return list(self._yaml_dict['technical_parameters']['spark_conf'].items())
 
     def get_first_historical_week(self):
         """
         Get first Historical week param (Functional Param).
-        :return: the first Historical week in conf
+
+        Returns:
+            object: the first Historical week in conf
         """
         return self._yaml_dict['functional_parameters']['first_historical_week']
 
     def get_first_backtesting_cutoff(self):
         """
-        Get first backtesting cutoff param (Functional Param).
-        :return: the first backtesting cutoff in conf
+        Get first backtesting cutoff param (Functional Param)
+
+        Returns:
+            object: the first backtesting cutoff in conf
         """
         return self._yaml_dict['functional_parameters']['first_backtesting_cutoff']
 
     def get_list_purch_org(self):
         """
-        Get list of countries where model is applied (EU)
-        :return: a list of countries in conf
+        Get list of countries where model is applied
+
+        Returns:
+            object: a list of countries in conf
         """
         return self._yaml_dict['functional_parameters']['list_purch_org']

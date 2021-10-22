@@ -6,9 +6,13 @@ from functools import reduce
 def to_uri(bucket, key):
     """
     List all files under a S3 bucket
-    :param bucket: (string) name of the S3 bucket
-    :param key: (string) S3 key
-    :return: (string) URI format
+
+    Args:
+        bucket (string): name of the S3 bucket
+        key (string): S3 key
+
+    Returns:
+        object (string): URI format
     """
     return 's3://{}/{}'.format(bucket, key)
 
@@ -16,10 +20,14 @@ def to_uri(bucket, key):
 def read_parquet_s3(spark, bucket, key):
     """
     Read parquet files on s3 and return a spark dataframe
-    :app: (SparkSession) spark app
-    :param bucket: (string) name of the S3 bucket
-    :param key: (string) S3 key
-    :return: (SparkDataframe)
+
+    Args:
+        spark (SparkSession): spark app
+        bucket (string): name of the S3 bucket
+        key (string): S3 key
+
+    Returns:
+        object (SparkDataframe):
     """
     df = spark.read.parquet(to_uri(bucket, key))
     return df
@@ -28,9 +36,11 @@ def read_parquet_s3(spark, bucket, key):
 def write_parquet_s3(df, bucket, key, mode='overwrite'):
     """
     Write a SparkDataframe to parquet files on a S3 bucket
-    :df: (SparkDataframe)
-    :param bucket: (string) name of the S3 bucket
-    :param key: (string) S3 key
+
+    Args:
+        df (SparkDataframe):
+        bucket (string): name of the S3 bucket
+        key (string):  S3 key
     """
     df.write.parquet(to_uri(bucket, key), mode=mode)
 
@@ -42,6 +52,13 @@ def write_partitionned_parquet_s3(df, bucket, key, partition_col, mode='overwrit
     :param bucket: (string) name of the S3 bucket
     :param key: (string) S3 key
     :param partition_col: (string) Partition Column
+
+    Args:
+        df:
+        bucket:
+        key:
+        partition_col:
+        mode:
     """
     df.write.partitionBy(partition_col).parquet(to_uri(bucket, key), mode=mode)
 
