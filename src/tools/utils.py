@@ -24,7 +24,7 @@ def spark_read_parquet_s3(spark, bucket, path):
     Args:
         spark (SparkSession): spark app
         bucket (string): S3 bucket
-        path (dict): full path to the parquet directory or file within the S3 bucket
+        path (string): full path to the parquet directory or file within the S3 bucket
 
     Returns:
         (SparkDataframe): data loaded
@@ -43,7 +43,7 @@ def spark_write_parquet_s3(df, bucket, dir_path, repartition=10, mode='overwrite
         repartition (int): number of partitions files to write
         mode (string): writing mode
     """
-    df.repartition(repartition).write.parquet(to_uri(bucket, key), mode=mode)
+    df.repartition(repartition).write.parquet(to_uri(bucket, dir_path), mode=mode)
     
 
 def get_timer(starting_time):
@@ -58,7 +58,7 @@ def get_timer(starting_time):
     print("{} minute(s) {} second(s)".format(int(minutes), seconds))
 
 
-def unionAll(l_df):
+def union_all(l_df):
     """
     Apply union function on all spark dataframes in l_df
 

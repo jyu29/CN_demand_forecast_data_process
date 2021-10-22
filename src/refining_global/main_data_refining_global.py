@@ -33,19 +33,21 @@ if __name__ == '__main__':
     spark.sparkContext.setLogLevel('ERROR')
 
     # Load all needed clean data
-    tdt = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_transaction_detail/')
-    dyd = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_delivery_detail/')
-    cex = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_currency_exchange/')
-    sku = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_sku/')
-    sku_h = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_sku_h/')
-    but = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_business_unit/')
-    sapb = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'sites_attribut_0plant_branches_h/')
-    gdw = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_general_data_warehouse_h/')
-    gdc = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_general_data_customer/')
-    day = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_day/')
-    week = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_week/')
-    sms = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'apo_sku_mrp_status_h/')
-    zep = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'ecc_zaa_extplan/')
+    bucket_clean = params.bucket_clean
+    path_clean_datalake = params.path_clean_datalake
+    tdt = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_transaction_detail/')
+    dyd = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_delivery_detail/')
+    cex = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_currency_exchange/')
+    sku = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku/')
+    sku_h = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_sku_h/')
+    but = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_business_unit/')
+    sapb = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'sites_attribut_0plant_branches_h/')
+    gdw = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_warehouse_h/')
+    gdc = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_general_data_customer/')
+    day = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_day/')
+    week = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'd_week/')
+    sms = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'apo_sku_mrp_status_h/')
+    zep = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'ecc_zaa_extplan/')
 
     # Apply global filters
     cex = gf.filter_current_exchange(cex)
@@ -109,10 +111,12 @@ if __name__ == '__main__':
     check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
 
     # Write results
-    ut.spark_write_parquet_s3(model_week_sales, params.bucket_refined, params.path_refined_global + 'model_week_sales')
-    ut.spark_write_parquet_s3(model_week_price, params.bucket_refined, params.path_refined_global + 'model_week_price')
-    ut.spark_write_parquet_s3(model_week_turnover, params.bucket_refined, params.path_refined_global + 'model_week_turnover')
-    ut.spark_write_parquet_s3(model_week_tree, params.bucket_refined, params.path_refined_global + 'model_week_tree')
-    ut.spark_write_parquet_s3(model_week_mrp, params.bucket_refined, params.path_refined_global + 'model_week_mrp')
+    bucket_refined = params.bucket_refined
+    path_refined_global = params.path_refined_global
+    ut.spark_write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
+    ut.spark_write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
+    ut.spark_write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
+    ut.spark_write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
+    ut.spark_write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
 
     spark.stop()
