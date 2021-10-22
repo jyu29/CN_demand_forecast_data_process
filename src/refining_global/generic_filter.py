@@ -1,4 +1,4 @@
-from pyspark.sql.functions import *
+import pyspark.sql.functions as F
 
 
 def filter_current_exchange(cex):
@@ -11,11 +11,11 @@ def filter_current_exchange(cex):
     cex = cex \
         .filter(cex['cpt_idr_cur_price'] == 6) \
         .filter(cex['cur_idr_currency_restit'] == 32) \
-        .filter(current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
-        .select(col('cur_idr_currency_base').alias('cur_idr_currency'),
-                col('hde_share_price')) \
+        .filter(F.current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
+        .select(cex['cur_idr_currency_base'].alias('cur_idr_currency'),
+                cex['hde_share_price']) \
         .groupby('cur_idr_currency') \
-        .agg(mean(cex['hde_share_price']).alias('exchange_rate'))
+        .agg(F.ean(cex['hde_share_price']).alias('exchange_rate'))
     return cex
 
 
@@ -24,8 +24,8 @@ def filter_days(day, week_begin, week_end):
     Filter on days more recent than first historical week
     """
     day = day \
-        .filter(col('wee_id_week') >= week_begin) \
-        .filter(col('wee_id_week') <= week_end)
+        .filter(day['wee_id_week'] >= week_begin) \
+        .filter(day['wee_id_week'] <= week_end)
     return day
 
 
@@ -48,7 +48,7 @@ def filter_sapb(sapb, list_purch_org):
     sap = sapb \
         .filter(sapb['sapsrc'] == 'PRT') \
         .filter(sapb['purch_org'].isin(list_purch_org)) \
-        .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end']))
+        .filter(F.current_timestamp().between(sapb['date_begin'], sapb['date_end']))
     return sap
 
 
