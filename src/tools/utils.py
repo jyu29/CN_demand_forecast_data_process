@@ -48,17 +48,13 @@ def write_parquet_s3(df, bucket, key, mode='overwrite'):
 def write_partitionned_parquet_s3(df, bucket, key, partition_col, mode='overwrite'):
     """
     Write a SparkDataframe to parquet files on a S3 bucket
-    :df: (SparkDataframe)
-    :param bucket: (string) name of the S3 bucket
-    :param key: (string) S3 key
-    :param partition_col: (string) Partition Column
 
     Args:
-        df:
-        bucket:
-        key:
-        partition_col:
-        mode:
+        df (SparkDataframe):
+        bucket (string): name of the S3 bucket
+        key (string): S3 key
+        partition_col (string): Partition Column
+        mode (string):
     """
     df.write.partitionBy(partition_col).parquet(to_uri(bucket, key), mode=mode)
 
@@ -66,7 +62,9 @@ def write_partitionned_parquet_s3(df, bucket, key, partition_col, mode='overwrit
 def get_timer(starting_time):
     """
     Displays the time that has elapsed between the input timer and the current time.
-    :param starting_time: (timecode) timecode from Python 'time' package
+
+    Args:
+        starting_time (timecode): timecode from Python 'time' package
     """
     end_time = time.time()
     minutes, seconds = divmod(int(end_time - starting_time), 60)
@@ -74,12 +72,27 @@ def get_timer(starting_time):
 
 
 def read_parquet_table(spark, params, path):
+    """
+
+    Args:
+        spark:
+        params:
+        path:
+
+    Returns:
+
+    """
     return read_parquet_s3(spark, params.bucket_clean, params.path_clean_datalake + path)
 
 
 def write_result(towrite_df, params, path):
     """
-      Save refined  tables
+    Save refined tables
+
+    Args:
+        towrite_df:
+        params:
+        path:
     """
     start = time.time()
     write_parquet_s3(towrite_df.repartition(10), params.bucket_refined, params.path_refined_global + path)
@@ -88,7 +101,13 @@ def write_result(towrite_df, params, path):
 
 def write_partitioned_result(towrite_df, params, path, partition_col):
     """
-      Save refined global tables
+    Save refined global tables
+
+    Args:
+        towrite_df:
+        params:
+        path:
+        partition_col:
     """
     start = time.time()
     write_partitionned_parquet_s3(
@@ -101,16 +120,30 @@ def write_partitioned_result(towrite_df, params, path, partition_col):
 
 
 def unionAll(dfs):
+    """
+
+    Args:
+        dfs:
+
+    Returns:
+
+    """
     return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
 
 
 def get_week_id(date):
     """
-      return the week number of a date (ex: 202051)
-       - year: str(date.isocalendar()[0])
-       - week number: date.strftime("%V") (return the week number where week is starting from monday)
-      If the day is sunday, I add one day to get the good day value in order to respect Decathlon regle:
-        the fist day of week is sunday
+    Return the week number of a date (ex: 202051)
+        - year: str(date.isocalendar()[0])
+        - week number: date.strftime("%V") (return the week number where week is starting from monday)
+    If the day is sunday, I add one day to get the good day value in order to respect Decathlon rule:
+        the first day of week is sunday
+
+    Args:
+        date:
+
+    Returns:
+        object (int): week number
     """
     day_of_week = date.strftime("%w")
     date = date if (day_of_week != '0') else date + timedelta(days=1)
@@ -119,8 +152,14 @@ def get_week_id(date):
 
 def get_first_day_month(week_id):
     """
-    Get the month of the first day of week
+    Get the first day of month for the first day of week
     ex: 202122 (30/05 -> 05/06) => result = 2021-05-01
+
+    Args:
+        week_id (int):
+
+    Returns:
+        object (date):
     """
     fdm = (datetime.strptime(str(week_id) + '1', '%G%V%u') - timedelta(days=1)).replace(day=1)
     return fdm
@@ -129,6 +168,12 @@ def get_first_day_month(week_id):
 def get_last_day_week(week_id):
     """
     Get the date of the last day of week (saturday)
+
+    Args:
+        week_id:
+
+    Returns:
+        object:
     """
     ldw = datetime.strptime(str(week_id) + '6', '%G%V%u')
     return ldw
@@ -138,7 +183,9 @@ def get_current_week():
     """
     Return current week (international standard ISO 8601 - first day of week
     is Sunday, with format 'YYYYWW'
-    :return current week (international standard ISO 8601) with format 'YYYYWW'
+
+    Returns:
+        object (int): current week (international standard ISO 8601) with format 'YYYYWW'
     """
     shifted_date = datetime.today()
     current_week_id = get_week_id(shifted_date)
@@ -148,6 +195,13 @@ def get_current_week():
 def get_shift_n_week(week_id, nb_weeks):
     """
     Return shifted week (previous or next)
+
+    Args:
+        week_id (int):
+        nb_weeks (int):
+
+    Returns:
+        object (int):
     """
     shifted_date = datetime.strptime(str(week_id) + '1', '%G%V%u') + timedelta(nb_weeks * 7)
     ret_week_id = get_week_id(shifted_date)
@@ -157,7 +211,13 @@ def get_shift_n_week(week_id, nb_weeks):
 def get_previous_n_week(week_id, nb_weeks):
     """
     Get previous week depending on nb_week
-    @param nb_weeks should be positive
+
+    Args:
+        week_id (int):
+        nb_weeks (int): should be positive
+
+    Returns:
+        object (int):
     """
     if nb_weeks < 0:
         raise ValueError('get_previous_n_week: nb_weeks argument should be positive')
@@ -166,15 +226,23 @@ def get_previous_n_week(week_id, nb_weeks):
 
 def get_previous_week_id(week_id):
     """
-    Get previous week: current week - 1
+     Returns:
+        object (int): previous week: current week - 1
     """
+
     return get_previous_n_week(week_id, 1)
 
 
 def get_next_n_week(week_id, nb_weeks):
     """
     Get next week depending on nb_week
-    @param nb_weeks should be positive
+
+    Args:
+        week_id (int):
+        nb_weeks (int): should be positive
+
+    Returns:
+        object (int):
     """
     if nb_weeks < 0:
         raise ValueError('get_next_n_week: nb_weeks argument should be positive')
@@ -183,10 +251,16 @@ def get_next_n_week(week_id, nb_weeks):
 
 def get_next_week_id(week_id):
     """
-    Get next week: current week + 1
+     Returns:
+        object (int): next week: current week + 1
     """
     return get_next_n_week(week_id, 1)
 
 
 def get_time():
+    """
+
+    Returns:
+        object (string): Current datetime in string
+    """
     return str(datetime.now())
