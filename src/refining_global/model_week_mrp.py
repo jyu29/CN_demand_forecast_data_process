@@ -68,7 +68,7 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
 
     l_df = []
     for w in range(201924, 201939):
-        df = model_week_mrp_apo_201939.withColumn('week_id', lit(w))
+        df = model_week_mrp_apo_201939.withColumn('week_id', F.lit(w))
         l_df.append(df)
     l_df.append(model_week_mrp_apo)
 
