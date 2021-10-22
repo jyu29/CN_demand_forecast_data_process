@@ -8,7 +8,6 @@ def check_d_sku(df):
     Check if always date_begin < date_end
 
     """
-    # Check de l'unicité de la d_sku
     sku_last = df \
         .filter(col('sku_date_end') == '2999-12-31 23:59:59') \
         .groupby('sku_idr_sku') \
@@ -28,7 +27,6 @@ def check_d_business_unit(df):
     Check unicity of each but_idr_business_unit
 
     """
-    # Check de l'unicité de la d_business_unit
     but_count = df \
         .filter(col('but_num_typ_but').isin({'7', '48', '50'})) \
         .groupby('but_idr_business_unit') \
