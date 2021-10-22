@@ -61,12 +61,11 @@ def get_mrp_status_pf(asms):
     """
     mrp_pf = asms \
         .filter(asms['custom_zone'] == '2002') \
-        .select(
-        col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
-        col('status').cast(IntegerType()).alias('mrp_status'),
-        col('date_begin'),
-        col('date_end')) \
-        .distinct()
+        .select(col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
+                col('status').cast(IntegerType()).alias('mrp_status'),
+                col('date_begin'),
+                col('date_end')) \
+        .drop_duplicates()
     return mrp_pf
 
 
@@ -102,7 +101,7 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
               how='inner') \
         .select('purch_org',
                 sku_mrp_pf['mdl_num_model_r3'].alias('model_id'),
-                col('wee_id_week').alias('week_id'),
+                week['wee_id_week'].alias('week_id'),
                 'mrp_status')
 
     return sku_week_mrp_pf
