@@ -5,7 +5,7 @@ from src.tools import utils as ut
 
 def check_d_sku(sku):
     """
-    Check unicity of each sku_idr_sku
+    Check duplicate of each sku_idr_sku
     Check if always date_begin < date_end
 
     Args:
@@ -28,10 +28,10 @@ def check_d_sku(sku):
 
 def check_d_business_unit(but):
     """
-    Check unicity of each but_idr_business_unit
+    Check duplicate of each but_idr_business_unit
 
     Args:
-        df:
+        but:
 
     """
     but_count = but \
@@ -51,7 +51,7 @@ def check_sales_stability(model_week_sales, current_week):
     If average of percentage sales growth is more or less than 30% it crashes.
 
     Args:
-        df:
+        model_week_sales:
         current_week:
 
     """
@@ -82,9 +82,9 @@ def check_sales_stability(model_week_sales, current_week):
     assert abs(sales_pct) < 30, '---> ALERT: Absolute sales percentage growth >= 30%'
 
 
-def check_unicity_by_keys(df, keys):
+def check_duplicate_by_keys(df, keys):
     """
-    Check data unicity by keys.
+    Check data duplicate by keys.
 
     Args:
         df:
