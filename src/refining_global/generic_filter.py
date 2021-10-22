@@ -15,7 +15,7 @@ def filter_current_exchange(cex):
         .select(cex['cur_idr_currency_base'].alias('cur_idr_currency'),
                 cex['hde_share_price']) \
         .groupby('cur_idr_currency') \
-        .agg(F.ean(cex['hde_share_price']).alias('exchange_rate'))
+        .agg(F.mean(cex['hde_share_price']).alias('exchange_rate'))
     return cex
 
 
