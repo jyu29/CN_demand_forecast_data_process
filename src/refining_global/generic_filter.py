@@ -47,7 +47,7 @@ def filter_sapb(sapb, list_purch_org):
     """
     sap = sapb \
         .filter(sapb['sapsrc'] == 'PRT') \
-        .filter(sapb['purch_org'].isin(list_purch_org))\
+        .filter(sapb['purch_org'].isin(list_purch_org)) \
         .filter(current_timestamp().between(sapb['date_begin'], sapb['date_end']))
     return sap
 

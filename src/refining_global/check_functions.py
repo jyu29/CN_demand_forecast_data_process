@@ -69,10 +69,10 @@ def check_sales_stability(df, current_week):
     print(f'Sales quantity week-3 : {sales_agg_w_2}')
     print(f'Sales quantity week-4 : {sales_agg_w_3}')
     print(f'Sales percentage growth : {sales_pct}')
-    
-    assert abs(sales_pct) >= 30, f'---> ALERT: Sales percentage growth={sales_pct}'
-    
-    
+
+    assert abs(sales_pct) <= 30, '---> ALERT: Sales percentage growth=' + sales_pct
+
+
 def check_unicity_by_keys(df, keys):
     """
     Check data unicity by keys.

@@ -2,6 +2,7 @@ import time
 from datetime import datetime, timedelta
 from functools import reduce
 
+
 def to_uri(bucket, key):
     """
     List all files under a S3 bucket
@@ -84,7 +85,6 @@ def write_partitioned_result(towrite_df, params, path, partition_col):
 
 def unionAll(dfs):
     return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
-
 
 
 def get_week_id(date):

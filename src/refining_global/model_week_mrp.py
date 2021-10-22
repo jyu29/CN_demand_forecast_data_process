@@ -62,10 +62,10 @@ def get_mrp_status_pf(asms):
     mrp_pf = asms \
         .filter(asms['custom_zone'] == '2002') \
         .select(
-          col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
-          col('status').cast(IntegerType()).alias('mrp_status'),
-          col('date_begin'),
-          col('date_end'))\
+        col('sku').cast(IntegerType()).alias('sku_num_sku_r3'),
+        col('status').cast(IntegerType()).alias('mrp_status'),
+        col('date_begin'),
+        col('date_end')) \
         .distinct()
     return mrp_pf
 
@@ -74,12 +74,11 @@ def get_migrated_sku_pf(zex):
     """
     Get list of models in new mrp method
     """
-    migrated_sku_pf = zex\
-        .filter(upper(zex['mrp_pr']) == 'X')\
-        .select(
-          col('ekorg').alias('purch_org'),
-          col('matnr').cast(IntegerType()).alias('sku_num_sku_r3')
-        ).distinct()
+    migrated_sku_pf = zex \
+        .filter(upper(zex['mrp_pr']) == 'X') \
+        .select(zex['ekorg'].alias('purch_org'),
+                zex('matnr').cast(IntegerType()).alias('sku_num_sku_r3')) \
+        .drop_duplicates()
     return migrated_sku_pf
 
 
@@ -157,8 +156,8 @@ def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     ######### Join between MRP APO and Purchase Forecast
     print('====> Join between MRP APO and Purchase Forecast...')
     model_not_migrate_pf = model_week_mrp_apo_clean.join(model_week_mrp_pf, on=['model_id', 'week_id'], how='leftanti')
-    model_week_mrp = model_week_mrp_pf\
-        .union(model_not_migrate_pf)\
+    model_week_mrp = model_week_mrp_pf \
+        .union(model_not_migrate_pf) \
         .orderBy('model_id', 'week_id')
 
     return model_week_mrp

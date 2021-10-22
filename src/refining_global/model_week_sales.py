@@ -99,7 +99,6 @@ def union_sales(offline_sales, online_sales):
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc):
-
     # Get offline sales
     model_week_sales_offline = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
 
