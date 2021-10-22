@@ -5,7 +5,7 @@ from functools import reduce
 
 def to_uri(bucket, key):
     """
-    List all files under a S3 bucket
+    Transforms bucket & key strings into S3 URI
 
     Args:
         bucket (string): name of the S3 bucket
@@ -17,47 +17,34 @@ def to_uri(bucket, key):
     return 's3://{}/{}'.format(bucket, key)
 
 
-def read_parquet_s3(spark, bucket, key):
+def spark_read_parquet_s3(spark, bucket, path):
     """
-    Read parquet files on s3 and return a spark dataframe
+    Read parquet file(s) hosted on a S3 bucket, load and return as spark dataframe
 
     Args:
         spark (SparkSession): spark app
-        bucket (string): name of the S3 bucket
-        key (string): S3 key
+        bucket (string): S3 bucket
+        path (dict): full path to the parquet directory or file within the S3 bucket
 
     Returns:
-        object (SparkDataframe):
+        (SparkDataframe): data loaded
     """
-    df = spark.read.parquet(to_uri(bucket, key))
-    return df
+    return spark.read.parquet(to_uri(bucket, path))
 
 
-def write_parquet_s3(df, bucket, key, mode='overwrite'):
+def spark_write_parquet_s3(df, bucket, dir_path, repartition=10, mode='overwrite'):
     """
-    Write a SparkDataframe to parquet files on a S3 bucket
+    Write a in-memory SparkDataframe to parquet files on a S3 bucket
 
     Args:
-        df (SparkDataframe):
-        bucket (string): name of the S3 bucket
-        key (string):  S3 key
+        df (SparkDataframe): the data to save
+        bucket (string): S3 bucket
+        dir_path (string): full path to the parquet directory within the S3 bucket
+        repartition (int): number of partitions files to write
+        mode (string): writing mode
     """
-    df.write.parquet(to_uri(bucket, key), mode=mode)
-
-
-def write_partitionned_parquet_s3(df, bucket, key, partition_col, mode='overwrite'):
-    """
-    Write a SparkDataframe to parquet files on a S3 bucket
-
-    Args:
-        df (SparkDataframe):
-        bucket (string): name of the S3 bucket
-        key (string): S3 key
-        partition_col (string): Partition Column
-        mode (string):
-    """
-    df.write.partitionBy(partition_col).parquet(to_uri(bucket, key), mode=mode)
-
+    df.repartition(repartition).write.parquet(to_uri(bucket, key), mode=mode)
+    
 
 def get_timer(starting_time):
     """
@@ -71,196 +58,42 @@ def get_timer(starting_time):
     print("{} minute(s) {} second(s)".format(int(minutes), seconds))
 
 
-def read_parquet_table(spark, params, path):
+def unionAll(l_df):
     """
+    Apply union function on all spark dataframes in l_df
 
+    """
+    return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), l_df)
+
+
+def date_to_week_id(date):
+    """
+    Turn a date to Decathlon week id
     Args:
-        spark:
-        params:
-        path:
-
+        date (str, pd.Timestamp or pd.Series): the date or pandas column of dates
     Returns:
+        (int): the week id
 
-    """
-    return read_parquet_s3(spark, params.bucket_clean, params.path_clean_datalake + path)
-
-
-def write_result(towrite_df, params, path):
-    """
-    Save refined tables
-
-    Args:
-        towrite_df:
-        params:
-        path:
-    """
-    start = time.time()
-    write_parquet_s3(towrite_df.repartition(10), params.bucket_refined, params.path_refined_global + path)
-    get_timer(starting_time=start)
-
-
-def write_partitioned_result(towrite_df, params, path, partition_col):
-    """
-    Save refined global tables
-
-    Args:
-        towrite_df:
-        params:
-        path:
-        partition_col:
-    """
-    start = time.time()
-    write_partitionned_parquet_s3(
-        towrite_df,
-        params.bucket_refined,
-        params.path_refined_global + path,
-        partition_col
-    )
-    get_timer(starting_time=start)
-
-
-def unionAll(dfs):
-    """
-
-    Args:
-        dfs:
-
-    Returns:
-
-    """
-    return reduce(lambda df1, df2: df1.union(df2.select(df1.columns)), dfs)
-
-
-def get_week_id(date):
-    """
-    Return the week number of a date (ex: 202051)
-        - year: str(date.isocalendar()[0])
-        - week number: date.strftime("%V") (return the week number where week is starting from monday)
-    If the day is sunday, I add one day to get the good day value in order to respect Decathlon rule:
-        the first day of week is sunday
-
-    Args:
-        date:
-
-    Returns:
-        object (int): week number
     """
     day_of_week = date.strftime("%w")
     date = date if (day_of_week != '0') else date + timedelta(days=1)
     return int(str(date.isocalendar()[0]) + str(date.isocalendar()[1]).zfill(2))
 
 
-def get_first_day_month(week_id):
+def get_current_week_id():
     """
-    Get the first day of month for the first day of week
-    ex: 202122 (30/05 -> 05/06) => result = 2021-05-01
+    Return current week id (international standard ISO 8601 - first day of week
+    is Sunday, with format 'YYYYWW', as integer
 
-    Args:
-        week_id (int):
-
-    Returns:
-        object (date):
     """
-    fdm = (datetime.strptime(str(week_id) + '1', '%G%V%u') - timedelta(days=1)).replace(day=1)
-    return fdm
-
-
-def get_last_day_week(week_id):
-    """
-    Get the date of the last day of week (saturday)
-
-    Args:
-        week_id:
-
-    Returns:
-        object:
-    """
-    ldw = datetime.strptime(str(week_id) + '6', '%G%V%u')
-    return ldw
-
-
-def get_current_week():
-    """
-    Return current week (international standard ISO 8601 - first day of week
-    is Sunday, with format 'YYYYWW'
-
-    Returns:
-        object (int): current week (international standard ISO 8601) with format 'YYYYWW'
-    """
-    shifted_date = datetime.today()
-    current_week_id = get_week_id(shifted_date)
-    return current_week_id
+    return date_to_week_id(datetime.today())
 
 
 def get_shift_n_week(week_id, nb_weeks):
     """
-    Return shifted week (previous or next)
+    Return input week_id shifted by nb_weeks (could be negative)
 
-    Args:
-        week_id (int):
-        nb_weeks (int):
-
-    Returns:
-        object (int):
     """
-    shifted_date = datetime.strptime(str(week_id) + '1', '%G%V%u') + timedelta(nb_weeks * 7)
-    ret_week_id = get_week_id(shifted_date)
+    shifted_date = datetime.strptime(str(week_id) + '1', '%G%V%u') + timedelta(weeks=nb_weeks)
+    ret_week_id = date_to_week_id(shifted_date)
     return ret_week_id
-
-
-def get_previous_n_week(week_id, nb_weeks):
-    """
-    Get previous week depending on nb_week
-
-    Args:
-        week_id (int):
-        nb_weeks (int): should be positive
-
-    Returns:
-        object (int):
-    """
-    if nb_weeks < 0:
-        raise ValueError('get_previous_n_week: nb_weeks argument should be positive')
-    return get_shift_n_week(week_id, -nb_weeks)
-
-
-def get_previous_week_id(week_id):
-    """
-     Returns:
-        object (int): previous week: current week - 1
-    """
-
-    return get_previous_n_week(week_id, 1)
-
-
-def get_next_n_week(week_id, nb_weeks):
-    """
-    Get next week depending on nb_week
-
-    Args:
-        week_id (int):
-        nb_weeks (int): should be positive
-
-    Returns:
-        object (int):
-    """
-    if nb_weeks < 0:
-        raise ValueError('get_next_n_week: nb_weeks argument should be positive')
-    return get_shift_n_week(week_id, nb_weeks)
-
-
-def get_next_week_id(week_id):
-    """
-     Returns:
-        object (int): next week: current week + 1
-    """
-    return get_next_n_week(week_id, 1)
-
-
-def get_time():
-    """
-
-    Returns:
-        object (string): Current datetime in string
-    """
-    return str(datetime.now())

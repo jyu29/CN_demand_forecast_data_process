@@ -22,7 +22,7 @@ if __name__ == '__main__':
     params = conf.Configuration(config_file)
     params.pretty_print_dict()
 
-    current_week = ut.get_current_week()
+    current_week = ut.get_current_week_id()
     print('Current week: {}'.format(current_week))
     print('==> Global refined data will be uploaded up to this week (excluded).')
 
@@ -33,19 +33,19 @@ if __name__ == '__main__':
     spark.sparkContext.setLogLevel('ERROR')
 
     # Load all needed clean data
-    tdt = ut.read_parquet_table(spark, params, 'f_transaction_detail/')
-    dyd = ut.read_parquet_table(spark, params, 'f_delivery_detail/')
-    cex = ut.read_parquet_table(spark, params, 'f_currency_exchange/')
-    sku = ut.read_parquet_table(spark, params, 'd_sku/')
-    sku_h = ut.read_parquet_table(spark, params, 'd_sku_h/')
-    but = ut.read_parquet_table(spark, params, 'd_business_unit/')
-    sapb = ut.read_parquet_table(spark, params, 'sites_attribut_0plant_branches_h/')
-    gdw = ut.read_parquet_table(spark, params, 'd_general_data_warehouse_h/')
-    gdc = ut.read_parquet_table(spark, params, 'd_general_data_customer/')
-    day = ut.read_parquet_table(spark, params, 'd_day/')
-    week = ut.read_parquet_table(spark, params, 'd_week/')
-    sms = ut.read_parquet_table(spark, params, 'apo_sku_mrp_status_h/')
-    zep = ut.read_parquet_table(spark, params, 'ecc_zaa_extplan/')
+    tdt = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_transaction_detail/')
+    dyd = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_delivery_detail/')
+    cex = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'f_currency_exchange/')
+    sku = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_sku/')
+    sku_h = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_sku_h/')
+    but = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_business_unit/')
+    sapb = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'sites_attribut_0plant_branches_h/')
+    gdw = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_general_data_warehouse_h/')
+    gdc = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_general_data_customer/')
+    day = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_day/')
+    week = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'd_week/')
+    sms = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'apo_sku_mrp_status_h/')
+    zep = ut.spark_read_parquet_s3(spark, params.bucket_clean, params.clean_datalake + 'ecc_zaa_extplan/')
 
     # Apply global filters
     cex = gf.filter_current_exchange(cex)
@@ -109,10 +109,10 @@ if __name__ == '__main__':
     check.check_unicity_by_keys(model_week_mrp, ['model_id', 'week_id'])
 
     # Write results
-    ut.write_result(model_week_sales, params, 'model_week_sales')
-    ut.write_result(model_week_price, params, 'model_week_price')
-    ut.write_result(model_week_turnover, params, 'model_week_turnover')
-    ut.write_result(model_week_tree, params, 'model_week_tree')
-    ut.write_result(model_week_mrp, params, 'model_week_mrp')
+    ut.spark_write_parquet_s3(model_week_sales, params.bucket_refined, params.path_refined_global + 'model_week_sales')
+    ut.spark_write_parquet_s3(model_week_price, params.bucket_refined, params.path_refined_global + 'model_week_price')
+    ut.spark_write_parquet_s3(model_week_turnover, params.bucket_refined, params.path_refined_global + 'model_week_turnover')
+    ut.spark_write_parquet_s3(model_week_tree, params.bucket_refined, params.path_refined_global + 'model_week_tree')
+    ut.spark_write_parquet_s3(model_week_mrp, params.bucket_refined, params.path_refined_global + 'model_week_mrp')
 
     spark.stop()

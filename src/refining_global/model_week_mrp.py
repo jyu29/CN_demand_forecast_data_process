@@ -66,8 +66,8 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
         l_df.append(df)
     l_df.append(model_week_mrp_apo)
 
-    model_week_mrp_apo_clean = ut.unionAll(l_df)
-    return model_week_mrp_apo_clean
+    model_week_mrp_apo_filled = ut.unionAll(l_df)
+    return model_week_mrp_apo_filled
 
 
 def get_mrp_status_pf(asms):
