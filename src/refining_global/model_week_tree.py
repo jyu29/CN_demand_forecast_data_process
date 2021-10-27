@@ -1,9 +1,9 @@
 import pyspark.sql.functions as F
 
 
-def get_model_week_tree(sku_h, week):
+def get_model_week_tree(sku_h, week, first_backtesting_cutoff):
     model_week_tree = sku_h \
-        .join(F.broadcast(week),
+        .join(F.broadcast(week.filter(week['wee_id_week'] >= first_backtesting_cutoff)),
               on=week['day_first_day_week'].between(sku_h['sku_date_begin'], sku_h['sku_date_end']),
               how='inner') \
         .groupBy(week['wee_id_week'].cast('int').alias('week_id'),

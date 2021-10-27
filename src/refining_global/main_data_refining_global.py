@@ -68,7 +68,7 @@ if __name__ == '__main__':
     print('[model_week_sales] length:', model_week_sales_count)
 
     # Create model_week_tree
-    model_week_tree = tree.get_model_week_tree(sku_h, week)
+    model_week_tree = tree.get_model_week_tree(sku_h, week, params.first_backtesting_cutoff)
     model_week_tree.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_tree] took ')
     start = time.time()
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     print('[model_week_tree] length:', model_week_tree_count)
 
     # Create model_week_mrp
-    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week)
+    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.first_backtesting_cutoff)
     model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_mrp] took ')
     start = time.time()

@@ -56,7 +56,7 @@ def get_model_week_mrp_apo(gdw, sapb, sku, day):
     return model_week_mrp_apo
 
 
-def fill_mrp_apo_before_201939(model_week_mrp_apo):
+def fill_mrp_apo_before_201939(model_week_mrp_apo, first_backtesting_cutoff):
     """
     MRP from APO are available since 201939 only
     We have to fill weeks between 201924 and 201938 using the 201939 values.
@@ -67,7 +67,7 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo):
     model_week_mrp_apo_201939 = model_week_mrp_apo.filter(model_week_mrp_apo['week_id'] == 201939)
 
     l_df = []
-    for w in range(201924, 201939):
+    for w in range(first_backtesting_cutoff, 201939):
         df = model_week_mrp_apo_201939.withColumn('week_id', F.lit(w))
         l_df.append(df)
     l_df.append(model_week_mrp_apo)
@@ -193,7 +193,7 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
     return model_week_mrp_pf
 
 
-def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
+def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, first_backtesting_cutoff):
     """
 
     Args:
@@ -219,9 +219,10 @@ def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week):
     ut.get_timer(starting_time=start)
     print('[model_week_mrp] length:', model_week_mrp_apo_count)
 
-    # Fill missing MRP for APO
-    print('====> Filling missing MRP for APO...')
-    model_week_mrp_apo_clean = fill_mrp_apo_before_201939(model_week_mrp_apo)
+    if first_backtesting_cutoff < 201939:
+        # Fill missing MRP for APO
+        print('====> Filling missing MRP for APO...')
+        model_week_mrp_apo_clean = fill_mrp_apo_before_201939(model_week_mrp_apo, first_backtesting_cutoff)
 
     # Model MRP for Purchase Forecast
     print('====> Model MRP for Purchase Forecast...')
