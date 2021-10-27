@@ -19,24 +19,24 @@ def filter_current_exchange(cex):
     return cex
 
 
-def filter_days(day, week_begin, week_end):
+def filter_day(day, week_begin, week_end):
     """
     Filter on days more recent than first historical week
     """
     day = day \
         .filter(day['wee_id_week'] >= week_begin) \
-        .filter(day['wee_id_week'] <= week_end)
+        .filter(day['wee_id_week'] < week_end)
     return day
 
 
-def filter_weeks(weeks, week_begin, week_end):
+def filter_week(week, week_begin, week_end):
     """
     Filter on weeks between first backtesting cutoff and current week
     """
-    weeks = weeks \
-        .filter(weeks['wee_id_week'] >= week_begin) \
-        .filter(weeks['wee_id_week'] <= week_end)
-    return weeks
+    week = week \
+        .filter(week['wee_id_week'] >= week_begin) \
+        .filter(week['wee_id_week'] < week_end)
+    return week
 
 
 def filter_sapb(sapb, list_purch_org):
