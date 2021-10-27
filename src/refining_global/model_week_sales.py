@@ -13,13 +13,13 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
               on=F.to_date(tdt['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'],
               how='inner') \
         .join(F.broadcast(week),
-              on='wee_id_week',
+              on=week['wee_id_week'] == day['wee_id_week'],
               how='inner') \
         .join(sku,
-              on='sku_idr_sku',
+              on=sku['sku_idr_sku'] == tdt['sku_idr_sku'],
               how='inner') \
         .join(F.broadcast(but.filter(but['but_num_typ_but'] == 7)),
-              on='but_idr_business_unit',
+              on=but['but_idr_business_unit'] == tdt['but_idr_business_unit'],
               how='inner') \
         .join(F.broadcast(cex),
               on=tdt['cur_idr_currency'] == cex['cur_idr_currency'],
@@ -50,10 +50,10 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               on=F.to_date(dyd['tdt_date_to_ordered'], 'yyyy-MM-dd') == day['day_id_day'],
               how='inner') \
         .join(F.broadcast(week),
-              on='wee_id_week',
+              on=week['wee_id_week'] == day['wee_id_week'],
               how='inner') \
         .join(sku,
-              on='sku_idr_sku',
+              on=sku['sku_idr_sku'] == dyd['sku_idr_sku'],
               how='inner') \
         .join(F.broadcast(but),
               on=dyd['but_idr_business_unit_sender'] == but['but_idr_business_unit'],
@@ -62,10 +62,10 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               on=but['but_code_international'] == F.concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']),
               how='inner') \
         .join(F.broadcast(cex),
-              on='cur_idr_currency',
+              on=cex['cur_idr_currency'] == dyd['cur_idr_currency'],
               how='inner') \
         .join(F.broadcast(sapb),
-              on=gdc['plant_id'] == sapb['plant_id'],
+              on=sapb['plant_id'] == gdc['plant_id'],
               how='inner') \
         .filter(F.lower(dyd['the_to_type']) == 'online') \
         .filter(F.lower(dyd['tdt_type_detail']) == 'sale') \
