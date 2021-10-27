@@ -79,14 +79,14 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
     return model_week_sales_online
 
 
-def union_sales(offline_sales, online_sales):
+def union_sales(model_week_sales_offline, model_week_sales_online):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
      - average_price: mean of regular sales unit
      - turnover: sum taxes with exchange
     """
-    model_week_sales = offline_sales.union(online_sales) \
+    model_week_sales = model_week_sales_offline.union(model_week_sales_online) \
         .groupby(['model_id', 'week_id', 'date']) \
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
