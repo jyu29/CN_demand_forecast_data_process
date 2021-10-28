@@ -2,6 +2,12 @@ pipeline {
 
     agent any
 
+    parameters {
+        choice(description: '', name: 'scope', choices: ['choices', 'sales', 'stocks_delta', 'stocks_full', 'historic_stocks'])
+        choice(description: '', name: 'run_env', choices:['dev','prod','debug'])
+        string(description: 'branch name', name: 'branch_name', defaultValue:'master')
+    }
+
     stages {
 
         stage("cluster provisioning") {
