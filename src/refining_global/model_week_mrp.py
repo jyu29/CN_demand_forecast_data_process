@@ -146,7 +146,7 @@ def get_sku_week_mrp_pf(sku_mrp_pf, week):
               how='inner') \
         .select(sku_mrp_pf['purch_org'],
                 sku_mrp_pf['mdl_num_model_r3'].alias('model_id'),
-                week['wee_id_week'].alias('week_id'),
+                week['wee_id_week'].cast('int').alias('week_id'),
                 sku_mrp_pf['mrp_status'])
 
     return sku_week_mrp_pf
