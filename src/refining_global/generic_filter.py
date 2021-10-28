@@ -25,7 +25,7 @@ def filter_day(day, week_begin, week_end):
     """
     day = day \
         .filter(day['wee_id_week'] >= week_begin) \
-        .filter(day['wee_id_week'] < week_end)
+        .filter(day['wee_id_week'] <= week_end)
     return day
 
 
@@ -35,7 +35,7 @@ def filter_week(week, week_begin, week_end):
     """
     week = week \
         .filter(week['wee_id_week'] >= week_begin) \
-        .filter(week['wee_id_week'] < week_end)
+        .filter(week['wee_id_week'] <= week_end)
     return week
 
 
