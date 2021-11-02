@@ -56,7 +56,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               on=sku['sku_idr_sku'] == dyd['sku_idr_sku'],
               how='inner') \
         .join(F.broadcast(but),
-              on=dyd['but_idr_business_unit_sender'] == but['but_idr_business_unit'],
+              on=dyd['but_idr_business_unit_stock_origin'] == but['but_idr_business_unit'],
               how='inner') \
         .join(F.broadcast(gdc),
               on=but['but_code_international'] == F.concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']),
@@ -69,6 +69,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               how='inner') \
         .filter(F.lower(dyd['the_to_type']) == 'online') \
         .filter(F.lower(dyd['tdt_type_detail']) == 'sale') \
+        .filter(dyd['tdt_type_detail'] != 'canceled')\
         .select(sku['mdl_num_model_r3'].alias('model_id'),
                 day['wee_id_week'].cast('int').alias('week_id'),
                 week['day_first_day_week'].alias('date'),

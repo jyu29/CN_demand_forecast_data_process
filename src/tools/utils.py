@@ -14,7 +14,7 @@ def to_uri(bucket, key):
     Returns:
         object (string): URI format
     """
-    return 's3://{}/{}'.format(bucket, key)
+    return 's3://fcst-workspace/forecast-cn/{}/{}'.format(bucket, key)
 
 
 def spark_read_parquet_s3(spark, bucket, path):
