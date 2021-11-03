@@ -69,7 +69,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               how='inner') \
         .filter(F.lower(dyd['the_to_type']) == 'online') \
         .filter(F.lower(dyd['tdt_type_detail']) == 'sale') \
-        .filter(dyd['tdt_type_detail'] != 'canceled')\
+        .filter(dyd['the_transaction_status'] != 'canceled')\
         .select(sku['mdl_num_model_r3'].alias('model_id'),
                 day['wee_id_week'].cast('int').alias('week_id'),
                 week['day_first_day_week'].alias('date'),
