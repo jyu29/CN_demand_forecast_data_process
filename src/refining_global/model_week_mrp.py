@@ -85,7 +85,7 @@ def get_mrp_status_pf(asms):
         asms:
     """
     mrp_pf = asms \
-        .filter(asms['custom_zone'] == '2002') \
+        .filter(asms['custom_zone'].isin(['2005','2008','2024','2036','2040'])) \
         .select(asms['sku'].cast(IntegerType()).alias('sku_num_sku_r3'),
                 asms['status'].cast(IntegerType()).alias('mrp_status'),
                 asms['date_begin'],
