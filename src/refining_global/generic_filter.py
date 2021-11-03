@@ -6,6 +6,7 @@ def filter_current_exchange(cex):
     Get the current CRE exchange rate
         cex['cpt_idr_cur_price'] = 6 #exchange rate for sales price
         cex['cur_idr_currency_restit'] == 32 # 32 is the index of euro
+        cex['cur_idr_currency_restit'] == 19 # 19 is the index of rmb
       TODO: get a dynamic exchange rate when the right data source is identified
     """
     cex = cex \
