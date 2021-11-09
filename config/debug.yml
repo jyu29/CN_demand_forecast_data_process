@@ -6,7 +6,7 @@ paths:
   refined_global: global/
 functional_parameters:
   first_historical_week: 201601
-  first_backtesting_cutoff: 201925
+  first_backtesting_cutoff: 201901
   list_purch_org:
     - Z015
     - Z024
@@ -20,4 +20,5 @@ technical_parameters:
     spark.sql.legacy.parquet.int96RebaseModeInRead: "CORRECTED"
     spark.sql.legacy.parquet.datetimeRebaseModeInWrite: "CORRECTED"
     spark.sql.legacy.parquet.datetimeRebaseModeInRead: "CORRECTED"
+    spark.driver.maxResultSize: "2g"
     spark.sql.legacy.timeParserPolicy": "LEGACY"
