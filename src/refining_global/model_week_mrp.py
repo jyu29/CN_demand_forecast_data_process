@@ -51,7 +51,7 @@ def get_model_week_mrp_apo(gdw, sapb, sku, day):
               how='inner') \
         .filter(day['wee_id_week'] >= '201939') \
         .groupBy(day['wee_id_week'].cast('int').alias('week_id'), smu['model_id']) \
-        .agg(F.max(F.when(smu['mrp'].isin(2, 5), True).otherwise(False)).alias('is_mrp_active')) \
+        .agg(F.max(F.when(smu['mrp'].isin(1, 2, 5), True).otherwise(False)).alias('is_mrp_active')) \
         .orderBy('model_id', 'week_id')
     return model_week_mrp_apo
 
