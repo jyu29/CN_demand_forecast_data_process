@@ -1,5 +1,5 @@
 buckets:
-  clean: fcst-clean-dev
+  clean: fcst-workspace/forecast-cn/fcst-clean-dev
   refined: fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev
 paths:
   clean_datalake: datalake/
