@@ -12,7 +12,7 @@ class Configuration(object):
     _yaml_list = None
     _logger = logging.getLogger()
 
-    def __init__(self, file_path, id_list):
+    def __init__(self, file_path):
         """
         Read a local yaml file and return a python dictionary
 
@@ -29,8 +29,9 @@ class Configuration(object):
         else:
             raise Exception("Could not load the functional YAML configuration file '{}'".format(file_path))
 
+        id_list = './config/quicktest_whitelist.yml'
         if os.path.exists(id_list):
-            with open('./config/quicktest_whitelist.yml') as i:
+            with open(id_list) as i:
                 self._yaml_list = yaml.safe_load(i)
                 self._logger.info("YAML whitelist file ('{}') successfully loaded".format(id_list))
         else:
