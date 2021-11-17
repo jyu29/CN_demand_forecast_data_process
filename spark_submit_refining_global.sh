@@ -5,7 +5,8 @@ technical_env=${1:-dev}
 echo "Technical environment: $technical_env"
 
 technical_conf_file="./config/$technical_env.yml"
-white_list_file = "./config/quicktest_whitelist.yml"
+white_list_file="./config/quicktest_whitelist.yml"
+
 echo "Technical configuration file: $technical_conf_file"
 echo "WhiteList file: $white_list_file"
 
