@@ -33,7 +33,7 @@ def get_sku_mrp_apo(gdw, sapb, sku):
     return smu
 
 
-def get_model_week_mrp_apo(gdw, sapb, sku, day):
+def get_model_week_mrp_apo(gdw, sapb, sku, day, whitelist):
     """
     Calculate model week MRP from APO
 
@@ -51,7 +51,7 @@ def get_model_week_mrp_apo(gdw, sapb, sku, day):
               how='inner') \
         .filter(day['wee_id_week'] >= '201939') \
         .groupBy(day['wee_id_week'].cast('int').alias('week_id'), smu['model_id']) \
-        .agg(F.max(F.when(smu['mrp'].isin(1, 2, 5), True).otherwise(False)).alias('is_mrp_active')) \
+        .agg(F.max(F.when(smu['mrp'].isin(2, 5) | smu['model_id'].isin(whitelist), True).otherwise(False)).alias('is_mrp_active')) \
         .orderBy('model_id', 'week_id')
     return model_week_mrp_apo
 
@@ -193,7 +193,7 @@ def get_model_week_mrp_pf(sms, zep, week, sku):
     return model_week_mrp_pf
 
 
-def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, first_backtesting_cutoff):
+def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, white_list, first_backtesting_cutoff):
     """
 
     Args:
@@ -210,7 +210,7 @@ def get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, first_backtesting_cu
     """
     # Model MRP for APO
     print('====> Model MRP for APO...')
-    model_week_mrp_apo = get_model_week_mrp_apo(gdw, sapb, sku, day)
+    model_week_mrp_apo = get_model_week_mrp_apo(gdw, sapb, sku, day, white_list)
     model_week_mrp_apo.persist(StorageLevel.MEMORY_ONLY)
 
     print('====> counting(cache) [model_week_mrp_apo] took ')

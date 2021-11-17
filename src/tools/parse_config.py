@@ -29,4 +29,8 @@ def basic_parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--configfile', required=True,
                         help="Technical configuration file (YAML format)")
+    parser.add_argument('-w', '--whitelist', required=True,
+                        help="model_id whitelist file (YAML format)")
     return parser.parse_args()
+
+

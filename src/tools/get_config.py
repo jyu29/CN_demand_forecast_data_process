@@ -9,9 +9,10 @@ class Configuration(object):
     Class used to handle and maintain all parameters of this program (timeouts, some other values...)
     """
     _yaml_dict = None
+    _yaml_list = None
     _logger = logging.getLogger()
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, id_list):
         """
         Read a local yaml file and return a python dictionary
 
@@ -28,6 +29,13 @@ class Configuration(object):
         else:
             raise Exception("Could not load the functional YAML configuration file '{}'".format(file_path))
 
+        if os.path.exists(id_list):
+            with open(id_list) as i:
+                self._yaml_list = yaml.safe_load(i)
+                self._logger.info("YAML whitelist file ('{}') successfully loaded".format(id_list))
+        else:
+            raise Exception("Could not load the functional YAML whitelist file '{}'".format(id_list))
+
         self.bucket_clean = self.get_bucket_clean()
         self.bucket_refined = self.get_bucket_refined()
         self.path_clean_datalake = self.get_path_clean_data()
@@ -36,12 +44,19 @@ class Configuration(object):
         self.first_backtesting_cutoff = self.get_first_backtesting_cutoff()
         self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
+        self.white_list = self.get_white_list_id()
 
     def pretty_print_dict(self):
         """
         Pretty prints the config dictionary
         """
         pprint.pprint(self._yaml_dict)
+
+    def pretty_print_list(self):
+        """
+        Pretty prints the config dictionary
+        """
+        pprint.pprint(self._yaml_list)
 
     def get_bucket_clean(self):
         """
@@ -114,3 +129,12 @@ class Configuration(object):
             object: a list of countries in conf
         """
         return self._yaml_dict['functional_parameters']['list_purch_org']
+
+    def get_white_list_id(self):
+        """
+        Get list of model_id which model need to keep
+
+        Returns:
+            object: a list of model_id in whitelist
+        """
+        return self._yaml_list['model_id']

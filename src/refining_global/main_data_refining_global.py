@@ -19,8 +19,10 @@ if __name__ == '__main__':
     print('Getting parameters...')
     args = parse_config.basic_parse_args()
     config_file = vars(args)['configfile']
-    params = conf.Configuration(config_file)
+    whitelist_file = vars(args)['whitelist']
+    params = conf.Configuration(config_file, whitelist_file)
     params.pretty_print_dict()
+    params.pretty_print_list()
 
     current_week = ut.get_current_week_id()
     print('Current week: {}'.format(current_week))
@@ -77,7 +79,7 @@ if __name__ == '__main__':
     print('[model_week_tree] length:', model_week_tree_count)
 
     # Create model_week_mrp
-    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.first_backtesting_cutoff)
+    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
     model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_mrp] took ')
     start = time.time()
