@@ -1,8 +1,8 @@
 buckets:
-  clean: fcst-workspace
+  clean: fcst-clean-prod
   refined: fcst-workspace
 paths:
-  clean_datalake: forecast-cn/fcst-clean-dev/datalake/
+  clean_datalake: datalake/
   refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
 functional_parameters:
   first_historical_week: 201601

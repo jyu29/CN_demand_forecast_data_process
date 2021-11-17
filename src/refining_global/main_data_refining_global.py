@@ -19,8 +19,7 @@ if __name__ == '__main__':
     print('Getting parameters...')
     args = parse_config.basic_parse_args()
     config_file = vars(args)['configfile']
-    whitelist_file = vars(args)['whitelist']
-    params = conf.Configuration(config_file, whitelist_file)
+    params = conf.Configuration(config_file)
     params.pretty_print_dict()
     params.pretty_print_list()
 

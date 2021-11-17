@@ -30,7 +30,7 @@ class Configuration(object):
             raise Exception("Could not load the functional YAML configuration file '{}'".format(file_path))
 
         if os.path.exists(id_list):
-            with open(id_list) as i:
+            with open('./config/quicktest_whitelist.yml') as i:
                 self._yaml_list = yaml.safe_load(i)
                 self._logger.info("YAML whitelist file ('{}') successfully loaded".format(id_list))
         else:

@@ -5,10 +5,8 @@ technical_env=${1:-dev}
 echo "Technical environment: $technical_env"
 
 technical_conf_file="./config/$technical_env.yml"
-white_list_file="./config/quicktest_whitelist.yml"
 
 echo "Technical configuration file: $technical_conf_file"
-echo "WhiteList file: $white_list_file"
 
 sudo pip3 install -r requirements.txt
 zip -x ./src/refining_specific* -x ./src/refining_global* -r tools.zip ./src/
@@ -21,7 +19,7 @@ spark-submit \
     --deploy-mode client \
     --master yarn \
     --py-files tools.zip \
-    ./src/refining_global/main_data_refining_global.py -c $technical_conf_file -w $white_list_file
+    ./src/refining_global/main_data_refining_global.py -c $technical_conf_file
 
 echo $? > code_status
 my_exit_code=$(cat code_status)
