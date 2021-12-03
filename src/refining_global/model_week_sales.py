@@ -34,7 +34,8 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
                 tdt['f_qty_item'],
                 tdt['f_pri_regular_sales_unit'],
                 tdt['f_to_tax_in'],
-                cex['exchange_rate'])
+                cex['exchange_rate'])\
+        .withColumn("channel", F.lit('offline'))
     return offline_sales
 
 
@@ -76,7 +77,8 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
                 dyd['f_qty_item'],
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
-                cex['exchange_rate'])
+                cex['exchange_rate']) \
+        .withColumn("channel", F.lit('offline'))
     return online_sales
 
 
