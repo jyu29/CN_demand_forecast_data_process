@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sum_turnover'])
     # model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel','sales_quantity'])
 
-    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel','f_pri_regular_sales_unit'])
+    model_week_price = test_price.select(['model_id', 'week_id', 'date', 'channel','f_pri_regular_sales_unit'])
 
     # # Data checks & assertions
     # check.check_d_sku(sku)
