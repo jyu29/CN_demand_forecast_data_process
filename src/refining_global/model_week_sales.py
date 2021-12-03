@@ -110,7 +110,7 @@ def union_sales(spark, offline_sales, online_sales, current_week):
         .filter(F.col('week_id') < current_week) \
         .orderBy('model_id', 'week_id')
 
-    return  test_price
+    return test_price
 
 
 def get_model_week_sales(spark, tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
