@@ -82,7 +82,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
     return online_sales
 
 
-def union_sales(offline_sales, online_sales, current_week):
+def union_sales(spark, offline_sales, online_sales, current_week):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
@@ -103,17 +103,17 @@ def union_sales(offline_sales, online_sales, current_week):
     test_price = offline_sales.union(online_sales) \
         .groupby(['model_id', 'week_id', 'date', 'channel']) \
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
+             F.mean(F.col('f_pri_regular_sales_unit')).alias('average_price'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
         .filter(F.col('sales_quantity') > 0) \
         .filter(F.col('sum_turnover') > 0) \
         .filter(F.col('week_id') < current_week) \
-        .orderBy('model_id', 'week_id')\
-        .select(['model_id', 'week_id', 'date', 'channel','f_pri_regular_sales_unit'])
+        .orderBy('model_id', 'week_id')
 
     return  test_price
 
 
-def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
+def get_model_week_sales(spark, tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
 
@@ -121,6 +121,6 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
 
     # Create model week sales
-    test_price = union_sales(offline_sales, online_sales, current_week)
+    test_price = union_sales(spark, offline_sales, online_sales, current_week)
 
     return test_price

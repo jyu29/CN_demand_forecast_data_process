@@ -60,7 +60,7 @@ if __name__ == '__main__':
     gdw = gf.filter_gdw(gdw)
 
     # Create model_week_sales
-    test_price = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
+    test_price = sales.get_model_week_sales(spark, tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
     # model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     test_price.persist(StorageLevel.MEMORY_ONLY)
     # print('====> counting(cache) [model_week_sales] took ')
