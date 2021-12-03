@@ -60,14 +60,14 @@ if __name__ == '__main__':
     gdw = gf.filter_gdw(gdw)
 
     # Create model_week_sales
-    model_week_sales, test_price = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
-    model_week_sales.persist(StorageLevel.MEMORY_ONLY)
+    test_price = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
+    # model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     test_price.persist(StorageLevel.MEMORY_ONLY)
-    print('====> counting(cache) [model_week_sales] took ')
-    start = time.time()
-    model_week_sales_count = model_week_sales.count()
-    ut.get_timer(starting_time=start)
-    print('[model_week_sales] length:', model_week_sales_count)
+    # print('====> counting(cache) [model_week_sales] took ')
+    # start = time.time()
+    # model_week_sales_count = model_week_sales.count()
+    # ut.get_timer(starting_time=start)
+    # print('[model_week_sales] length:', model_week_sales_count)
 
     # # Create model_week_tree
     # model_week_tree = tree.get_model_week_tree(sku_h, week, params.first_backtesting_cutoff)

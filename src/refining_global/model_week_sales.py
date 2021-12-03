@@ -89,29 +89,28 @@ def union_sales(offline_sales, online_sales, current_week):
      - average_price: mean of regular sales unit
      - turnover: sum taxes with exchange
     """
-    model_week_sales = offline_sales.union(online_sales) \
-        .groupby(['model_id', 'week_id', 'date', 'channel']) \
-        .agg(F.sum('f_qty_item').alias('sales_quantity'),
-             F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
-             F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
-        .filter(F.col('sales_quantity') > 0) \
-        .filter(F.col('average_price') > 0) \
-        .filter(F.col('sum_turnover') > 0) \
-        .filter(F.col('week_id') < current_week) \
-        .orderBy('model_id', 'week_id')
+    # model_week_sales = offline_sales.union(online_sales) \
+    #     .groupby(['model_id', 'week_id', 'date', 'channel']) \
+    #     .agg(F.sum('f_qty_item').alias('sales_quantity'),
+    #          F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
+    #          F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
+    #     .filter(F.col('sales_quantity') > 0) \
+    #     .filter(F.col('average_price') > 0) \
+    #     .filter(F.col('sum_turnover') > 0) \
+    #     .filter(F.col('week_id') < current_week) \
+    #     .orderBy('model_id', 'week_id')
 
     test_price = offline_sales.union(online_sales) \
         .groupby(['model_id', 'week_id', 'date', 'channel']) \
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
         .filter(F.col('sales_quantity') > 0) \
-        .filter(F.col('average_price') > 0) \
         .filter(F.col('sum_turnover') > 0) \
         .filter(F.col('week_id') < current_week) \
         .orderBy('model_id', 'week_id')\
         .select(['model_id', 'week_id', 'date', 'channel','f_pri_regular_sales_unit'])
 
-    return model_week_sales, test_price
+    return  test_price
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
@@ -122,6 +121,6 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
 
     # Create model week sales
-    model_week_sales, test_price = union_sales(offline_sales, online_sales, current_week)
+    test_price = union_sales(offline_sales, online_sales, current_week)
 
-    return model_week_sales, test_price
+    return test_price
