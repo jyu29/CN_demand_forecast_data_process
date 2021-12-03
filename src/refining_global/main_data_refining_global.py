@@ -105,9 +105,9 @@ if __name__ == '__main__':
     check.check_d_sku(sku)
     check.check_d_business_unit(but)
     check.check_sales_stability(model_week_sales, current_week)
-    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date'])
-    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date'])
-    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date'])
+    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date','channel'])
+    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date','channel'])
+    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date','channel'])
     check.check_duplicate_by_keys(model_week_tree, ['model_id', 'week_id'])
     check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
 
