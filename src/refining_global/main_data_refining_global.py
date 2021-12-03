@@ -117,8 +117,8 @@ if __name__ == '__main__':
 
     # # Write results
     print('====> write result.')
-    # bucket_refined = params.bucket_refined
-    # path_refined_global = params.path_refined_global
+    bucket_refined = params.bucket_refined
+    path_refined_global = params.path_refined_global
     # ut.spark_write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
     ut.spark_write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
     # ut.spark_write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
