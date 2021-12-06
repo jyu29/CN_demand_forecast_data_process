@@ -78,7 +78,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
                 cex['exchange_rate']) \
-        .withColumn("channel", F.lit('offline'))
+        .withColumn("channel", F.lit('online'))
     return online_sales
 
 
