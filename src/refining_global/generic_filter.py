@@ -11,7 +11,7 @@ def filter_current_exchange(cex):
     """
     cex = cex \
         .filter(cex['cpt_idr_cur_price'] == 6) \
-        .filter(cex['cur_idr_currency_restit'].isin([19,37,46,49,90])) \
+        .filter(cex['cur_idr_currency_restit'].isin(['19', '37', '46', '49', '90'])) \
         .filter(F.current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
         .select(cex['cur_idr_currency_base'].alias('cur_idr_currency'),
                 cex['hde_share_price']) \
