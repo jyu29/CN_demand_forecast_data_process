@@ -1,9 +1,9 @@
 buckets:
   clean: fcst-clean-prod
-  refined: fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev
+  refined: fcst-workspace
 paths:
   clean_datalake: datalake/
-  refined_global: global/
+  refined_global: forecast-cn/fcst-refined-demand-forecast-dev/test_data/
 functional_parameters:
   first_historical_week: 201601
   first_backtesting_cutoff: 201901

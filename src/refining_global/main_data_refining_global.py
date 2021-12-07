@@ -97,17 +97,17 @@ if __name__ == '__main__':
 
     # Split model_week_sales into 3 tables
     print('====> Splitting sales, price & turnover into 3 tables...')
-    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'average_price'])
-    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'sum_turnover'])
-    model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'sales_quantity'])
+    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel','average_price'])
+    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel','sum_turnover'])
+    model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel','sales_quantity'])
 
     # Data checks & assertions
     check.check_d_sku(sku)
     check.check_d_business_unit(but)
     check.check_sales_stability(model_week_sales, current_week)
-    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date'])
-    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date'])
-    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date'])
+    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date','channel'])
+    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date','channel'])
+    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date','channel'])
     check.check_duplicate_by_keys(model_week_tree, ['model_id', 'week_id'])
     check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
 

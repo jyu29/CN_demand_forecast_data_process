@@ -34,7 +34,8 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
                 tdt['f_qty_item'],
                 tdt['f_pri_regular_sales_unit'],
                 tdt['f_to_tax_in'],
-                cex['exchange_rate'])
+                cex['exchange_rate'])\
+        .withColumn("channel", F.lit('offline'))
     return offline_sales
 
 
@@ -76,7 +77,8 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
                 dyd['f_qty_item'],
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
-                cex['exchange_rate'])
+                cex['exchange_rate'])\
+        .withColumn("channel", F.lit('online'))
     return online_sales
 
 
@@ -88,7 +90,7 @@ def union_sales(offline_sales, online_sales, current_week):
      - turnover: sum taxes with exchange
     """
     model_week_sales = offline_sales.union(online_sales) \
-        .groupby(['model_id', 'week_id', 'date']) \
+        .groupby(['model_id', 'week_id', 'date','channel']) \
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
