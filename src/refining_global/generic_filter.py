@@ -20,7 +20,7 @@ def filter_current_exchange(cex):
         .agg(F.mean(cex['hde_share_price']).alias('exchange_rate'))
 
     cex = cex \
-        .filter(~ ((cex['cur_idr_currency_restit'] == 37) & (cex['cur_idr_currency'] != 19))) \
+        .filter(~((cex['cur_idr_currency_restit'] == 37) & (cex['cur_idr_currency'] != 19))) \
         .withColumn('exchange_rate', F.when(cex['cur_idr_currency_restit'] == 37, 1.0).otherwise(cex['exchange_rate']))
     return cex
 

@@ -23,7 +23,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
               how='inner') \
         .join(F.broadcast(cex),
               on=tdt['cur_idr_currency'] == cex['cur_idr_currency'],
-              how='inner') \
+              how='left') \
         .join(F.broadcast(sapb),
               on=but['but_num_business_unit'].cast('string') == F.regexp_replace(sapb['plant_id'], '^0*|\s', ''),
               how='inner') \
@@ -64,7 +64,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
               how='inner') \
         .join(F.broadcast(cex),
               on=cex['cur_idr_currency'] == dyd['cur_idr_currency'],
-              how='inner') \
+              how='left') \
         .join(F.broadcast(sapb),
               on=sapb['plant_id'] == gdc['plant_id'],
               how='inner') \
