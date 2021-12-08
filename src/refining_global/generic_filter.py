@@ -11,14 +11,18 @@ def filter_current_exchange(cex):
     """
     cex = cex \
         .filter(cex['cpt_idr_cur_price'] == 6) \
-        .filter(cex['cur_idr_currency_restit'].isin(['19', '37', '46', '49', '90'])) \
+        .filter(cex['cur_idr_currency_restit'].isin([19, 37])) \
         .filter(F.current_timestamp().between(cex['hde_effect_date'], cex['hde_end_date'])) \
         .select(cex['cur_idr_currency_base'].alias('cur_idr_currency'),
+                cex['cur_idr_currency_restit'],
                 cex['hde_share_price']) \
-        .groupby('cur_idr_currency') \
+        .groupby('cur_idr_currency', 'cur_idr_currency_restit') \
         .agg(F.mean(cex['hde_share_price']).alias('exchange_rate'))
-    return cex
 
+    cex = cex \
+        .filter(~ ((cex['cur_idr_currency_restit'] == 37) & (cex['cur_idr_currency'] != 19))) \
+        .withColumn('exchange_rate', F.when(cex['cur_idr_currency_restit'] == 37, 1.0).otherwise(cex['exchange_rate']))
+    return cex
 
 def filter_day(day, week_begin, week_end):
     """
