@@ -1,7 +1,6 @@
 buckets:
   clean: fcst-clean-prod
   refined: fcst-workspace/forecast-cn/fcst-refined-demand-forecast-prod
-
 paths:
   clean_datalake: datalake/
   refined_global: global/
