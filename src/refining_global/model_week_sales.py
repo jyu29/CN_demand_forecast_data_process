@@ -57,7 +57,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
         .join(sku,
               on=sku['sku_idr_sku'] == dyd['sku_idr_sku'],
               how='inner') \
-        .join(F.broadcast(but.filter((but['cnt_country_code_3a'] == 'CHN') & (but['but_num_typ_but'] == 50))),
+        .join(F.broadcast(but),
               on=dyd['but_idr_business_unit_stock_origin'] == but['but_idr_business_unit'],
               how='inner') \
         .join(F.broadcast(gdc),
