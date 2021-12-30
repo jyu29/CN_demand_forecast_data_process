@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
 
 
-def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
+def get_offline_sales(tdt, day, week, sku, but, cex, sapb, black_list):
     """
     Get Offline sales from transactions data
     Filters:
