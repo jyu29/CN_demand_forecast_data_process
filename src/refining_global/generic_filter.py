@@ -96,17 +96,15 @@ def filter_channel(but):
                          but['but_name_business_unit'].alias('channel_name')).distinct()
     return channel
 
-
 def filter_dyd(dyd):
     """
     trun the column the_transaction_id in delivery table into the key used for join with channel_name.
 
     """
     dyd = dyd \
-        .withColumn('channel_id_1', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 1))\
-        .withColumn('channel_id_2', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 2))\
+        .withColumn('channel_id_1', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 1)) \
+        .withColumn('channel_id_2', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 2)) \
         .withColumn('channel_id_3', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 3))
-
     dyd = dyd.withColumn('the_transaction_id', F.concat(dyd.channel_id_1, dyd.channel_id_2, dyd.channel_id_3))
 
     return dyd
