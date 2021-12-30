@@ -27,7 +27,6 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb, black_list):
         .join(F.broadcast(sapb),
               on=but['but_num_business_unit'].cast('string') == F.regexp_replace(sapb['plant_id'], '^0*|\s', ''),
               how='inner') \
-        .filter(~sku['mdl_num_model_r3'].isin(black_list)) \
         .filter(F.lower(tdt['the_to_type']) == 'offline') \
         .select(sku['mdl_num_model_r3'].alias('model_id'),
                 day['wee_id_week'].cast('int').alias('week_id'),
@@ -72,7 +71,6 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, black_li
         .join(F.broadcast(sapb),
               on=sapb['plant_id'] == gdc['plant_id'],
               how='inner') \
-        .filter(~sku['mdl_num_model_r3'].isin(black_list))\
         .filter(F.lower(dyd['the_to_type']) == 'online') \
         .filter(F.lower(dyd['tdt_type_detail']) == 'sale') \
         .filter(dyd['the_transaction_status'] != 'canceled')\
