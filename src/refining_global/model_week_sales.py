@@ -27,6 +27,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
         .join(F.broadcast(sapb),
               on=but['but_num_business_unit'].cast('string') == F.regexp_replace(sapb['plant_id'], '^0*|\s', ''),
               how='inner') \
+        .filter(~sku['mdl_num_model_r3'].isin(black_list)) \
         .filter(F.lower(tdt['the_to_type']) == 'offline') \
         .select(sku['mdl_num_model_r3'].alias('model_id'),
                 day['wee_id_week'].cast('int').alias('week_id'),
@@ -39,7 +40,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
     return offline_sales
 
 
-def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel):
+def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, black_list):
     """
     Get online sales from delivery data
     Filters:
@@ -71,6 +72,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel):
         .join(F.broadcast(sapb),
               on=sapb['plant_id'] == gdc['plant_id'],
               how='inner') \
+        .filter(~sku['mdl_num_model_r3'].isin(black_list))\
         .filter(F.lower(dyd['the_to_type']) == 'online') \
         .filter(F.lower(dyd['tdt_type_detail']) == 'sale') \
         .filter(dyd['the_transaction_status'] != 'canceled')\
@@ -97,7 +99,6 @@ def union_sales(offline_sales, online_sales, current_week, black_list):
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
-        .filter(~ F.col('model_id').isin(black_list)) \
         .filter(F.col('sales_quantity') > 0) \
         .filter(F.col('average_price') > 0) \
         .filter(F.col('sum_turnover') > 0) \
@@ -108,12 +109,12 @@ def union_sales(offline_sales, online_sales, current_week, black_list):
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, channel, current_week, black_list):
     # Get offline sales
-    offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
+    offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb, black_list)
 
     # Get online sales
-    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel)
+    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, black_list)
 
     # Create model week sales
-    model_week_sales = union_sales(offline_sales, online_sales, current_week, black_list)
+    model_week_sales = union_sales(offline_sales, online_sales, current_week)
 
     return model_week_sales
