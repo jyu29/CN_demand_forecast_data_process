@@ -62,7 +62,7 @@ if __name__ == '__main__':
     dyd = gf.filter_dyd(dyd)
 
     # Create model_week_sales
-    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
+    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, channel)
     model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_sales] took ')
     start = time.time()
