@@ -39,7 +39,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
     return offline_sales
 
 
-def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
+def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel):
     """
     Get online sales from delivery data
     Filters:
@@ -59,6 +59,9 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
         .join(F.broadcast(but),
               on=dyd['but_idr_business_unit_stock_origin'] == but['but_idr_business_unit'],
               how='inner') \
+        .join(F.broadcast(channel),
+              on=dyd['the_transaction_id'] == channel['channel_key'],
+              how='left') \
         .join(F.broadcast(gdc),
               on=but['but_code_international'] == F.concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']),
               how='inner') \
@@ -77,12 +80,12 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
                 dyd['f_qty_item'],
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
-                cex['exchange_rate'])\
-        .withColumn("channel", F.lit('online'))
+                cex['exchange_rate'],
+                channel['channel_name'].alias('channel'))
     return online_sales
 
 
-def union_sales(offline_sales, online_sales, current_week):
+def union_sales(offline_sales, online_sales, current_week, black_list):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
@@ -94,6 +97,7 @@ def union_sales(offline_sales, online_sales, current_week):
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
+        .filter(~ F.col('model_id').isin(black_list)) \
         .filter(F.col('sales_quantity') > 0) \
         .filter(F.col('average_price') > 0) \
         .filter(F.col('sum_turnover') > 0) \
@@ -102,14 +106,14 @@ def union_sales(offline_sales, online_sales, current_week):
     return model_week_sales
 
 
-def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
+def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, channel, current_week, black_list):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
 
     # Get online sales
-    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
+    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel)
 
     # Create model week sales
-    model_week_sales = union_sales(offline_sales, online_sales, current_week)
+    model_week_sales = union_sales(offline_sales, online_sales, current_week, black_list)
 
     return model_week_sales
