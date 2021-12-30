@@ -46,7 +46,7 @@ class Configuration(object):
         self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
         self.white_list = self.get_white_list_id()
-        self.black_list = self.get_black_list_id()
+        # self.black_list = self.get_black_list_id()
 
     def pretty_print_dict(self):
         """
@@ -141,11 +141,11 @@ class Configuration(object):
         """
         return self._yaml_list['white_list']
 
-    def get_black_list_id(self):
-        """
-        Get list of model_id which model need to delete (about taiwan's pur_org)
-
-        Returns:
-            object: a list of model_id in blacklist
-        """
-        return self._yaml_list['black_list']
+    # def get_black_list_id(self):
+    #     """
+    #     Get list of model_id which model need to delete (about taiwan's pur_org)
+    #
+    #     Returns:
+    #         object: a list of model_id in blacklist
+    #     """
+    #     return self._yaml_list['black_list']
