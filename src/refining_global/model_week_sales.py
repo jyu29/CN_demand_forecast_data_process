@@ -108,13 +108,13 @@ def union_sales(offline_sales, online_sales, current_week):
     return model_week_sales
 
 
-def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,channel):
+def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, channel):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
-    online_sales.show()
+    offline_sales.show()
 
     # Get online sales
-    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb,channel)
+    online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel)
     online_sales.show()
 
     # Create model week sales
