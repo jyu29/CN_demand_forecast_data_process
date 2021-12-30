@@ -51,7 +51,6 @@ if __name__ == '__main__':
     zep = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'ecc_zaa_extplan/')
 
     # Apply global filters
-    # dyd = gf.filter_dyd(dyd)
     cex = gf.filter_current_exchange(cex)
     sku = gf.filter_sku(sku)
     sku_h = gf.filter_sku(sku_h)
@@ -59,7 +58,8 @@ if __name__ == '__main__':
     week = gf.filter_week(week, params.first_historical_week, current_week)
     sapb = gf.filter_sapb(sapb, params.list_purch_org)
     gdw = gf.filter_gdw(gdw)
-    # channel = gf.filter_channel(but)
+    channel = gf.filter_channel(but)
+    dyd = gf.filter_dyd(dyd)
 
     # Create model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     print('[model_week_tree] length:', model_week_tree_count)
 
     # Create model_week_mrp
-    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
+    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff,channel)
     model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_mrp] took ')
     start = time.time()
