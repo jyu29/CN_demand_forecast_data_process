@@ -87,7 +87,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, black_li
     return online_sales
 
 
-def union_sales(offline_sales, online_sales, current_week, black_list):
+def union_sales(offline_sales, online_sales, current_week):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
