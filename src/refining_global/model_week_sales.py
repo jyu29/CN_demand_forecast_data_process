@@ -119,6 +119,5 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
 
     # Create model week sales
     model_week_sales = union_sales(offline_sales, online_sales, current_week)
-    model_week_sales.show()
 
     return model_week_sales
