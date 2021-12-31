@@ -11,8 +11,8 @@ echo "Technical configuration file: $technical_conf_file"
 sudo pip3 install -r requirements.txt
 zip -x ./src/refining_specific* -x ./src/refining_global* -r tools.zip ./src/
 
-echo "Wait 60s until the initialization of metastore is done"
-sleep 60s
+#echo "Wait 60s until the initialization of metastore is done"
+#sleep 60s
 
 echo "Spark submit:"
 spark-submit \
