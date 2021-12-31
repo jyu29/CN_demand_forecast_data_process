@@ -29,7 +29,7 @@ class Configuration(object):
         else:
             raise Exception("Could not load the functional YAML configuration file '{}'".format(file_path))
 
-        id_list = './config/quicktest_whitelist.yml'
+        id_list = './config/special_list.yml'
         if os.path.exists(id_list):
             with open(id_list) as i:
                 self._yaml_list = yaml.safe_load(i)
@@ -138,4 +138,4 @@ class Configuration(object):
         Returns:
             object: a list of model_id in whitelist
         """
-        return self._yaml_list['model_id']
+        return self._yaml_list['white_list']
