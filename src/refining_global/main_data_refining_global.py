@@ -51,14 +51,14 @@ if __name__ == '__main__':
     zep = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'ecc_zaa_extplan/')
 
     # Apply global filters
-    # cex = gf.filter_current_exchange(cex)
+    cex = gf.filter_current_exchange(cex)
     sku = gf.filter_sku(sku)
     sku_h = gf.filter_sku(sku_h)
     day = gf.filter_day(day, params.first_historical_week, current_week)
     week = gf.filter_week(week, params.first_historical_week, current_week)
     sapb = gf.filter_sapb(sapb, params.list_purch_org)
     gdw = gf.filter_gdw(gdw)
-    channel = gf.filter_channel(but)
+    # channel = gf.filter_channel(but)
     # dyd = gf.filter_dyd(dyd)
 
     # Create model_week_sales
