@@ -60,8 +60,8 @@ if __name__ == '__main__':
     week = gf.filter_week(week, params.first_historical_week, current_week)
     sapb = gf.filter_sapb(sapb, params.list_purch_org)
     gdw = gf.filter_gdw(gdw)
-    dyd = filter_dyd(dyd)
-    channel = filter_channel(but)
+    dyd = gf.filter_dyd(dyd)
+    channel = gf.filter_channel(but)
 
     # Create model_week_sales
     model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.black_list, channel)
