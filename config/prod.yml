@@ -20,4 +20,4 @@ technical_parameters:
     spark.sql.legacy.parquet.int96RebaseModeInRead: "CORRECTED"
     spark.sql.legacy.parquet.datetimeRebaseModeInWrite: "CORRECTED"
     spark.sql.legacy.parquet.datetimeRebaseModeInRead: "CORRECTED"
-    spark.sql.legacy.timeParserPolicy": "LEGACY"
+    spark.sql.legacy.timeParserPolicy: "LEGACY"
