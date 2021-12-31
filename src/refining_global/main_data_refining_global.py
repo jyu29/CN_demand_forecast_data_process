@@ -21,7 +21,7 @@ if __name__ == '__main__':
     config_file = vars(args)['configfile']
     params = conf.Configuration(config_file)
     params.pretty_print_dict()
-    params.pretty_print_list()
+    # params.pretty_print_list()
 
     current_week = ut.get_current_week_id()
     print('Current week: {}'.format(current_week))
