@@ -34,6 +34,7 @@ if __name__ == '__main__':
     spark.sparkContext.setLogLevel('ERROR')
 
     # Load all needed clean data
+    print('Load data from clean bucket.')
     bucket_clean = params.bucket_clean
     path_clean_datalake = params.path_clean_datalake
     tdt = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'f_transaction_detail/')
@@ -51,6 +52,7 @@ if __name__ == '__main__':
     zep = ut.spark_read_parquet_s3(spark, bucket_clean, path_clean_datalake + 'ecc_zaa_extplan/')
 
     # Apply global filters
+    print('Make global filter.')
     cex = gf.filter_current_exchange(cex)
     sku = gf.filter_sku(sku)
     sku_h = gf.filter_sku(sku_h)
@@ -58,9 +60,11 @@ if __name__ == '__main__':
     week = gf.filter_week(week, params.first_historical_week, current_week)
     sapb = gf.filter_sapb(sapb, params.list_purch_org)
     gdw = gf.filter_gdw(gdw)
+    dyd = filter_dyd(dyd)
+    channel = filter_channel(but)
 
     # Create model_week_sales
-    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.black_list)
+    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.black_list, channel)
     model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_sales] took ')
     start = time.time()
@@ -95,19 +99,19 @@ if __name__ == '__main__':
     # print('[model_week_tree] (new) length:', model_week_tree.count())
     # print('[model_week_mrp] (new) length:', model_week_mrp.count())
     #
-    # # Split model_week_sales into 3 tables
-    # print('====> Splitting sales, price & turnover into 3 tables...')
-    # model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'average_price'])
-    # model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sum_turnover'])
-    # model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sales_quantity'])
-    #
-    # # Data checks & assertions
-    # check.check_d_sku(sku)
-    # check.check_d_business_unit(but)
-    # check.check_sales_stability(model_week_sales, current_week)
-    # check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date', 'channel'])
-    # check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date', 'channel'])
-    # check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date', 'channel'])
+    # Split model_week_sales into 3 tables
+    print('====> Splitting sales, price & turnover into 3 tables...')
+    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'average_price'])
+    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sum_turnover'])
+    model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sales_quantity'])
+
+    # Data checks & assertions
+    check.check_d_sku(sku)
+    check.check_d_business_unit(but)
+    check.check_sales_stability(model_week_sales, current_week)
+    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date', 'channel'])
+    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date', 'channel'])
+    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date', 'channel'])
     # check.check_duplicate_by_keys(model_week_tree, ['model_id', 'week_id'])
     # check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
     #

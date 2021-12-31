@@ -84,3 +84,25 @@ def filter_gdw(gdw):
         .filter(gdw['sdw_sap_source'] == 'PRT') \
         .filter(gdw['sdw_material_mrp'] != '    ')
     return gdw
+
+
+def filter_channel(but):
+    """
+    """
+    channel = but.select(F.concat(but['but_num_typ_but'].cast('string'),
+                                  but['but_num_business_unit'].cast('string'),
+                                  but['but_sub_num_but'].cast('string')).alias('channel_key'),
+                                  but['but_name_business_unit'].alias('channel_name')).distinct()
+    return channel
+
+
+def filter_dyd(dyd):
+    """
+    """
+    dyd = dyd \
+        .withColumn('channel_id_1', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 1)) \
+        .withColumn('channel_id_2', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 2)) \
+        .withColumn('channel_id_3', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 3))
+    dyd = dyd.withColumn('the_transaction_id', F.concat(dyd.channel_id_1, dyd.channel_id_2, dyd.channel_id_3))
+
+    return dyd
