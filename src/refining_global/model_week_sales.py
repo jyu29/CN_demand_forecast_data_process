@@ -34,9 +34,8 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb):
                 tdt['f_qty_item'],
                 tdt['f_pri_regular_sales_unit'],
                 tdt['f_to_tax_in'],
-                cex['exchange_rate'])\
-        .withColumn("channel", F.lit('offline'))\
-        .cache()
+                cex['exchange_rate']) \
+        .withColumn("channel", F.lit('offline'))
     return offline_sales
 
 
@@ -79,8 +78,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb):
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
                 cex['exchange_rate'])\
-        .withColumn("channel", F.lit('offline')) \
-        .cache()
+        .withColumn("channel", F.lit('online'))
     return online_sales
 
 
@@ -100,19 +98,16 @@ def union_sales(offline_sales, online_sales, current_week):
         .filter(F.col('average_price') > 0) \
         .filter(F.col('sum_turnover') > 0) \
         .filter(F.col('week_id') < current_week) \
-        .orderBy('model_id', 'week_id') \
-        .cache()
+        .orderBy('model_id', 'week_id')
     return model_week_sales
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb)
-    offline_sales.show()
 
     # Get online sales
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb)
-    online_sales.show()
 
     # Create model week sales
     model_week_sales = union_sales(offline_sales, online_sales, current_week)

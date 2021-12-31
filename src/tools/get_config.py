@@ -29,7 +29,7 @@ class Configuration(object):
         else:
             raise Exception("Could not load the functional YAML configuration file '{}'".format(file_path))
 
-        id_list = './config/special_list.yml'
+        id_list = './config/quicktest_whitelist.yml'
         if os.path.exists(id_list):
             with open(id_list) as i:
                 self._yaml_list = yaml.safe_load(i)
@@ -46,7 +46,6 @@ class Configuration(object):
         self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
         self.white_list = self.get_white_list_id()
-        # self.black_list = self.get_black_list_id()
 
     def pretty_print_dict(self):
         """
@@ -139,13 +138,4 @@ class Configuration(object):
         Returns:
             object: a list of model_id in whitelist
         """
-        return self._yaml_list['white_list']
-
-    # def get_black_list_id(self):
-    #     """
-    #     Get list of model_id which model need to delete (about taiwan's pur_org)
-    #
-    #     Returns:
-    #         object: a list of model_id in blacklist
-    #     """
-    #     return self._yaml_list['black_list']
+        return self._yaml_list['model_id']
