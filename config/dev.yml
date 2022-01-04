@@ -21,4 +21,4 @@ technical_parameters:
     spark.sql.legacy.parquet.datetimeRebaseModeInWrite: "CORRECTED"
     spark.sql.legacy.parquet.datetimeRebaseModeInRead: "CORRECTED"
     spark.sql.legacy.timeParserPolicy: "LEGACY"
-    spark.driver.maxResultSize: 10g
+    spark.driver.maxResultSize: 8g

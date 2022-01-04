@@ -59,9 +59,6 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel):
         .join(F.broadcast(but),
               on=dyd['but_idr_business_unit_stock_origin'] == but['but_idr_business_unit'],
               how='inner') \
-        .join(F.broadcast(channel),
-              on=dyd['the_transaction_id'] == channel['channel_key'],
-              how='left') \
         .join(F.broadcast(gdc),
               on=but['but_code_international'] == F.concat(gdc['ean_1'], gdc['ean_2'], gdc['ean_3']),
               how='inner') \
@@ -80,9 +77,8 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel):
                 dyd['f_qty_item'],
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
-                cex['exchange_rate'],
-                channel['channel_name'].alias('channel')) \
-            .cache()
+                cex['exchange_rate']) \
+        .withColumn("channel", F.lit('online'))
     return online_sales
 
 
