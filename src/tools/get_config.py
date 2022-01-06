@@ -46,7 +46,7 @@ class Configuration(object):
         self.list_purch_org = self.get_list_purch_org()
         self.list_conf = self.get_spark_conf()
         self.white_list = self.get_white_list_id()
-        self.taiwan_self_sale = self.get_taiwan_self_sale_list_id()
+        self.taiwan_list = self.get_taiwan_self_sale_list_id()
 
     def pretty_print_dict(self):
         """
