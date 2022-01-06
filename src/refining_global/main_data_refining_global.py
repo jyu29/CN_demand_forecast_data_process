@@ -64,7 +64,7 @@ if __name__ == '__main__':
     channel = gf.filter_channel(but)
 
     # Create model_week_sales
-    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.black_list, channel)
+    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.taiwan_self_sale, channel)
     model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_sales] took ')
     start = time.time()
