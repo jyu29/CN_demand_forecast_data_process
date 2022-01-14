@@ -23,7 +23,7 @@ pipeline {
                     string(name: "masterNodeDiskSize", value: "256"),
                     string(name: "nbrCoreOnDemand", value: "6"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r6g.16xlarge"),
+                    string(name: "instanceTypeCore", value: "r6g.12xlarge"),
                     string(name: "coreNodeDiskSize", value: "256"),
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "r5.2xlarge"),
