@@ -61,7 +61,7 @@ forecast-data-exposition-quicktest
    ```Pipeline EMR-CREATE-DEV-CLUSTER-V2```
 
    2. use the parameters on the bottom to fill in the form and build it.
-   <img src="./readme_picture/emr/set_emr_parameter.png" width = "400" align=center/>
+   <img src="./readme_pic/emr/set_emr_parameter.png" width = "400" align=center/>
    <br>
    
    ```
@@ -85,7 +85,7 @@ forecast-data-exposition-quicktest
    4. check pipeline console to see the log, waiting it finish.
    
       1. choose the lighting pipeline task on the web left.
-      <img src="./readme_picture//emr/choose_task.png" width = "400" align=center/>
+      <img src="./readme_pic//emr/choose_task.png" width = "400" align=center/>
       <br>
 
       2. you will see the pipeline result like this code paragraph, and if result succeeded, copy your EMR ip.
@@ -117,7 +117,7 @@ forecast-data-exposition-quicktest
 
    2. check you have required file in s3:
       1. data source 
-      <img src="./readme_pic/table_source" width = "400" align=center/>
+      <img src="./readme_pic/table_source.png" width = "400" align=center/>
       <br>    
       
       > Note : you need to confirm there are file which you need in this path.
@@ -129,7 +129,7 @@ forecast-data-exposition-quicktest
    <br>
 
    2. fill the these required parameters into form. 
-   <img src="./readme_picture/exposition/set_exposition_paras.png" width = "400" align=center/>
+   <img src="./readme_pic/exposition/set_exposition_paras.png" width = "400" align=center/>
    <br>
    
    3. Jenkins parameters(like picture):
@@ -145,7 +145,7 @@ forecast-data-exposition-quicktest
    3. Confim parameters in config file and push it
 
       1. choose the file depend on your environment, we use `dev.yml` to be exanple.
-      <img src="./readme_picture/exposition/config.png" width = "400" align=center/>
+      <img src="./readme_pic/config.png" width = "400" align=center/>
       <br>
       
       2. confirm your bucket, path and name are all right.
@@ -170,11 +170,11 @@ forecast-data-exposition-quicktest
       
       5. Push the code you just adjusted to specific branch of github 
          1. commit your config file just rewrite
-         <img src="./readme_picture/exposition/git_commit.png" width = "400" align=center/>
+         <img src="./readme_pic/git_commit.png" width = "400" align=center/>
          <br>
 
-         2. commit your config file just rewrite
-         <img src="./readme_picture/exposition/git_push.png" width = "400" align=center/>
+         2. push your config file just rewrite
+         <img src="./readme_pic/git_push.png" width = "400" align=center/>
          <br>
 
       ### Note : Now! you can click the bottom "bulid" on the Jenkins web. 
@@ -182,7 +182,7 @@ forecast-data-exposition-quicktest
    4. How to check the console log of task on Jenkins.
 
       1. Click the lighting task on the left of web.
-      <img src="./readme_picture/emr/choose_task.png" width = "400" align=center/>
+      <img src="./readme_pic/emr/choose_task.png" width = "400" align=center/>
       <br>
       
       2. You will see the log like this, if you pipeline run normal.
@@ -222,7 +222,7 @@ forecast-data-exposition-quicktest
    
 ### 2.4. Confirm_result_data_path_and_name
    1. your result file will show in this folder in s3, there should be 5 files. 
-   <img src="./readme_picture/table_result.png" width = "400" align=center/>
+   <img src="./readme_pic/table_result.png" width = "400" align=center/>
    <br>
    
    >Note : To this step, you already finish your exposition pipeline.
@@ -233,13 +233,13 @@ forecast-data-exposition-quicktest
    1. choose EMR build pipeline on Jenkins : `EMR-DELETE-DEV-CLUSTER`
    
    2. build EMR with parameter.
-   <img src="./readme_picture/emr/build_emr_close.png" width = "400" align=center/>
+   <img src="./readme_pic/emr/build_emr_close.png" width = "400" align=center/>
    <br>
    
    3. check pipeline console to see the log, waiting it finish.
    
       1. choose the lighting pipeline task on the web left. 
-      <img src="./readme_picture/emr/choose_task.png" width = "400" align=center/>
+      <img src="./readme_pic/emr/choose_task.png" width = "400" align=center/>
       <br>
       
       2. you will see the pipeline result on web bottom, if result is success, it means you close successfully.
