@@ -36,6 +36,7 @@ def get_sku_mrp_apo(gdw, sapb, sku):
 def get_model_week_mrp_apo(gdw, sapb, sku, day, whitelist):
     """
     Calculate model week MRP from APO
+    add the filter of whitelist.
 
     Args:
         gdw:
@@ -79,8 +80,7 @@ def fill_mrp_apo_before_201939(model_week_mrp_apo, first_backtesting_cutoff):
 def get_mrp_status_pf(asms):
     """
     Get mrp status data
-        - filter on cz = 2002
-
+        - filter on china, taiwan, japan, hongon, korean in ('2005','2008','2024','2036','2040')
     Args:
         asms:
     """

@@ -88,6 +88,7 @@ def filter_gdw(gdw):
 
 def filter_channel(but):
     """
+    Create a table which include the message of online channel.
     """
     channel = but.select(F.concat(but['but_num_typ_but'].cast('string'),
                                   but['but_num_business_unit'].cast('string'),
@@ -98,6 +99,7 @@ def filter_channel(but):
 
 def filter_dyd(dyd):
     """
+    Redefine the column 'the_transaction_id' in dyd in order to make it be a join key use in joining channel.
     """
     dyd = dyd \
         .withColumn('channel_id_1', F.regexp_extract('the_transaction_id', r'(\d+)-(\d+)-(\d+)-(\d+)-(\d+)-(\d+)', 1)) \

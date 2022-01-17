@@ -3,10 +3,13 @@ import pyspark.sql.functions as F
 
 def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
     """
-    Get Offline sales from transactions data
-    Filters:
-      but['but_num_typ_but'] == 7 physical store
-      tdt['the_to_type']) == 'offline'
+    1.Get Offline sales from transactions data
+        but['but_num_typ_but'] == 7 physical store
+        tdt['the_to_type']) == 'offline'
+    2.Delete the product that taiwan by from other way:
+        ~((sku['mdl_num_model_r3'].isin(taiwan)) & (sapb['purch_org'] == 'Z024'))
+    3.Add a column for channel:
+        .withColumn("channel", F.lit('offline'))
     """
     offline_sales = tdt \
         .join(F.broadcast(day),
@@ -42,10 +45,15 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
 
 def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan):
     """
-    Get online sales from delivery data
-    Filters:
-      dyd['tdt_type_detail'] == 'sale'
-      dyd['the_to_type'] == 'online'
+    1.Get online sales from delivery data:
+        .dyd['tdt_type_detail'] == 'sale'
+        .dyd['the_to_type'] == 'online'
+    2. Get data from non-canceled:
+        . dyd['the_transaction_status'] != 'canceled'
+    3.Delete the product that taiwan by from other way:
+        ~((sku['mdl_num_model_r3'].isin(taiwan)) & (sapb['purch_org'] == 'Z024'))
+    4.Add a column for channel:
+        .withColumn("channel", F.lit('offline'))
     """
     online_sales = dyd \
         .join(F.broadcast(day),
