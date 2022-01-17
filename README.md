@@ -186,25 +186,29 @@ forecast-data-exposition-quicktest
       <br>
       
       2. You will see the log like this, if you pipeline run normal.
-         1. exposition_handler
-         ```
-         ####################################################################################
-         ########## RECONSTRUCTED SALES EXPOSITION FOR CUTOFF 202146 AND ALGO deepar ##########
-         ####################################################################################
-         Formatting reconstructed sales dataframe...
-         Building outputs for channel 'sac'...
-           Mapping forecast dataframe...
-             Filtered reconstructed sales horizon : '201947'
-         Writing outputs for channel 'sac...'
-         ###########################################################################################
-         ############################## DEMAND FORECAST GLOBAL EXPOSITION ###########################
-         #############################################################################################
-         Building outputs for channel 'sac'...
-         Writing outputs for channel 'sac...'
-         ```
+     
+      ```
+      Load data from clean bucket.
+      Make global filter.
+      ====> counting(cache) [model_week_sales] took 
+      10 minute(s) 19 second(s)
+      [model_week_sales] length: 5181802
+      ====> counting(cache) [model_week_tree] took 
+      1 minute(s) 19 second(s)
+      [model_week_tree] length: 62113100
+      ====> Model MRP for APO...
+      ====> counting(cache) [model_week_mrp_apo] took 
+      0 minute(s) 25 second(s)
+      [model_week_mrp] length: 9663480
+      .......
+
+      End of Data Refining Global
+      ```
          
       3. when you see the **success** on the log, you are finish pipeline. 
       ```
+      + x=0
+      + exit 0
       [Pipeline] }
       [Pipeline] // wrap
       [Pipeline] }
@@ -212,11 +216,8 @@ forecast-data-exposition-quicktest
       [Pipeline] }
       [Pipeline] // withEnv
       [Pipeline] }
-      [Pipeline] // withEnv
-      [Pipeline] }
       [Pipeline] // node
       [Pipeline] End of Pipeline
-      [withMaven] WARNING abort infinite build trigger loop. Please consider opening a Jira issue: Infinite loop of job triggers 
       Finished: SUCCESS
       ```
    
@@ -249,45 +250,9 @@ forecast-data-exposition-quicktest
 
 ## 3. Commond_Error
 
-> you may need to use Sagemaker to help you debug, the debug file already set in my account. 
+1. spark config start lag, or it can't get enough resource to run the pipeline.
 
-1. `Exposition_handler.py` can't find your data source path, or it got not entire path.
-   
-   1. you will get the error like these message on the bottom, they are all same kand of error.
-   ```
-   # first error message
-   Traceback (most recent call last):
-      ......
-      KeyError: 'filename'
-   Traceback (most recent call last):
-      ......
-   ValueError: Wrong number of items passed 2, placement implies 1
-   
-   # second error message   
-   file name: predict-2021-12-01-12-42-18-742 not in folder, use next file name to load.
-   file name: predict-2021-12-01-13-48-08-809 not in folder, use next file name to load.
-   Traceback (most recent call last):
-      .....
-   OSError: Passed non-file path: fcst-workspace/None
-   ValueError: No objects to concatenate
-   
-   # third errro meassage  
-   Formatting forecast dataframe...
-   Traceback (most recent call last):
-      .......
-   ValueError: Length mismatch: Expected 6454 rows, received array of length 43920
-   ```
-
-   2. debug file path : {HTSAI/Sagemaker/exposition/expo_debug.ipyn}
-
-   3. check if you got both path of input file and output file when you start the exposition_handler.
-
-   4. If not entire input or output path, you may choose error week_id when you build the pipeline on jenkins or choose error model output name in your config file.<br>
-
-
-2. spark congif start lag, or it can't get enough resource to run the pipeline.
-
-   1. you will get the error like picture, it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.
+   1. you will get the error like this, it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.
    ```
    # first error message (Actually it is not abosutly error, you just need to  wait a long time.)
    22/01/06 07:44:55 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
@@ -299,10 +264,27 @@ forecast-data-exposition-quicktest
    21/12/31 03:29:54 ERROR FileFormatWriter: Aborting job 33e3847a-8b9a-4f5a.......
    java.lang.IllegaStateExceptio:SparkContext has been shutdown.....
 
-   ```
-   
+   ```   
    2. when you stuck here, just reboost you EMR pipeline, it should be run normally. <br>
 
+2. spark config's memory parameter too small to finish task
+   
+   1. you will get the error like these message on the bottom.
+   ```
+   # There is insufficient memory for the Java Runtime Environment to continue.
+   # Native memory allocation (mmap) failed to map 935329792 bytesOpenJDK 64-Bit Server VM warning: 
+   INFO: os::commit_memory(0x00000005bea00000, 935329792, 0) failed; error='Cannot allocate memory' (errno=12)
+    for committing reserved memory.
+   # An error report file with more information is saved as:
+   # /home/hadoop/forecast-data-refining-demand-cn-dev/hs_err_pid22226.log
+   ```
+   
+   2. that has a simple way to fix this problem: add the cluster's configuration on AWS.
+   <img src="./readme_pic/aws_config.png" width = "400" align=center/>
+   <br>
+   
+   you can try to add instanceTypeMaster and instanceTypeCore's level or number
+   
 
 ## 4. Code_Adaption
 - add parameter to choose specific file name for data source 
