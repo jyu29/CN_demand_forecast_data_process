@@ -12,6 +12,7 @@
 * [4. Code Adaption](#4-Code_Adaption)
 
 
+
 ## 1. Code_Architecture 
 
 ```
@@ -48,21 +49,14 @@ forecast-data-exposition-quicktest
      
 ```
 
-## 2. Pipeline_Launch_Step
+## 2. How_to_run
 
-#### Note : Before we start, we should know this pipeline have two stages when you launch it:
-
-> Note : This program depends on Jenkins's pipeline, so we launch it on Jenkins, not on local env.
-<br>
+>data exposition pipeline build upon jenkins.
 
 ### 2.1. Bulid_EMR_and_get_cluster_IP
 
-   1. Choose EMR build pipeline on Jenkins.
-   ```Pipeline EMR-CREATE-DEV-CLUSTER-V2```
-
-   2. use the parameters on the bottom to fill in the form and build it.
-   <img src="./readme_pic/emr/set_emr_parameter.png" width = "400" align=center/>
-   <br>
+   >Select EMR pipeline on Jenkins.```Pipeline EMR-CREATE-DEV-CLUSTER-V2```,use the parameters to build:
+ 
    
    ```
    parameters: [
@@ -81,15 +75,12 @@ forecast-data-exposition-quicktest
                     string(name: "hdfsReplicationFactor", value: "3")
                     ]
    ```
-   
-   4. check pipeline console to see the log, waiting it finish.
-   
-      1. choose the lighting pipeline task on the web left.
-      <img src="./readme_pic//emr/choose_task.png" width = "400" align=center/>
-      <br>
 
-      2. you will see the pipeline result like this code paragraph, and if result succeeded, copy your EMR ip.
-      ```
+   
+   > check pipeline console to see the log. 
+   
+   
+   ```
       Your EMR dev-cluster-emr is built !
       Your available URI are :
       http://IBENKH18-ganglia.forecast-emr.subsidia.org/ganglia/
@@ -105,110 +96,101 @@ forecast-data-exposition-quicktest
       [Pipeline] sh
       + echo CLUSTER_IP=10.226.xxx.xxx
       CLUSTER_IP=10.226.xxx.xxx
-      ```
+   ```
+      
+   > copy your EMR ip.   
+   
+   
+   ```
+   CLUSTER_IP=10.226.xxx.xxx
+   ```
       
 
-### 2.2. Confirm_data_source_path_and_name
-   1. confirm you have access to S3.
+### 2.2. Confirm_input_s3_path_and_name
 
-      You'll have to use both saml2aws & the open-source tool [Cyberduck](https://cyberduck.io).
-
-      Here is the link for the configuration of [saml2aws](https://wiki.decathlon.net/display/DATA/1.2.0.1.2+-+Saml2aws)
-
-   2. check you have required file in s3:
-      1. data source 
-      <img src="./readme_pic/table_source.png" width = "400" align=center/>
-      <br>    
+   > confirm you already have access to S3. You'll have to use both saml2aws & the open-source tool. [Cyberduck](https://cyberduck.io).  
+   Here is the link for the configuration of [saml2aws](https://wiki.decathlon.net/display/DATA/1.2.0.1.2+-+Saml2aws). check you have required file in s3:
+   
+   
+  
+  **data source:**
+    
+  <img src="./readme_pic/table_source.png" width = "400" align=center/>
+  <br>    
       
-      > Note : you need to confirm there are file which you need in this path.
+
+### 2.3. Build_refining_pipeline_on_Jenkins
+
+   > go to Jenkins, choose the specific pipeline: `forecast-data-refining-cn-dev-quicktest`.
+   Before build jenkins pipeline,you should confirm the parameters in config file.
    
-
-### 2.3. Build_exposition_pipeline_on_Jenkins
-
-   1. go to Jenkins, choose the specific pipeline: `forecast-data-refining-demand-cn-dev`  
-   <br>
-
-   2. fill the these required parameters into form. 
-   <img src="./readme_pic/exposition/set_exposition_paras.png" width = "400" align=center/>
-   <br>
-   
-   3. Jenkins parameters(like picture):
+ 
    ```
    1. run_env : dev | prod          (choose an env to run pipieline, it will decide which config file to be used.) 
    2. branch_name : forecast-data-exposition-cn-dev-quicktest (which branch you want to use tp run pipeline.)  
    3. master_ip : 10.226.xxx.xxx    (The EMR ip you get from above.)
    ```
-
-   >Note: Don't click the build now! you should confirm the parameters in config file is already Okay. 
+  
       
+   > Confim parameters in config file and push it. choose the file depend on your environment.
    
-   3. Confim parameters in config file and push it
-
-      1. choose the file depend on your environment, we use `dev.yml` to be exanple.
-      <img src="./readme_pic/config.png" width = "400" align=center/>
-      <br>
-      
-      2. confirm your bucket, path and name are all right.
-      ```
-      buckets:
-         clean: fcst-clean-prod
-         refined: fcst-workspace
-      paths:
-         clean_datalake: datalake/
-         refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
-      ```
-      
-      3. confirm the code in `purch_org` are you want. 
-      ```
-      list_purch_org:
-         - Z015
-         - Z024
-         - Z067
-         - Z069
-         - Z108
-      ```
-      
-      5. Push the code you just adjusted to specific branch of github 
-         1. commit your config file just rewrite
-         <img src="./readme_pic/git_commit.png" width = "400" align=center/>
-         <br>
-
-         2. push your config file just rewrite
-         <img src="./readme_pic/git_push.png" width = "400" align=center/>
-         <br>
-
-      ### Note : Now! you can click the bottom "bulid" on the Jenkins web. 
-
-   4. How to check the console log of task on Jenkins.
-
-      1. Click the lighting task on the left of web.
-      <img src="./readme_pic/emr/choose_task.png" width = "400" align=center/>
-      <br>
-      
-      2. You will see the log like this, if you pipeline run normal.
-     
-      ```
-      Load data from clean bucket.
-      Make global filter.
-      ====> counting(cache) [model_week_sales] took 
-      10 minute(s) 19 second(s)
-      [model_week_sales] length: 5181802
-      ====> counting(cache) [model_week_tree] took 
-      1 minute(s) 19 second(s)
-      [model_week_tree] length: 62113100
-      ====> Model MRP for APO...
-      ====> counting(cache) [model_week_mrp_apo] took 
-      0 minute(s) 25 second(s)
-      [model_week_mrp] length: 9663480
-      .......
-
-      End of Data Refining Global
-      ```
+   > confirm your bucket, path and name are all right. with the config file name you read.(ex.`dev.yml`)
+   
+   ```
+   buckets:
+      clean: fcst-clean-prod
+      refined: fcst-workspace
+   paths:
+      clean_datalake: datalake/
+      refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
+   ```
          
-      3. when you see the **success** on the log, you are finish pipeline. 
-      ```
-      + x=0
-      + exit 0
+   > confirm the code in `purch_org` are you want. 
+   
+   ```
+   list_purch_org:
+      - Z015
+      - Z024
+      - Z067
+      - Z069
+      - Z108
+   ```
+      
+   > **Push and commit** the code from your IDE to the github branch name your entered .Then click the bottom **"bulid"** on the Jenkins 
+
+   
+  <img src="./readme_pic/git_commit.png" width = "400" align=center/>
+  <br>
+
+
+      
+   >See the jenkins console logs
+
+
+
+   #### exposition_handler
+   
+   ```
+         Load data from clean bucket.
+         Make global filter.
+         ====> counting(cache) [model_week_sales] took 
+         10 minute(s) 19 second(s)
+         [model_week_sales] length: 5181802
+         ====> counting(cache) [model_week_tree] took 
+         1 minute(s) 19 second(s)
+         [model_week_tree] length: 62113100
+         ====> Model MRP for APO...
+         ====> counting(cache) [model_week_mrp_apo] took 
+         0 minute(s) 25 second(s)
+         [model_week_mrp] length: 9663480
+         .......
+
+         End of Data Refining Global
+   ```
+         
+   > when you see the **success** on the log, you are finih pipeline. 
+   
+   ```
       [Pipeline] }
       [Pipeline] // wrap
       [Pipeline] }
@@ -216,43 +198,37 @@ forecast-data-exposition-quicktest
       [Pipeline] }
       [Pipeline] // withEnv
       [Pipeline] }
+      [Pipeline] // withEnv
+      [Pipeline] }
       [Pipeline] // node
       [Pipeline] End of Pipeline
+      [withMaven] WARNING abort infinite build trigger loop. Please consider opening a Jira issue: Infinite loop of job triggers 
       Finished: SUCCESS
-      ```
+   ```
+      
+
+### 2.4. Confirm_output_s3_path_and_file_name
    
-### 2.4. Confirm_result_data_path_and_name
-   1. your result file will show in this folder in s3, there should be 5 files. 
+   
+   > your result file will show in this folder in s3, there should be 5 files. 
+
+
    <img src="./readme_pic/table_result.png" width = "400" align=center/>
    <br>
-   
-   >Note : To this step, you already finish your exposition pipeline.
 
 
-## 2.5. Close_the_EMR
 
-   1. choose EMR build pipeline on Jenkins : `EMR-DELETE-DEV-CLUSTER`
-   
-   2. build EMR with parameter.
-   <img src="./readme_pic/emr/build_emr_close.png" width = "400" align=center/>
-   <br>
-   
-   3. check pipeline console to see the log, waiting it finish.
-   
-      1. choose the lighting pipeline task on the web left. 
-      <img src="./readme_pic/emr/choose_task.png" width = "400" align=center/>
-      <br>
-      
-      2. you will see the pipeline result on web bottom, if result is success, it means you close successfully.
-      
-      ### when you close the EMR, its pipeline process can be quick.
+## 2.5. Close_EMR
+
+   > choose EMR build pipeline on Jenkins : `EMR-DELETE-DEV-CLUSTER`.  build EMR with parameter.check pipeline console to see the log, waiting it finish.
+
+           
 
 
-## 3. Commond_Error
+## 3. Common_error
 
-1. spark config start lag, or it can't get enough resource to run the pipeline.
+#### error 1:  
 
-   1. you will get the error like this, it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.
    ```
    # first error message (Actually it is not abosutly error, you just need to  wait a long time.)
    22/01/06 07:44:55 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
@@ -264,12 +240,12 @@ forecast-data-exposition-quicktest
    21/12/31 03:29:54 ERROR FileFormatWriter: Aborting job 33e3847a-8b9a-4f5a.......
    java.lang.IllegaStateExceptio:SparkContext has been shutdown.....
 
-   ```   
-   2. when you stuck here, just reboost you EMR pipeline, it should be run normally. <br>
-
-2. spark config's memory parameter too small to finish task
+   ```
    
-   1. you will get the error like these message on the bottom.
+> you will get the error like picture, it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.when you stuck here, just reboost you EMR pipeline, it should be run normally. <
+
+
+#### error 2:    
    ```
    # There is insufficient memory for the Java Runtime Environment to continue.
    # Native memory allocation (mmap) failed to map 935329792 bytesOpenJDK 64-Bit Server VM warning: 
@@ -279,23 +255,25 @@ forecast-data-exposition-quicktest
    # /home/hadoop/forecast-data-refining-demand-cn-dev/hs_err_pid22226.log
    ```
    
-   2. that has a simple way to fix this problem: add the cluster's configuration on AWS.
+   > that has a simple way to fix this problem: add the cluster's configuration on AWS. you can try to add instanceTypeMaster and instanceTypeCore's level or number
    <img src="./readme_pic/aws_config.png" width = "600" align=center/>
    <br>
-   
-   you can try to add instanceTypeMaster and instanceTypeCore's level or number
-   
 
-## 4. Code_Adaption
-- adject:
+
+
+## 4. What_has_been_changed_from_master_branch
+
+
+#### adject
    - modify the purch_org code(in env.yml).
    - modify the table `d_business_unit` and `f_delivery_detail`'s join key to be `but_idr_business_unit_stock_origin` (in `model_week_sales.py` at line 61).
    - modify the canceled transaction record (in `model_week_sales.py` at line 74).
    - modify the `custom_zone`'s filter condition in table `apo_sku_mrp_status_h`(in `model_week_mrp.py` at line 88).
    - add the model_id's whitelist (in `model_week_mrp.py` at line 54).
-   - add the columns `channel` in table `model_week_sales`( in `model_week_sales.py` at line 39 and 83).
-- problem:
+   - add the columns `channel` in table `model_week_sales`( in `model_week_sales.py` at line 39 and 83).<br>
+
+#### problem
    - delete the data from product which taiwan's shop buy it from other place but not from china (in `model_week_sales.py` at line 75).
-   - add the china's self-currency in table `f_currency_exchange` and ensure sales table have the same currency code in it (in `generic_filter.py` at line 23).
+   - add the china's self-currency in table `f_currency_exchange` and ensure sales table have the same currency code in it (in `generic_filter.py` at line 23).<br>
 
 
