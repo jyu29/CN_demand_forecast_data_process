@@ -5,7 +5,7 @@
 * [2. Pipeline Launch Step](#2-Pipeline_Launch_Step)
     * [2.1. Bulid EMR and get cluster IP](#21-Bulid_EMR_and_get_cluster_IP)
     * [2.2. Confirm data source path and name](#22-Confirm_data_source_path_and_name)
-    * [2.3. Build refining pipeline on Jenkins](#23-Build_exposition_pipeline_on_Jenkins)
+    * [2.3. Build refining pipeline on Jenkins](#23-Build_refiningn_pipeline_on_Jenkins)
     * [2.4. Confirm result data path and name](#24-Confirm_result_data_path_and_name)
     * [2.5. Close the EMR](#25-Close_the_EMR)
 * [3. Commond Error](#3-Commond_Error)
@@ -51,7 +51,7 @@ forecast-data-exposition-quicktest
 
 ## 2. How_to_run
 
->data exposition pipeline build upon jenkins.
+>data refining pipeline build upon jenkins.
 
 ### 2.1. Bulid_EMR_and_get_cluster_IP
 
@@ -168,7 +168,7 @@ forecast-data-exposition-quicktest
 
 
 
-   #### exposition_handler
+   #### Refing 
    
    ```
          Load data from clean bucket.
