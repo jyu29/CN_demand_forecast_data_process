@@ -280,31 +280,22 @@ forecast-data-exposition-quicktest
    ```
    
    2. that has a simple way to fix this problem: add the cluster's configuration on AWS.
-   <img src="./readme_pic/aws_config.png" width = "400" align=center/>
+   <img src="./readme_pic/aws_config.png" width = "600" align=center/>
    <br>
    
    you can try to add instanceTypeMaster and instanceTypeCore's level or number
    
 
 ## 4. Code_Adaption
-- add parameter to choose specific file name for data source 
-  - `Exposition_handler.py` : add load_name and save_tag to decide which model's output you want to be the table source.
-  - `bi_create_table.py` : add load_path and save_path to decide BI table's path in s3.  <br>
-
-- modify the BI table
-  - due to chinese apo data from s3 can't be use, join the apo data from local-site. 
-  - delete the redundant result table `outlier_model` and `cutoff_numweek_fcststep` 
-  - add a new tmp table `realized_sales` to be a table store real_quantity.
-  - group by the  and model_id to sum the column `real_quantity` of online and offline in table `model_week_sales`. <br>
-
-- add filter to reduce the size of BI table 
-  - add `whitelist` and `blacklist` to filter what model_id you want in BI table.
-  - filter forecast value by `deepar` and `apo_gd` in BI table `quantity_forecast_sales` and `f_forecast_global_demand`. 
-  - filter realized value by `y` and `y_1` in BI table `quantity_forecast_sales`. 
-  - only keep `<= 10` `forecast_step` value in BI table. <br>
- 
-- make the process of creating BI table work automatically 
-  - rewrite the `bigquery sql script` to the pysparkSQL script. 
-  - compose the task of creating BI table and original jenkins pipeline <br>
+- adject:
+   - modify the purch_org code(in env.yml).
+   - modify the table `d_business_unit` and `f_delivery_detail`'s join key to be `but_idr_business_unit_stock_origin` (in `model_week_sales.py` at line 61).
+   - modify the canceled transaction record (in `model_week_sales.py` at line 74).
+   - modify the `custom_zone`'s filter condition in table `apo_sku_mrp_status_h`(in `model_week_mrp.py` at line 88).
+   - add the model_id's whitelist (in `model_week_mrp.py` at line 54).
+   - add the columns `channel` in table `model_week_sales`( in `model_week_sales.py` at line 39 and 83).
+- problem:
+   - delete the data from product which taiwan's shop buy it from other place but not from china (in `model_week_sales.py` at line 75).
+   - add the china's self-currency in table `f_currency_exchange` and ensure sales table have the same currency code in it (in `generic_filter.py` at line 23).
 
 
