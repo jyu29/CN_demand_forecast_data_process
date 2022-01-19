@@ -16,8 +16,13 @@
 In this repo, we will use data from ingestion repo to do a pre-process tsak in order to turn a lots of dataset into 5 table with specific structure. These new table will be the modeling's input data. you can see all input and ouput data in the below table. 
 
 Besides, if you want to know more about this pipeline's opreation, you can see these two picture:<br>
-Flow chart: https://github.com/dktunited/forecast-data-exposition/blob/forecast-data-exposition-cn-dev-quicktest/readme_picture/exposition/flow_chart_exposition.drawio.png <br>
-ER diagram: https://github.com/dktunited/forecast-data-exposition/blob/forecast-data-exposition-cn-dev-quicktest/readme_picture/exposition/bigquery.drawio.png <br>
+Flow chart:  https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9101_flow_chart_refining.drawio.png
+<br>
+
+ER diagram:  
+https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9102_model_week_sales.drawio.png <br>
+https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9103_model_week_mrp.drawio.png <br>
+https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9104_model_week_tree.drawio.png <br>
 
 
 ## 2. Input & Output Data
