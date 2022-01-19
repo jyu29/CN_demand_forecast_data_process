@@ -1,19 +1,19 @@
-# Forecast Data Exposition CN
+# Forecast Data Refining CN
 
 ## Context
-* [1. Code Architecture](#1-Code_Architecture)
-* [2. Pipeline Launch Step](#2-Pipeline_Launch_Step)
-    * [2.1. Bulid EMR and get cluster IP](#21-Bulid_EMR_and_get_cluster_IP)
-    * [2.2. Confirm data source path and name](#22-Confirm_data_source_path_and_name)
-    * [2.3. Build refining pipeline on Jenkins](#23-Build_refiningn_pipeline_on_Jenkins)
-    * [2.4. Confirm result data path and name](#24-Confirm_result_data_path_and_name)
-    * [2.5. Close the EMR](#25-Close_the_EMR)
-* [3. Commond Error](#3-Commond_Error)
-* [4. Code Adaption](#4-Code_Adaption)
+* [1. Description](#1-Description)
+* [2. Input & Output Data](#2-Input_&_Output_Data)
+* [3. Code Architecture](#3-Code_Architecture)
+* [4. How to run](#4-How_to_run)
+    * [4.1. Bulid EMR and get cluster IP](#41-Bulid_EMR_and_get_cluster_IP)
+    * [4.2. Build exposition pipeline on Jenkins](#42-Build_exposition_pipeline_on_Jenkins)
+    * [4.3. Close EMR](#43-Close_EMR)
+* [5. Common Error](#5-Common_error)
+* [6. What has been changed from master branch](#5-What_has_been_changed_from_master_branch)
 
 
 ## 1. Description
-In this repo, we will accept the output data from modeling stage, and turn the data into the appropriate structure for BI tool whcih we use. However, to get this result, we have two step here, one is `exposition_handeler`, processing all forecast data to same schema, two is `bI_table_create`, joining these data and produce the BI table we need. 
+In this repo, we will use data from ingestion repo to do a pre-process tsak in order to turn a lots of dataset into 5 table with specific structure. These new table will be the modeling's input data. you can see all input and ouput data in the below table. 
 
 Besides, if you want to know more about this pipeline's opreation, you can see these two picture:<br>
 Flow chart: https://github.com/dktunited/forecast-data-exposition/blob/forecast-data-exposition-cn-dev-quicktest/readme_picture/exposition/flow_chart_exposition.drawio.png <br>
@@ -26,7 +26,6 @@ ER diagram: https://github.com/dktunited/forecast-data-exposition/blob/forecast-
   <thead>
     <tr>
         <th>Type</th>
-        <th>Channel</th>
         <th>TableName</th>
         <th>Columns</th>
         <th>S3_Path</th>
@@ -34,19 +33,17 @@ ER diagram: https://github.com/dktunited/forecast-data-exposition/blob/forecast-
   </thead>
   <tbody>
     <tr>
-      <td rowspan=6>Input data</td>
-      <td rowspan=2>Forecast <br> Restructure</td>
-      <td>predict-{timestamp}.josn</td>
-      <td>model_id <br> start <br> target <br> cat <br> dynamic_feat</td>
-      <td>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/specific/quicktest/quicktest-deepar-202038/input/</td>
+      <td>Input data</td>
+      <td>f_transaction_detail <br> f_delivery_detail <br> f_currency_exchange <br> d_sku <br> d_sku_h <br> d_business_unit <br>
+          sites_attribut_0plant_branches_h <br> d_general_data_warehouse_h <br> d_general_data_customer <br> d_day <br> d_week <br> apo_sku_mrp_status_h <br>
+          ecc_zaa_extplan</td>
+      <td>too many to show, please check ER diagram</td>
+      <td>s3://fcst-clean-prod/datalake/</td>
     </tr>
+  </tbody>
+  <tfoot>
     <tr>
-      <td>predict-{timestamp}.josn.out</td>
-      <td>mean <br> quantiles</td>
-      <td>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/specific/quicktest/quicktest-deepar-202038/output/</td>
-    </tr>
-    <tr>
-      <td rowspan=4>Global</td>
+      <td rowspan=4>Output_data</td>
       <td>model_week_sales.parquet</td>
       <td>model_id <br> week_id <br> date <br> channel <br> sales_quantity</td>
       <td rowspan=4>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/global/</td>
@@ -64,32 +61,6 @@ ER diagram: https://github.com/dktunited/forecast-data-exposition/blob/forecast-
       <td>model_id <br> family_id <br> sub_department_id <br> department_id <br> univers_id <br> product_nature_id <br> model_label <br> family_label <br>
           sub_department_label <br> department_label <br> univers_label <br> product_nature_label <br> brand_label <br> brand_type</td>
     </tr>
-  </tbody>
-  <tfoot>
-    <tr>
-      <td rowspan=5>Output_data</td>
-      <td rowspan=3>Forecast</td>
-      <td>forecast_deepar</td>
-      <td rowspan=3>algorithm <br> cutoff_week_id <br> cutoff_date <br> model_id <br> forecast_step <br> week_id <br> date <br> qt10 <br> qt20 <br> qt30 <br> 
-          qt40 <br> qt50 <br> qt60 <br> qt70 <br> qt80<br> qt90</td>
-      <td rowspan=5>s3://fcst-workspace/forecast-cn/fcst-data-exchange-dev/demand-forecast/sac/in/{version}</td>
-    </tr>
-    <tr>
-      <td>forecast_hw</td>
-    </tr>
-    <tr>
-      <td>forecast_deepar-hw</td>
-    </tr>
-    <tr>
-      <td>Restructure</td>
-      <td>restruct_sales</td>
-      <td>cutoff_week_id <br> cutoff_date <br> model_id <br> week_id <br> date <br> reconstructed_sales_quantity</td>
-    </tr>    
-    <tr>
-      <td>Global</td>
-      <td>same to input file</td>
-      <td>same to input file</td>
-    </tr> 
   </tfoot>
 </table>
 
