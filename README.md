@@ -1,8 +1,8 @@
 # Forecast Data Refining CN
 
 ## Context
-* [1. Description](#1-Description)
-* [2. Input & Output Data](#2-input-and-output-Data)
+* [1. Description](#1Description)
+* [2. Input & Output Data](#2inputandoutputData)
 * [3. Code Architecture](#3-code-architecture)
 * [4. How to run](#4-how-to-run)
     * [4.1. Bulid EMR and get cluster IP](#41-bulid-emr-and-get-cluster-ip)
