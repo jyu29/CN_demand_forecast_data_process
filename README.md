@@ -9,7 +9,7 @@
     * [4.2. Build exposition pipeline on Jenkins](#42-build-exposition-pipeline-on-jenkins)
     * [4.3. Close EMR](#43-close-emr)
 * [5. Common Error](#5-common-error)
-* [6. What has been changed from master branch](#5-what-has-been-changed-from-master-branch)
+* [6. What has been changed from master branch](#6-what-has-been-changed-from-master-branch)
 
 
 
@@ -27,7 +27,7 @@ ER diagram:
 
 
 
-## 2. Input & Output Data
+## 2. Input and Output Data
 
 <table>
   <thead>
