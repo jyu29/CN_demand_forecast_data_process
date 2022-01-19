@@ -2,19 +2,20 @@
 
 ## Context
 * [1. Description](#1-Description)
-* [2. Input & Output Data](#2-Input_&_Output_Data)
-* [3. Code Architecture](#3-Code_Architecture)
-* [4. How to run](#4-How_to_run)
-    * [4.1. Bulid EMR and get cluster IP](#41-Bulid_EMR_and_get_cluster_IP)
-    * [4.2. Build exposition pipeline on Jenkins](#42-Build_exposition_pipeline_on_Jenkins)
-    * [4.3. Close EMR](#43-Close_EMR)
-* [5. Common Error](#5-Common_error)
-* [6. What has been changed from master branch](#5-What_has_been_changed_from_master_branch)
+* [2. Input & Output Data](#2-input-and-output-Data)
+* [3. Code Architecture](#3-code-architecture)
+* [4. How to run](#4-how-to-run)
+    * [4.1. Bulid EMR and get cluster IP](#41-bulid-emr-and-get-cluster-ip)
+    * [4.2. Build exposition pipeline on Jenkins](#42-build-exposition-pipeline-on-jenkins)
+    * [4.3. Close EMR](#43-close-emr)
+* [5. Common Error](#5-common-error)
+* [6. What has been changed from master branch](#5-what-has-been-changed-from-master-branch)
+
+
 
 
 ## 1. Description
 In this repo, we will use data from ingestion repo to do a pre-process tsak in order to turn a lots of dataset into 5 table with specific structure. These new table will be the modeling's input data. you can see all input and ouput data in the below table. 
-
 Besides, if you want to know more about this pipeline's opreation, you can see these two picture:<br>
 Flow chart:  https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9101_flow_chart_refining.drawio.png
 <br>
@@ -23,6 +24,7 @@ ER diagram:
 1. model_week_sales : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9102_model_week_sales.drawio.png <br>
 2. model_week_mrp : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9103_model_week_mrp.drawio.png <br>
 3. model_week_tree : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9104_model_week_tree.drawio.png <br>
+
 
 
 ## 2. Input & Output Data
@@ -68,6 +70,7 @@ ER diagram:
     </tr>
   </tfoot>
 </table>
+
 
 
 ## 3. Code Architecture 
