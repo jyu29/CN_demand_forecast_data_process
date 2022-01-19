@@ -20,9 +20,9 @@ Flow chart:  https://github.com/dktunited/forecast-data-refining-demand/blob/for
 <br>
 
 ER diagram:  
-https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9102_model_week_sales.drawio.png <br>
-https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9103_model_week_mrp.drawio.png <br>
-https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9104_model_week_tree.drawio.png <br>
+1. model_week_sales : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9102_model_week_sales.drawio.png <br>
+2. model_week_mrp : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9103_model_week_mrp.drawio.png <br>
+3. model_week_tree : https://github.com/dktunited/forecast-data-refining-demand/blob/forecast-data-refining-demand-cn-dev/readme_pic/%E3%80%90Refining%E3%80%9104_model_week_tree.drawio.png <br>
 
 
 ## 2. Input & Output Data
@@ -135,7 +135,6 @@ forecast-data-exposition-quicktest
                     ]
    ```
 
-   
    > check pipeline console to see the log. 
    
    example:https://forecast-jenkins.subsidia.org/view/EMR-HANDLING/job/EMR-CREATE-DEV-CLUSTER-V2/384/console
@@ -206,7 +205,7 @@ forecast-data-exposition-quicktest
       
    >See the jenkins console logs
 
-   example: https://forecast-jenkins.subsidia.org/view/TEST/job/forecast-data-exposition-cn-dev-quicktest/112/console
+   example: https://forecast-jenkins.subsidia.org/view/TEST/job/forecast-data-refining-demand-cn-dev/103/console
 
    >See the jenkins console logs
    
@@ -257,25 +256,31 @@ forecast-data-exposition-quicktest
 
 ## 5. Common error
 
-#### error 1:  
+#### error 1: (Actually it is not abosutly error, you just need to  wait a long time.)
+
+example : https://forecast-jenkins.subsidia.org/view/TEST/job/forecast-data-refining-demand-cn-dev/100/console
 
    ```
-   # first error message (Actually it is not abosutly error, you just need to  wait a long time.)
+   # first error message
    22/01/06 07:44:55 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
    22/01/06 07:44:56 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
    22/01/06 07:44:57 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
    22/01/06 07:44:58 INFO Client: Application report for application_1641448074754_0013 (state: ACCEPTED)
    
-   # second error message
-   21/12/31 03:29:54 ERROR FileFormatWriter: Aborting job 33e3847a-8b9a-4f5a.......
-   java.lang.IllegaStateExceptio:SparkContext has been shutdown.....
-
+   # scond error message
+   21/12/31 03:44:38 INFO ContextHandler: Started o.s.j.s.ServletContextHandler@6df61295{/SQL/execution,null,AVAILABLE,@Spark}
+   21/12/31 03:44:38 INFO ServerInfo: Adding filter to /SQL/execution/json: org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter
+   21/12/31 03:44:38 INFO ContextHandler: Started o.s.j.s.ServletContextHandler@f8b842e{/SQL/execution/json,null,AVAILABLE,@Spark}
+   21/12/31 03:44:38 INFO ServerInfo: Adding filter to /static/sql: org.apache.hadoop.yarn.server.webproxy.amfilter.AmIpFilter
+   21/12/31 03:44:38 INFO ContextHandler: Started o.s.j.s.ServletContextHandler@5a832521{/static/sql,null,AVAILABLE,@Spark}
    ```
    
-> you will get the error like picture, it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.when you stuck here, just reboost you EMR pipeline, it should be run normally. <
+>  it will constantly print INFO message like this but not go on, or print sparkcontext has be shoutdown.when you stuck here, just reboost you EMR pipeline, it should be run normally. <
 
 
-#### error 2:    
+#### error 2:  (You don't give spark enough memory to finish task.)  
+
+example : https://forecast-jenkins.subsidia.org/view/TEST/job/forecast-data-refining-demand-cn-dev/97/console
    ```
    # There is insufficient memory for the Java Runtime Environment to continue.
    # Native memory allocation (mmap) failed to map 935329792 bytesOpenJDK 64-Bit Server VM warning: 
