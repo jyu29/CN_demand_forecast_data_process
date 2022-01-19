@@ -12,8 +12,89 @@
 * [4. Code Adaption](#4-Code_Adaption)
 
 
+## 1. Description
+In this repo, we will accept the output data from modeling stage, and turn the data into the appropriate structure for BI tool whcih we use. However, to get this result, we have two step here, one is `exposition_handeler`, processing all forecast data to same schema, two is `bI_table_create`, joining these data and produce the BI table we need. 
 
-## 1. Code_Architecture 
+Besides, if you want to know more about this pipeline's opreation, you can see these two picture:<br>
+Flow chart: https://github.com/dktunited/forecast-data-exposition/blob/forecast-data-exposition-cn-dev-quicktest/readme_picture/exposition/flow_chart_exposition.drawio.png <br>
+ER diagram: https://github.com/dktunited/forecast-data-exposition/blob/forecast-data-exposition-cn-dev-quicktest/readme_picture/exposition/bigquery.drawio.png <br>
+
+
+## 2. Input & Output Data
+
+<table>
+  <thead>
+    <tr>
+        <th>Type</th>
+        <th>Channel</th>
+        <th>TableName</th>
+        <th>Columns</th>
+        <th>S3_Path</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan=6>Input data</td>
+      <td rowspan=2>Forecast <br> Restructure</td>
+      <td>predict-{timestamp}.josn</td>
+      <td>model_id <br> start <br> target <br> cat <br> dynamic_feat</td>
+      <td>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/specific/quicktest/quicktest-deepar-202038/input/</td>
+    </tr>
+    <tr>
+      <td>predict-{timestamp}.josn.out</td>
+      <td>mean <br> quantiles</td>
+      <td>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/specific/quicktest/quicktest-deepar-202038/output/</td>
+    </tr>
+    <tr>
+      <td rowspan=4>Global</td>
+      <td>model_week_sales.parquet</td>
+      <td>model_id <br> week_id <br> date <br> channel <br> sales_quantity</td>
+      <td rowspan=4>s3://fcst-workspace/forecast-cn/fcst-refined-demand-forecast-dev/global/</td>
+    </tr>
+    <tr>
+      <td>model_week_price.parquet</td>
+      <td>model_id <br> week_id <br> date <br> channel <br> average_price</td>
+    </tr>
+    <tr>
+      <td>model_week_turnover.parquet</td>
+      <td>model_id <br> week_id <br> date <br> channel <br> sum_turnover</td>
+    </tr>
+    <tr>
+      <td>model_week_tree.parquet</td>
+      <td>model_id <br> family_id <br> sub_department_id <br> department_id <br> univers_id <br> product_nature_id <br> model_label <br> family_label <br>
+          sub_department_label <br> department_label <br> univers_label <br> product_nature_label <br> brand_label <br> brand_type</td>
+    </tr>
+  </tbody>
+  <tfoot>
+    <tr>
+      <td rowspan=5>Output_data</td>
+      <td rowspan=3>Forecast</td>
+      <td>forecast_deepar</td>
+      <td rowspan=3>algorithm <br> cutoff_week_id <br> cutoff_date <br> model_id <br> forecast_step <br> week_id <br> date <br> qt10 <br> qt20 <br> qt30 <br> 
+          qt40 <br> qt50 <br> qt60 <br> qt70 <br> qt80<br> qt90</td>
+      <td rowspan=5>s3://fcst-workspace/forecast-cn/fcst-data-exchange-dev/demand-forecast/sac/in/{version}</td>
+    </tr>
+    <tr>
+      <td>forecast_hw</td>
+    </tr>
+    <tr>
+      <td>forecast_deepar-hw</td>
+    </tr>
+    <tr>
+      <td>Restructure</td>
+      <td>restruct_sales</td>
+      <td>cutoff_week_id <br> cutoff_date <br> model_id <br> week_id <br> date <br> reconstructed_sales_quantity</td>
+    </tr>    
+    <tr>
+      <td>Global</td>
+      <td>same to input file</td>
+      <td>same to input file</td>
+    </tr> 
+  </tfoot>
+</table>
+
+
+## 3. Code Architecture 
 
 ```
 forecast-data-exposition-quicktest
@@ -45,15 +126,17 @@ forecast-data-exposition-quicktest
               get_config.py
               parase_config.py  
               utils.py
-     
-     
 ```
 
-## 2. How_to_run
+## 4. How to run
 
->data refining pipeline build upon jenkins.
+>data exposition pipeline build upon jenkins.
 
-### 2.1. Bulid_EMR_and_get_cluster_IP
+- `exposition_handler.py` : process all model_output data to same type, 
+- `bi_table_create.py` : use all table from 'Exposition handler' to create BI table.
+
+
+### 4.1. Bulid EMR and get cluster IP
 
    >Select EMR pipeline on Jenkins.```Pipeline EMR-CREATE-DEV-CLUSTER-V2```,use the parameters to build:
  
@@ -79,6 +162,7 @@ forecast-data-exposition-quicktest
    
    > check pipeline console to see the log. 
    
+   example:https://forecast-jenkins.subsidia.org/view/EMR-HANDLING/job/EMR-CREATE-DEV-CLUSTER-V2/384/console
    
    ```
       Your EMR dev-cluster-emr is built !
@@ -99,76 +183,56 @@ forecast-data-exposition-quicktest
    ```
       
    > copy your EMR ip.   
-   
-   
+     
    ```
    CLUSTER_IP=10.226.xxx.xxx
    ```
       
 
-### 2.2. Confirm_input_s3_path_and_name
-
-   > confirm you already have access to S3. You'll have to use both saml2aws & the open-source tool. [Cyberduck](https://cyberduck.io).  
-   Here is the link for the configuration of [saml2aws](https://wiki.decathlon.net/display/DATA/1.2.0.1.2+-+Saml2aws). check you have required file in s3:
-   
-   
-  
-  **data source:**
-    
-  <img src="./readme_pic/table_source.png" width = "400" align=center/>
-  <br>    
-      
-
-### 2.3. Build_refining_pipeline_on_Jenkins
+### 4.2. Build exposition pipeline on Jenkins
 
    > go to Jenkins, choose the specific pipeline: `forecast-data-refining-cn-dev-quicktest`.
    Before build jenkins pipeline,you should confirm the parameters in config file.
    
  
    ```
-   1. run_env : dev | prod          (choose an env to run pipieline, it will decide which config file to be used.) 
-   2. branch_name : forecast-data-exposition-cn-dev-quicktest (which branch you want to use tp run pipeline.)  
-   3. master_ip : 10.226.xxx.xxx    (The EMR ip you get from above.)
+      1. run_env : dev | prod          (choose an env to run pipieline, it will decide which config file to be used.) 
+      2. branch_name : forecast-data-exposition-cn-dev-quicktest (which branch you want to use tp run pipeline.)  
+      3. master_ip : 10.226.xxx.xxx    (The EMR ip you get from above.)
    ```
-  
-      
+   
    > Confim parameters in config file and push it. choose the file depend on your environment.
    
    > confirm your bucket, path and name are all right. with the config file name you read.(ex.`dev.yml`)
    
    ```
-   buckets:
-      clean: fcst-clean-prod
-      refined: fcst-workspace
-   paths:
-      clean_datalake: datalake/
-      refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
+      buckets:
+         clean: fcst-clean-prod
+         refined: fcst-workspace
+      paths:
+         clean_datalake: datalake/
+         refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
    ```
          
    > confirm the code in `purch_org` are you want. 
    
    ```
-   list_purch_org:
-      - Z015
-      - Z024
-      - Z067
-      - Z069
-      - Z108
+      list_purch_org:
+         - Z015
+         - Z024
+         - Z067
+         - Z069
+         - Z108
    ```
-      
-   > **Push and commit** the code from your IDE to the github branch name your entered .Then click the bottom **"bulid"** on the Jenkins 
-
    
-  <img src="./readme_pic/git_commit.png" width = "400" align=center/>
-  <br>
-
+   > Remember to **Push and commit** the code from your IDE to the github branch name your entered .Then click the bottom **"bulid"** on the Jenkins 
 
       
    >See the jenkins console logs
 
+   example: https://forecast-jenkins.subsidia.org/view/TEST/job/forecast-data-exposition-cn-dev-quicktest/112/console
 
-
-   #### Refing 
+   >See the jenkins console logs
    
    ```
          Load data from clean bucket.
@@ -207,25 +271,15 @@ forecast-data-exposition-quicktest
    ```
       
 
-### 2.4. Confirm_output_s3_path_and_file_name
-   
-   
-   > your result file will show in this folder in s3, there should be 5 files. 
-
-
-   <img src="./readme_pic/table_result.png" width = "400" align=center/>
-   <br>
-
-
-
-## 2.5. Close_EMR
+### 4.3. Close EMR
 
    > choose EMR build pipeline on Jenkins : `EMR-DELETE-DEV-CLUSTER`.  build EMR with parameter.check pipeline console to see the log, waiting it finish.
 
-           
+   example : https://forecast-jenkins.subsidia.org/view/EMR-HANDLING/job/EMR-DELETE-DEV-CLUSTER/507/console
 
 
-## 3. Common_error
+
+## 5. Common error
 
 #### error 1:  
 
@@ -256,12 +310,9 @@ forecast-data-exposition-quicktest
    ```
    
    > that has a simple way to fix this problem: add the cluster's configuration on AWS. you can try to add instanceTypeMaster and instanceTypeCore's level or number
-   <img src="./readme_pic/aws_config.png" width = "600" align=center/>
-   <br>
 
 
-
-## 4. What_has_been_changed_from_master_branch
+## 6. What has been changed from master branch
 
 
 #### adject
