@@ -6,7 +6,7 @@
 * [3. Code Architecture](#3-code-architecture)
 * [4. How to run](#4-how-to-run)
     * [4.1. Bulid EMR and get cluster IP](#41-bulid-emr-and-get-cluster-ip)
-    * [4.2. Build exposition pipeline on Jenkins](#42-build-exposition-pipeline-on-jenkins)
+    * [4.2. Build refining pipeline on Jenkins](#42-build-refining-pipeline-on-jenkins)
     * [4.3. Close EMR](#43-close-emr)
 * [5. Common Error](#5-common-error)
 * [6. What has been changed from master branch](#6-what-has-been-changed-from-master-branch)
@@ -167,7 +167,7 @@ forecast-data-exposition-quicktest
    ```
       
 
-### 4.2. Build exposition pipeline on Jenkins
+### 4.2. Build refining pipeline on Jenkins
 
    > go to Jenkins, choose the specific pipeline: `forecast-data-refining-cn-dev-quicktest`.
    Before build jenkins pipeline,you should confirm the parameters in config file.
