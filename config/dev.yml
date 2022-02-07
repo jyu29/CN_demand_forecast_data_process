@@ -3,16 +3,16 @@ buckets:
   refined: fcst-workspace
 paths:
   clean_datalake: datalake/
-  refined_global: forecast-cn/fcst-refined-demand-forecast-dev/test_data/
+  refined_global: forecast-cn/fcst-refined-demand-forecast-dev/global/
 functional_parameters:
   first_historical_week: 201601
   first_backtesting_cutoff: 201901
   list_purch_org:
     - Z015
-#    - Z024
-#    - Z067
-#    - Z069
-#    - Z108
+    - Z024
+    - Z067
+    - Z069
+    - Z108
 technical_parameters:
   spark_conf:
     spark.yarn.isPython: "true"
