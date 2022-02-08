@@ -1,3 +1,7 @@
+// There are two adjusting here:
+// 1. stage("cluster provisioning"): original EMRName="forecast-emr-${BUILD_TAG}"
+// 2. stage("bigquery SQL"): string(name: "ClusterType", value: "batch_cluster")
+
 pipeline {
 
     agent any
@@ -11,19 +15,17 @@ pipeline {
     stages {
 
         stage("cluster provisioning") {
-
             steps {
-
             build job: "EMR-CREATE-DEV-CLUSTER-V2",
                 parameters: [
                     string(name: "nameOfCluster", value: "${BUILD_TAG}"),
                     string(name: "versionEMR", value: "emr-6.4.0"),
-                    string(name: "ClusterType", value: "batch_cluster"),
-                    string(name: "instanceTypeMaster", value: "c6g.12xlarge"),
+                    string(name: "ClusterType", value: "dev_cluster"),
+                    string(name: "instanceTypeMaster", value: "c5.24xlarge"),
                     string(name: "masterNodeDiskSize", value: "256"),
                     string(name: "nbrCoreOnDemand", value: "6"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r6g.12xlarge"),
+                    string(name: "instanceTypeCore", value: "r5.24xlarge"),
                     string(name: "coreNodeDiskSize", value: "256"),
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "r5.2xlarge"),
@@ -37,7 +39,6 @@ pipeline {
             steps {
                 wrap([$class: "BuildUser"]) {
                     sh('''
-
                     export https_proxy="${https_proxy}"
                     EMRName="forecast-dev-emr-${BUILD_TAG}-Z21HTSAI"
 
