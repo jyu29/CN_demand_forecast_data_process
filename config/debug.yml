@@ -9,10 +9,10 @@ functional_parameters:
   first_backtesting_cutoff: 201901
   list_purch_org:
     - Z015
-#    - Z024
-#    - Z067
-#    - Z069
-#    - Z108
+    - Z024
+    - Z067
+    - Z069
+    - Z108
 technical_parameters:
   spark_conf:
     spark.yarn.isPython: "true"
