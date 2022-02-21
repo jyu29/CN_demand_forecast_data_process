@@ -1,6 +1,3 @@
-// There are two adjusting here:
-// 1. stage("cluster provisioning"): original EMRName="forecast-emr-${BUILD_TAG}"
-// 2. stage("bigquery SQL"): string(name: "ClusterType", value: "batch_cluster")
 
 pipeline {
 
