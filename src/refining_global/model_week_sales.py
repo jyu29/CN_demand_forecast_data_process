@@ -40,7 +40,7 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
                 tdt['f_to_tax_in'],
                 cex['exchange_rate']) \
         .withColumn("channel", F.lit('offline'))\
-        .cahce()
+        .cache()
     return offline_sales
 
 
