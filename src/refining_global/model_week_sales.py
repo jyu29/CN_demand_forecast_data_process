@@ -94,7 +94,7 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan):
     return online_sales
 
 
-def union_sales(offline_sales, online_sales, current_week, group_item):
+def union_2o_sales(offline_sales, online_sales, current_week, group_item):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
@@ -116,7 +116,7 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_range):
-    union_sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
+    union_sales = union_2o_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     fcst_bi_dynamic_feat = model_week_sales \
         .filter(model_week_sales.week_id.between(but_range[0], but_range[1])) \
         .groupby(['model_id', 'week_id']) \
@@ -136,7 +136,7 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     # Get online sales
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan)
     # Create model week sales
-    union_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
+    union_sales = union_2o_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
     # Create a weekly number of business unit in sales
     but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_range)
     return model_week_sales
