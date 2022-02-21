@@ -155,7 +155,7 @@ class Configuration(object):
 
     def get_business_unit(self):
 
-        return self._yaml_dict['path']['but_num']
+        return self._yaml_dict['paths']['but_num']
 
     def get_business_range(self):
 
