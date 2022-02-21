@@ -136,7 +136,7 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     # Get online sales
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan)
     # Create model week sales
-    union_sales = union_sales_refining(offline_sales, online_sales, current_week, ['date', 'channel'])
+    union_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
     # Create a weekly number of business unit in sales
     but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_range)
     return model_week_sales
