@@ -39,7 +39,8 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
                 tdt['f_pri_regular_sales_unit'],
                 tdt['f_to_tax_in'],
                 cex['exchange_rate']) \
-        .withColumn("channel", F.lit('offline'))
+        .withColumn("channel", F.lit('offline'))\
+        .cahce()
     return offline_sales
 
 
@@ -88,11 +89,12 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan):
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
                 cex['exchange_rate']) \
-        .withColumn("channel", F.lit('online'))
+        .withColumn("channel", F.lit('online'))\
+        .cache()
     return online_sales
 
 
-def union_sales(offline_sales, online_sales, current_week):
+def union_sales(offline_sales, online_sales, current_week, group_item):
     """
     union online and offline sales and compute metrics for each (model, date)
      - quantity: online quantity + offline quantities
@@ -100,7 +102,7 @@ def union_sales(offline_sales, online_sales, current_week):
      - turnover: sum taxes with exchange
     """
     model_week_sales = offline_sales.union(online_sales) \
-        .groupby(['model_id', 'week_id', 'date', 'channel']) \
+        .groupby(['model_id', 'week_id'] + group_item) \
         .agg(F.sum('f_qty_item').alias('sales_quantity'),
              F.mean(F.col('f_pri_regular_sales_unit') * F.col('exchange_rate')).alias('average_price'),
              F.sum(F.col('f_to_tax_in') * F.col('exchange_rate')).alias('sum_turnover')) \
@@ -113,14 +115,27 @@ def union_sales(offline_sales, online_sales, current_week):
     return model_week_sales
 
 
-def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, taiwan, channel):
+def but_unit_number(offline_sales, online_sales, current_week, but_path, but_range):
+    union_sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
+    fcst_bi_dynamic_feat = model_week_sales \
+        .filter(model_week_sales.week_id.between(but_range[0], but_range[1])) \
+        .groupby(['model_id', 'week_id']) \
+        .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
+        .select(F.col('model_id'), F.col('week_id'),
+                F.col('avg(average_price)').alias('weekly_average_price'),
+                F.col('count(but_idr_business_unit)').alias('num_store_following')) \
+        .withColumn('update_time', F.current_timestamp()) \
+        .orderBy(['model_id', 'week_id'], ascending=True)\
+        .repartition(1).write.csv(but_path)
+
+
+def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, taiwan, channel, but_path,but_range):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan)
-
     # Get online sales
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan)
-
     # Create model week sales
-    model_week_sales = union_sales(offline_sales, online_sales, current_week)
-
+    union_sales = union_sales_refining(offline_sales, online_sales, current_week, ['date', 'channel'])
+    # Create a weekly number of business unit in sales
+    but_unit_number(offline_sales, online_sales, current_week, but_path, but_range)
     return model_week_sales

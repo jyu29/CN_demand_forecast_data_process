@@ -64,7 +64,8 @@ if __name__ == '__main__':
     channel = gf.filter_channel(but)
 
     # Create model_week_sales
-    model_week_sales = sales.get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.taiwan_list, channel)
+    model_week_sales = sales.get_model_week_sales(
+        tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week, params.taiwan_list, channel,params.but_num,params.but_range)
     model_week_sales.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_sales] took ')
     start = time.time()
@@ -82,7 +83,8 @@ if __name__ == '__main__':
     print('[model_week_tree] length:', model_week_tree_count)
 
     # Create model_week_mrp
-    model_week_mrp = mrp.get_model_week_mrp(gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
+    model_week_mrp = mrp.get_model_week_mrp(
+        gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
     model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
     print('====> counting(cache) [model_week_mrp] took ')
     start = time.time()

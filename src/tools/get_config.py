@@ -47,6 +47,9 @@ class Configuration(object):
         self.list_conf = self.get_spark_conf()
         self.white_list = self.get_white_list_id()
         self.taiwan_list = self.get_taiwan_self_sale_list_id()
+        self.but_num = self.get_business_unit()
+        self.but_range = self.get_business_range()
+
 
     def pretty_print_dict(self):
         """
@@ -149,3 +152,11 @@ class Configuration(object):
             object: a list of model_id in blacklist of Taiwan's own purchase model.
         """
         return self._yaml_list['taiwan_self_sale']
+
+    def get_business_unit(self):
+
+        return self._yaml_dict['path']['but_num']
+
+    def get_business_range(self):
+
+        return self._yaml_dict['functional_parameters']['but_week_range']

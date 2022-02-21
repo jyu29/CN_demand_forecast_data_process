@@ -20,6 +20,7 @@ pipeline {
                 parameters: [
                     string(name: "nameOfCluster", value: "${BUILD_TAG}"),
                     string(name: "versionEMR", value: "emr-6.4.0"),
+                    string(name: "projectTag", value: "demandforecastCN"),
                     string(name: "ClusterType", value: "dev_cluster"),
                     string(name: "instanceTypeMaster", value: "c5.24xlarge"),
                     string(name: "masterNodeDiskSize", value: "256"),
