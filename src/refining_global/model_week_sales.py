@@ -40,7 +40,8 @@ def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
                 tdt['f_pri_regular_sales_unit'],
                 tdt['f_to_tax_in'],
                 cex['exchange_rate']) \
-        .withColumn("channel", F.lit('offline'))
+        .withColumn("channel", F.lit('offline'))\
+        .cache()
     return offline_sales
 
 
@@ -90,7 +91,8 @@ def get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan):
                 dyd['f_tdt_pri_regular_sales_unit'].alias('f_pri_regular_sales_unit'),
                 dyd['f_to_tax_in'],
                 cex['exchange_rate']) \
-        .withColumn("channel", F.lit('online'))
+        .withColumn("channel", F.lit('online'))\
+        .cache()
     return online_sales
 
 def union_sales(offline_sales, online_sales, current_week, group_item):
@@ -115,8 +117,9 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_range):
+     week_range = but_range + [current_week]
      union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit']) \
-        .filter(model_week_sales.week_id.between(but_range[0], but_range[1])) \
+        .filter(model_week_sales.week_id.isin(week_range)) \
         .groupby(['model_id', 'week_id']) \
         .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
         .select(F.col('model_id'), F.col('week_id'),
@@ -124,7 +127,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
                 F.col('count(but_idr_business_unit)').alias('num_store_following')) \
         .withColumn('update_time', F.current_timestamp()) \
         .orderBy(['model_id', 'week_id'], ascending=True)\
-        .repartition(1).write.csv(f's3:{bucket_clean}/{but_path}')
+        .repartition(1).write.csv(f's3:{bucket_clean}/{but_path}/fcst_bi_dynamic_feat')
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,

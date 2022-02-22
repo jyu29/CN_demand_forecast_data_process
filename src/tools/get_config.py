@@ -158,5 +158,7 @@ class Configuration(object):
         return self._yaml_dict['paths']['but_num']
 
     def get_business_range(self):
-
-        return self._yaml_dict['functional_parameters']['but_week_range']
+        but_range = self._yaml_dict['functional_parameters']['but_week_range']
+        if but_range is None:
+            but_range = []
+        return but_range
