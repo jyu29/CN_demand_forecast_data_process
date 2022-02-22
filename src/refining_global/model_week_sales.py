@@ -121,7 +121,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
         sales \
-            .filter(model_week_sales.week_id == week) \
+            .filter(sales.week_id == week) \
             .groupby(['model_id', 'week_id']) \
             .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
             .select(F.col('model_id'), F.col('week_id'),
