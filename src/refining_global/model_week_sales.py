@@ -137,7 +137,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
-                         taiwan, channel, bucket_clean, but_path, but_range):
+                         taiwan, channel, bucket_clean, but_path, but_week):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan)
     # Get online sales
