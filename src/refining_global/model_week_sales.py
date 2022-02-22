@@ -120,7 +120,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
     but_weeks = [i for i in range(but_week[0],but_week[1])] + [current_week]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
-        sales \
+        but = sales \
             .filter(sales.week_id == week) \
             .groupby(['model_id', 'week_id']) \
             .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
@@ -129,7 +129,9 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
                     F.col('count(but_idr_business_unit)').alias('num_store_following')) \
             .withColumn('update_time', F.current_timestamp()) \
             .orderBy(['model_id', 'week_id'], ascending=True)\
-            .repartition(1).write.csv(f's3:{bucket_clean}/{but_path}/fcst_bi_dynamic_feat/{week}')
+            .cache()
+        but.repartition(1).write.csv(f's3:{bucket_clean}/{but_path}/fcst_bi_dynamic_feat/{week}',mode='overwrite')
+
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
