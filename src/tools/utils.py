@@ -45,7 +45,7 @@ def spark_write_parquet_s3(df, bucket, dir_path, repartition=10, mode='overwrite
     """
     df.repartition(repartition).write.parquet(to_uri(bucket, dir_path), mode=mode)
 
-def spark_write_csv_s3(df, bucket, dir_path, repartition=1, mode='overwrite'):
+def spark_write_csv_s3(df, bucket, dir_path, repartition=1, mode='overwrite', header=True):
     """
     Write a in-memory SparkDataframe to parquet files on a S3 bucket
 
@@ -56,7 +56,7 @@ def spark_write_csv_s3(df, bucket, dir_path, repartition=1, mode='overwrite'):
         repartition (int): number of partitions files to write
         mode (string): writing mode
     """
-    df.repartition(repartition).write.csv(to_uri(bucket, dir_path), mode=mode)
+    df.repartition(repartition).write.csv(to_uri(bucket, dir_path), mode=mode, header=True)
     
 
 def get_timer(starting_time):

@@ -131,7 +131,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, b
             .withColumn('update_time', F.current_timestamp()) \
             .orderBy(['model_id', 'week_id'], ascending=True)\
             .cache()
-        ut.spark_write_csv_s3(but, bucket_refined, f'{but_path}{week}/fcswt_bi_dynamic_feat')
+        ut.spark_write_csv_s3(but, bucket_refined, f'{but_path}fcswt_bi_dynamic_feat/{week}')
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
