@@ -117,7 +117,7 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_week):
-    but_weeks = but_week + [current_week]
+    but_weeks = [i for i in range(but_week[0],but_week[1])] + [current_week]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
         sales \
