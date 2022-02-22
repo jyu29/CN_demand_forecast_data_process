@@ -4,7 +4,7 @@ buckets:
 paths:
   clean_datalake: datalake/
   refined_global: forecast-cn/fcst-refined-demand-forecast-dev/test_data/
-  tableau: forecastcn/fcst-data-exchange-dev/dashboard/tableau/raw/
+  tableau: forecast-cn/fcst-data-exchange-dev/dashboard/tableau/raw/
 functional_parameters:
   # if but_range is True, but_week must be two number, one is start, another one is end.
   but_range: True
