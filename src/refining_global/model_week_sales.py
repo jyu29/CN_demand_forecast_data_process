@@ -117,7 +117,7 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
     return model_week_sales
 
 
-def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_week):
+def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week):
     but_weeks = but_week + [current_week]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
@@ -137,7 +137,7 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
-                         taiwan, channel, bucket_clean, but_path, but_week):
+                         taiwan, channel, bucket_refined, but_path, but_week):
     # Get offline sales
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan)
     # Get online sales
@@ -145,5 +145,5 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     # Create model week sales
     model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
     # Create a weekly number of business unit in sales
-    business = but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_week)
+    business = but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week)
     return model_week_sales, business
