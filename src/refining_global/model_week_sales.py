@@ -131,9 +131,8 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, b
             .withColumn('update_time', F.current_timestamp()) \
             .orderBy(['model_id', 'week_id'], ascending=True)\
             .cache()
-        ut.spark_write_parquet_s3(but, bucket_refined, but_path + 'fcswt_bi_dynamic_feat')
-
-
+        print(f"write {week} BI data to s3")
+        ut.spark_write_parquet_s3(but, bucket_refined, f'{but_path}{week}/fcswt_bi_dynamic_feat')
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
@@ -142,8 +141,8 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     offline_sales = get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan)
     # Get online sales
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan)
-    # Create model week sales
-    model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
-    # Create a weekly number of business unit in sales
+    print("=======create BI table fcswt_bi_dynamic_feat========")
     business = but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week)
-    return model_week_sales, business
+    print("=======Create model week sales========")
+    model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
+    return model_week_sales
