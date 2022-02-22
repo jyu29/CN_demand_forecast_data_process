@@ -1,4 +1,5 @@
 import pyspark.sql.functions as F
+import src.tools.utils as ut
 
 
 def get_offline_sales(tdt, day, week, sku, but, cex, sapb, taiwan):
@@ -117,7 +118,7 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_week):
-    but_weeks = [i for i in range(but_week[0],but_week[1])] + [current_week]
+    but_weeks = but_week + [current_week]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
         but = sales \
@@ -130,7 +131,8 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but
             .withColumn('update_time', F.current_timestamp()) \
             .orderBy(['model_id', 'week_id'], ascending=True)\
             .cache()
-        but.repartition(1).write.csv(f's3:{bucket_clean}/{but_path}/fcst_bi_dynamic_feat/{week}',mode='overwrite')
+        ut.spark_write_parquet_s3(but, bucket_refined, but_path + 'fcswt_bi_dynamic_feat')
+
 
 
 
@@ -143,5 +145,5 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     # Create model week sales
     model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
     # Create a weekly number of business unit in sales
-    but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_range)
-    return model_week_sales
+    business = but_unit_number(offline_sales, online_sales, current_week, bucket_clean, but_path, but_week)
+    return model_week_sales, business

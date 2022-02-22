@@ -47,8 +47,8 @@ class Configuration(object):
         self.list_conf = self.get_spark_conf()
         self.white_list = self.get_white_list_id()
         self.taiwan_list = self.get_taiwan_self_sale_list_id()
-        self.but_num = self.get_business_unit()
-        self.but_range = self.get_business_range()
+        self.but_path = self.get_business_path()
+        self.but_week = self.get_business_week()
 
 
     def pretty_print_dict(self):
@@ -153,12 +153,18 @@ class Configuration(object):
         """
         return self._yaml_list['taiwan_self_sale']
 
-    def get_business_unit(self):
+    def get_business_path(self):
 
-        return self._yaml_dict['paths']['but_num']
+        return self._yaml_dict['paths']['tableau']
 
-    def get_business_range(self):
-        but_range = self._yaml_dict['functional_parameters']['but_week_range']
-        if but_range is None:
-            but_range = []
-        return but_range
+    def get_business_week(self):
+
+        but_week = self._yaml_dict['functional_parameters']['but_week']
+
+        if but_week is None:
+            raise ValueError("list of week for creating business_unit BI table must be here.")
+
+        if self._yaml_dict['functional_parameters']['but_range']:
+            but_week = [i for i in range(but_week[0],but_week[1])]
+
+        return but_week

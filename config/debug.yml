@@ -4,9 +4,11 @@ buckets:
 paths:
   clean_datalake: datalake/
   refined_global: forecast-cn/fcst-refined-demand-forecast-dev/test_data/
-  but_num: forecastcn/fcst-data-exchange-dev/dashboard/tableau/raw/
+  tableau: forecastcn/fcst-data-exchange-dev/dashboard/tableau/raw/
 functional_parameters:
-  but_week_range:
+  # if but_range is True, but_week must be two number, one is start, another one is end.
+  but_range: True
+  but_week:
     - 202101
     - 202153
   first_historical_week: 201601
@@ -26,4 +28,3 @@ technical_parameters:
     spark.sql.legacy.parquet.datetimeRebaseModeInRead: "CORRECTED"
     spark.sql.legacy.timeParserPolicy: "LEGACY"
     spark.driver.maxResultSize: 8g
-
