@@ -4,7 +4,7 @@ buckets:
 paths:
   clean_datalake: datalake/
   refined_global: forecast-cn/fcst-refined-demand-forecast-dev/test_data/
-  but_num: forecast-cn/fcst-data-exchange-dev/dashboard/tableau/postgres/
+  but_num: forecast-cn/fcst-data-exchange-dev/dashboard/tableau/raw/
 functional_parameters:
   but_week_range:
   first_historical_week: 201601
