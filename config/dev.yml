@@ -18,6 +18,7 @@ functional_parameters:
     - 202207
     - 202208
     - 202209
+    - 202210
   first_historical_week: 201601
   first_backtesting_cutoff: 201901
   list_purch_org:
