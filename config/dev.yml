@@ -7,10 +7,17 @@ paths:
   tableau: forecast-cn/fcst-data-exchange-dev/dashboard/tableau/raw_name/
 functional_parameters:
   # if but_range is True, but_week must be two number, one is start, another one is end.
-  but_range: True
+  but_range: False
   but_week:
-    - 202101
-    - 202153
+    - 202201
+    - 202202
+    - 202203
+    - 202204
+    - 202205
+    - 202206
+    - 202207
+    - 202208
+    - 202209
   first_historical_week: 201601
   first_backtesting_cutoff: 201901
   list_purch_org:
