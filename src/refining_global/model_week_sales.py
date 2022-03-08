@@ -146,6 +146,7 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
 
     print("=======create BI table fcswt_bi_dynamic_feat========")
     business = but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week)
-    # print("=======Create model week sales========")
-    # model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
-    # return model_week_sales
+
+    print("=======Create model week sales========")
+    model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
+    return model_week_sales
