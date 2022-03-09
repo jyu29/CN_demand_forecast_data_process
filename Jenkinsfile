@@ -15,18 +15,20 @@ pipeline {
     stages {
 
         stage("cluster provisioning") {
+
             steps {
-            build job: "EMR-CREATE-DEV-CLUSTER-V2",
+
+            build job: "EMR-CREATE-PERSISTENT-CLUSTER-V2",
                 parameters: [
                     string(name: "nameOfCluster", value: "${BUILD_TAG}"),
                     string(name: "versionEMR", value: "emr-6.4.0"),
                     string(name: "projectTag", value: "demandforecastCN"),
-                    string(name: "ClusterType", value: "dev_cluster"),
+                    string(name: "ClusterType", value: "batch_cluster"),
                     string(name: "instanceTypeMaster", value: "c5.24xlarge"),
                     string(name: "masterNodeDiskSize", value: "256"),
                     string(name: "nbrCoreOnDemand", value: "6"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r5.24xlarge"),
+                    string(name: "instanceTypeCore", value: "r5.16xlarge"),
                     string(name: "coreNodeDiskSize", value: "256"),
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "r5.2xlarge"),
@@ -41,7 +43,7 @@ pipeline {
                 wrap([$class: "BuildUser"]) {
                     sh('''
                     export https_proxy="${https_proxy}"
-                    EMRName="forecast-dev-emr-${BUILD_TAG}-Z21HTSAI"
+                    EMRName="forecast-emr-${BUILD_TAG}"
 
                     cluster_id=$(aws emr list-clusters --active --output=json | jq '.Clusters[] | select(.Name=="'${EMRName}'") | .Id ' -r)
                     echo 'Cluster ID => ${cluster_id}'
