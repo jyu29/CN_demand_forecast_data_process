@@ -120,7 +120,6 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week):
     but_weeks = but_week + [current_week]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
-    print(but_weeks)
     for week in but_weeks:
         but = sales \
             .filter(sales.week_id == week) \
@@ -133,7 +132,6 @@ def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, b
             .orderBy(['model_id', 'week_id'], ascending=True)\
             .cache()
 
-        print(f"{week}")
         ut.spark_write_csv_s3(but, bucket_refined, f'{but_path}fcst_bi_dynamic_feat/{week}')
 
 
@@ -145,7 +143,7 @@ def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_
     online_sales = get_online_sales(dyd, day, week, sku, but, gdc, cex, sapb, channel, taiwan)
 
     print("=======create BI table fcswt_bi_dynamic_feat========")
-    business = but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week)
+    but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week)
 
     print("=======Create model week sales========")
     model_week_sales = union_sales(offline_sales, online_sales, current_week, ['date', 'channel'])
