@@ -118,21 +118,21 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week):
-    but_weeks = but_week + [current_week]
+    but_weeks = but_week
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
-        but = sales \
-            .filter(sales.week_id == week) \
-            .groupby(['model_id', 'week_id']) \
-            .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
-            .select(F.col('model_id'), F.col('week_id'),
-                    F.col('avg(average_price)').alias('weekly_average_price'),
-                    F.col('count(but_idr_business_unit)').alias('num_store_following')) \
-            .withColumn('update_time', F.current_timestamp()) \
-            .orderBy(['model_id', 'week_id'], ascending=True)\
-            .cache()
-
-        ut.spark_write_csv_s3(but, bucket_refined, f'{but_path}fcst_bi_dynamic_feat/{week}')
+        if week < current_week:
+            but = sales \
+                .filter(sales.week_id == week) \
+                .groupby(['model_id', 'week_id']) \
+                .agg({'but_idr_business_unit': 'count', 'average_price': 'mean'}) \
+                .select(F.col('model_id'), F.col('week_id'),
+                        F.col('avg(average_price)').alias('weekly_average_price'),
+                        F.col('count(but_idr_business_unit)').alias('num_store_following')) \
+                .withColumn('update_time', F.current_timestamp()) \
+                .orderBy(['model_id', 'week_id'], ascending=True)\
+                .cache()
+            ut.spark_write_csv_s3(but, bucket_refined, f'{but_path}fcst_bi_dynamic_feat/{week}')
 
 
 def get_model_week_sales(tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
