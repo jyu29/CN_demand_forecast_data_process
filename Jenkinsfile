@@ -28,7 +28,7 @@ pipeline {
                     string(name: "masterNodeDiskSize", value: "256"),
                     string(name: "nbrCoreOnDemand", value: "6"),
                     string(name: "nbrCoreSpot", value: "0"),
-                    string(name: "instanceTypeCore", value: "r5.16xlarge"),
+                    string(name: "instanceTypeCore", value: "r5.24xlarge"),
                     string(name: "coreNodeDiskSize", value: "256"),
                     string(name: "nbrTaskNode", value: "0"),
                     string(name: "instanceTypeTask", value: "r5.2xlarge"),
@@ -67,7 +67,7 @@ pipeline {
 
     post {
         always{
-             build job: 'EMR-DELETE-DEV-CLUSTER',
+             build job: 'EMR-DELETE-PERSISTENT-CLUSTER',
                 parameters: [
                 string(name: 'nameOfCluster', value: "${BUILD_TAG}")]
         }
