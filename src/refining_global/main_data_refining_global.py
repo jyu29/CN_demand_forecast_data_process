@@ -67,64 +67,64 @@ if __name__ == '__main__':
     model_week_sales = sales.get_model_week_sales(
         tdt, dyd, day, week, sku, but, cex, sapb, gdc, current_week,
         params.taiwan_list, channel, params.bucket_refined, params.but_path, params.but_week)
-    # model_week_sales.persist(StorageLevel.MEMORY_ONLY)
-    # print('====> counting(cache) [model_week_sales] took ')
-    # start = time.time()
-    # model_week_sales_count = model_week_sales.count()
-    # ut.get_timer(starting_time=start)
-    # print('[model_week_sales] length:', model_week_sales_count)
-    #
-    # # Create model_week_tree
-    # model_week_tree = tree.get_model_week_tree(sku_h, week, params.first_backtesting_cutoff)
-    # model_week_tree.persist(StorageLevel.MEMORY_ONLY)
-    # print('====> counting(cache) [model_week_tree] took ')
-    # start = time.time()
-    # model_week_tree_count = model_week_tree.count()
-    # ut.get_timer(starting_time=start)
-    # print('[model_week_tree] length:', model_week_tree_count)
-    #
-    # # Create model_week_mrp
-    # model_week_mrp = mrp.get_model_week_mrp(
-    #     gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
-    # model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
-    # print('====> counting(cache) [model_week_mrp] took ')
-    # start = time.time()
-    # model_week_mrp_count = model_week_mrp.count()
-    # ut.get_timer(starting_time=start)
-    # print('[model_week_mrp] length:', model_week_mrp_count)
-    #
-    # # Reduce tables according to the models found in model_week_sales
-    # print('====> Reducing tables according to the models found in model_week_sales...')
-    # l_model_id = model_week_sales.select('model_id').drop_duplicates()
-    # model_week_tree = model_week_tree.join(l_model_id, on='model_id', how='inner')
-    # model_week_mrp = model_week_mrp.join(l_model_id, on='model_id', how='inner')
-    #
-    # print('[model_week_tree] (new) length:', model_week_tree.count())
-    # print('[model_week_mrp] (new) length:', model_week_mrp.count())
-    #
-    # # Split model_week_sales into 3 tables
-    # print('====> Splitting sales, price & turnover into 3 tables...')
-    # model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'average_price'])
-    # model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sum_turnover'])
-    # model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sales_quantity'])
-    #
-    # # Data checks & assertions
-    # check.check_d_sku(sku)
-    # check.check_d_business_unit(but)
-    # check.check_sales_stability(model_week_sales, current_week)
-    # check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date', 'channel'])
-    # check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date', 'channel'])
-    # check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date', 'channel'])
-    # check.check_duplicate_by_keys(model_week_tree, ['model_id', 'week_id'])
-    # check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
-    #
-    # # Write results
-    # bucket_refined = params.bucket_refined
-    # path_refined_global = params.path_refined_global
-    # ut.spark_write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
-    # ut.spark_write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
-    # ut.spark_write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
-    # ut.spark_write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
-    # ut.spark_write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
+    model_week_sales.persist(StorageLevel.MEMORY_ONLY)
+    print('====> counting(cache) [model_week_sales] took ')
+    start = time.time()
+    model_week_sales_count = model_week_sales.count()
+    ut.get_timer(starting_time=start)
+    print('[model_week_sales] length:', model_week_sales_count)
+
+    # Create model_week_tree
+    model_week_tree = tree.get_model_week_tree(sku_h, week, params.first_backtesting_cutoff)
+    model_week_tree.persist(StorageLevel.MEMORY_ONLY)
+    print('====> counting(cache) [model_week_tree] took ')
+    start = time.time()
+    model_week_tree_count = model_week_tree.count()
+    ut.get_timer(starting_time=start)
+    print('[model_week_tree] length:', model_week_tree_count)
+
+    # Create model_week_mrp
+    model_week_mrp = mrp.get_model_week_mrp(
+        gdw, sapb, sku, day, sms, zep, week, params.white_list, params.first_backtesting_cutoff)
+    model_week_mrp.persist(StorageLevel.MEMORY_ONLY)
+    print('====> counting(cache) [model_week_mrp] took ')
+    start = time.time()
+    model_week_mrp_count = model_week_mrp.count()
+    ut.get_timer(starting_time=start)
+    print('[model_week_mrp] length:', model_week_mrp_count)
+
+    # Reduce tables according to the models found in model_week_sales
+    print('====> Reducing tables according to the models found in model_week_sales...')
+    l_model_id = model_week_sales.select('model_id').drop_duplicates()
+    model_week_tree = model_week_tree.join(l_model_id, on='model_id', how='inner')
+    model_week_mrp = model_week_mrp.join(l_model_id, on='model_id', how='inner')
+
+    print('[model_week_tree] (new) length:', model_week_tree.count())
+    print('[model_week_mrp] (new) length:', model_week_mrp.count())
+
+    # Split model_week_sales into 3 tables
+    print('====> Splitting sales, price & turnover into 3 tables...')
+    model_week_price = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'average_price'])
+    model_week_turnover = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sum_turnover'])
+    model_week_sales = model_week_sales.select(['model_id', 'week_id', 'date', 'channel', 'sales_quantity'])
+
+    # Data checks & assertions
+    check.check_d_sku(sku)
+    check.check_d_business_unit(but)
+    check.check_sales_stability(model_week_sales, current_week)
+    check.check_duplicate_by_keys(model_week_sales, ['model_id', 'week_id', 'date', 'channel'])
+    check.check_duplicate_by_keys(model_week_price, ['model_id', 'week_id', 'date', 'channel'])
+    check.check_duplicate_by_keys(model_week_turnover, ['model_id', 'week_id', 'date', 'channel'])
+    check.check_duplicate_by_keys(model_week_tree, ['model_id', 'week_id'])
+    check.check_duplicate_by_keys(model_week_mrp, ['model_id', 'week_id'])
+
+    # Write results
+    bucket_refined = params.bucket_refined
+    path_refined_global = params.path_refined_global
+    ut.spark_write_parquet_s3(model_week_sales, bucket_refined, path_refined_global + 'model_week_sales')
+    ut.spark_write_parquet_s3(model_week_price, bucket_refined, path_refined_global + 'model_week_price')
+    ut.spark_write_parquet_s3(model_week_turnover, bucket_refined, path_refined_global + 'model_week_turnover')
+    ut.spark_write_parquet_s3(model_week_tree, bucket_refined, path_refined_global + 'model_week_tree')
+    ut.spark_write_parquet_s3(model_week_mrp, bucket_refined, path_refined_global + 'model_week_mrp')
 
     spark.stop()

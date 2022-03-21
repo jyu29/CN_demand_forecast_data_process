@@ -164,12 +164,10 @@ class Configuration(object):
 
     def get_business_week(self):
 
-        but_week = self._yaml_dict['functional_parameters']['but_week']
+        if  self._yaml_dict['functional_parameters']['but_week']:
+            but_week = self._yaml_dict['functional_parameters']['but_week']
+        else:
+            but_week = []
 
-        if but_week is None:
-            raise ValueError("list of week for creating business_unit BI table must be here.")
-
-        if self._yaml_dict['functional_parameters']['but_range']:
-            but_week = [i for i in range(but_week[0],but_week[1])]
 
         return but_week
