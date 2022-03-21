@@ -142,7 +142,12 @@ class Configuration(object):
         Returns:
             object: a list of model_id in whitelist
         """
-        return self._yaml_list['white_list']
+        if self._yaml_list['white_list']:
+            white = self._yaml_list['white_list']
+        else:
+            white = []
+
+        return white
 
     def get_taiwan_self_sale_list_id(self):
         """
