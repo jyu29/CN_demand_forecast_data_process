@@ -9,9 +9,6 @@ functional_parameters:
   # if but_range is True, but_week must be two number, one is start, another one is end.
   but_range: False
   but_week:
-    - 202210
-    - 202211
-    - 202212
   first_historical_week: 201601
   first_backtesting_cutoff: 201901
   list_purch_org:

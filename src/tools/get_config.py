@@ -169,5 +169,4 @@ class Configuration(object):
         else:
             but_week = []
 
-
         return but_week
