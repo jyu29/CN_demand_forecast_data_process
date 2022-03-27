@@ -120,7 +120,7 @@ def union_sales(offline_sales, online_sales, current_week, group_item):
 
 def but_unit_number(offline_sales, online_sales, current_week, bucket_refined, but_path, but_week):
     shifted_date = datetime.datetime.strptime(str(current_week) + "1", "%G%V%u") + datetime.timedelta(weeks=-1)
-    but_weeks = but_week + [date_to_week_id(shifted_date)]
+    but_weeks = but_week + [ut.date_to_week_id(shifted_date)]
     sales = union_sales(offline_sales, online_sales, current_week, ['but_idr_business_unit'])
     for week in but_weeks:
         if week < current_week:
