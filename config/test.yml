@@ -1,0 +1,28 @@
+buckets:
+  clean: fcst-clean-prod
+  refined: fcst-workspace
+paths:
+  clean_datalake: datalake/
+  refined_global: forecast-cn/polo/global/
+  tableau: forecast-cn/polo/dashboard/tableau/raw_name/
+functional_parameters:
+  # if but_range is True, but_week must be two number, one is start, another one is end.
+  but_range: False
+  but_week:
+  first_historical_week: 201601
+  first_backtesting_cutoff: 201901
+  list_purch_org:
+    - Z015
+    - Z024
+    - Z067
+    - Z069
+    - Z108
+technical_parameters:
+  spark_conf:
+    spark.yarn.isPython: "true"
+    spark.serializer: "org.apache.spark.serializer.KryoSerializer"
+    spark.sql.legacy.parquet.int96RebaseModeInRead: "CORRECTED"
+    spark.sql.legacy.parquet.datetimeRebaseModeInWrite: "CORRECTED"
+    spark.sql.legacy.parquet.datetimeRebaseModeInRead: "CORRECTED"
+    spark.sql.legacy.timeParserPolicy: "LEGACY"
+    spark.driver.maxResultSize: 8g
